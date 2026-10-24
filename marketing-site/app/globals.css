@@ -1,0 +1,252 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+@import "shadcn/tailwind.css";
+
+/* Answerd brand tokens (light only). */
+
+@theme inline {
+  --color-navy: #0f2d5b;
+  --color-blue: #2563ff;
+  --color-blue-hover: #1d4ed8;
+  --color-blue-tint: #eaf0ff;
+  --color-teal: #14b8a6;
+  --color-teal-ink: #0f766e;
+  --color-teal-tint: #e6f7f5;
+  --color-sky: #f1f5f9;
+  --color-slate: #475569;
+  --color-muted-ink: #64748b;
+  --color-line: #e2e8f0;
+  --color-amber: #f59e0b;
+
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+
+  --font-sans: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
+  --font-heading: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
+
+  --radius-sm: 8px;
+  --radius-md: 10px;
+  --radius-lg: 12px;
+  --radius-xl: 16px;
+  --radius-2xl: 20px;
+  --radius-3xl: 24px;
+  --radius-4xl: 32px;
+
+  --shadow-card: 0 1px 2px rgba(15, 45, 91, 0.06), 0 4px 16px rgba(15, 45, 91, 0.06);
+  --shadow-lift: 0 2px 4px rgba(15, 45, 91, 0.08), 0 12px 32px rgba(15, 45, 91, 0.1);
+  --shadow-overlay: 0 24px 64px rgba(15, 45, 91, 0.18);
+}
+
+:root {
+  --background: #ffffff;
+  --foreground: #0f2d5b;
+  --card: #ffffff;
+  --card-foreground: #0f2d5b;
+  --popover: #ffffff;
+  --popover-foreground: #0f2d5b;
+  --primary: #2563ff;
+  --primary-foreground: #ffffff;
+  --secondary: #ffffff;
+  --secondary-foreground: #0f2d5b;
+  --muted: #f1f5f9;
+  --muted-foreground: #64748b;
+  --accent: #eaf0ff;
+  --accent-foreground: #0f2d5b;
+  --destructive: #dc2626;
+  --border: #e2e8f0;
+  --input: #e2e8f0;
+  --ring: #2563ff;
+  --radius: 12px;
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  html {
+    @apply font-sans;
+    -webkit-font-smoothing: antialiased;
+    scroll-behavior: smooth;
+    scroll-padding-top: 80px;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    html {
+      scroll-behavior: auto;
+    }
+  }
+  /* Base UI: body is the positioning context for portalled popups */
+  body {
+    @apply relative bg-background text-slate;
+    font-size: 16px;
+    line-height: 24px;
+  }
+  @media (min-width: 768px) {
+    body {
+      font-size: 18px;
+      line-height: 28px;
+    }
+  }
+  h1, h2, h3, h4 {
+    @apply text-navy;
+  }
+  :focus-visible {
+    outline: 2px solid #2563ff;
+    outline-offset: 2px;
+  }
+  button:not(:disabled),
+  [role="button"]:not(:disabled) {
+    cursor: pointer;
+  }
+}
+
+/* Type scale from the brief */
+@utility t-hero {
+  font-size: 34px; line-height: 40px; font-weight: 700; letter-spacing: -0.02em; color: var(--color-navy);
+  @media (min-width: 1024px) { font-size: 56px; line-height: 64px; }
+}
+@utility t-section {
+  font-size: 28px; line-height: 34px; font-weight: 700; letter-spacing: -0.015em; color: var(--color-navy);
+  @media (min-width: 768px) { font-size: 36px; line-height: 44px; }
+}
+@utility t-lead {
+  font-size: 16px; line-height: 24px; color: var(--color-slate);
+  @media (min-width: 768px) { font-size: 18px; line-height: 28px; }
+}
+@utility t-card-title {
+  font-size: 18px; line-height: 26px; font-weight: 600; color: var(--color-navy);
+  @media (min-width: 768px) { font-size: 20px; line-height: 28px; }
+}
+@utility t-small {
+  font-size: 14px; line-height: 20px;
+}
+@utility tnum {
+  font-variant-numeric: tabular-nums;
+}
+@utility container-site {
+  width: 100%; max-width: 1248px; margin-inline: auto; padding-inline: 24px;
+}
+@utility card-site {
+  background: #fff; border: 1px solid var(--color-line); border-radius: 16px; box-shadow: var(--shadow-card);
+}
+
+/* Returning visitors: hide the server-rendered cookie banner before paint */
+html[data-consent] [data-cookie-banner] {
+  display: none;
+}
+
+/* Dot-grid textures. A small SVG tile with a gradient fade on top: masks over tiled gradients are very slow to
+   rasterise on low-end phones and held up first paint by about a second. */
+@utility dots-hero {
+  background-image:
+    radial-gradient(70% 60% at 70% 40%, rgba(255, 255, 255, 0) 10%, #fff 70%),
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='22' height='22'%3E%3Ccircle cx='11' cy='11' r='1' fill='%230f2d5b' fill-opacity='.07'/%3E%3C/svg%3E");
+  background-size: 100% 100%, 22px 22px;
+}
+@utility dots-navy {
+  background-image:
+    linear-gradient(90deg, #0f2d5b, rgba(15, 45, 91, 0) 60%),
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='22' height='22'%3E%3Ccircle cx='11' cy='11' r='1' fill='%23fff' fill-opacity='.07'/%3E%3C/svg%3E");
+  background-size: 100% 100%, 22px 22px;
+}
+
+/* Below-the-fold sections skip style, layout and paint until they near the viewport (the trust strip is
+   left out because its tooltips overflow the section). */
+@media screen {
+  #main > section:not(#hero):not(:nth-child(2)),
+  body footer {
+    content-visibility: auto;
+    contain-intrinsic-size: auto 960px;
+  }
+}
+
+/* ---------- Motion (CSS) ----------
+   Scroll reveals, the phone float and the Ask Answerd sequence. JS only flips `data-shown`
+   (components/site/reveal.tsx), so none of this needs an animation library on first load. */
+:root {
+  --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
+}
+[data-reveal],
+[data-stagger-item] {
+  opacity: 0;
+  transform: translateY(16px);
+  transition:
+    opacity 0.4s var(--ease-out-expo) var(--reveal-delay, 0s),
+    transform 0.4s var(--ease-out-expo) var(--reveal-delay, 0s);
+}
+[data-stagger-item] {
+  --reveal-delay: calc(var(--stagger, 0.06s) * var(--i, 0));
+}
+[data-reveal][data-shown],
+[data-stagger][data-shown] [data-stagger-item] {
+  opacity: 1;
+  transform: none;
+}
+
+@keyframes float {
+  50% { transform: translateY(-6px); }
+}
+@keyframes drift {
+  50% { transform: translateY(var(--drift, 5px)); }
+}
+.anim-float { animation: float 4s ease-in-out infinite both; }
+.anim-drift { animation: drift 5s ease-in-out infinite both; }
+
+.ask-typing { transition: opacity 0.2s; }
+[data-ask][data-shown] .ask-typing { opacity: 0; transition-delay: 1.3s; }
+.ask-dot { opacity: 0.35; animation: ask-dot 1s infinite; }
+@keyframes ask-dot {
+  50% { opacity: 1; }
+}
+.ask-reply {
+  opacity: 0;
+  transform: translateY(6px) scale(0.98);
+  transform-origin: 0 100%;
+  transition: opacity 0.35s var(--ease-out-expo) 1.45s, transform 0.35s var(--ease-out-expo) 1.45s;
+}
+.ask-chip {
+  opacity: 0;
+  transform: translateY(4px);
+  transition: opacity 0.3s var(--d, 1.8s), transform 0.3s var(--d, 1.8s);
+}
+[data-ask][data-shown] :is(.ask-reply, .ask-chip) { opacity: 1; transform: none; }
+
+@media (prefers-reduced-motion: reduce) {
+  [data-reveal],
+  [data-stagger-item],
+  .ask-reply,
+  .ask-chip {
+    opacity: 1;
+    transform: none;
+    transition: none;
+  }
+  .ask-typing { opacity: 0; }
+  .anim-float,
+  .anim-drift,
+  .ask-dot { animation: none; }
+}
+
+/* The cookie banner rises in when it reappears after first paint (never on the first paint itself) */
+@media (prefers-reduced-motion: no-preference) {
+  @starting-style {
+    html[data-hydrated] [data-cookie-banner] {
+      opacity: 0;
+      translate: 0 24px;
+    }
+  }
+}
