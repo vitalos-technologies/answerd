@@ -37,6 +37,7 @@
     "**/*.mts"
   ],
   "exclude": [
+    ".claude",
     "node_modules",
     "marketing-site"
   ]

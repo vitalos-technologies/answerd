@@ -14,6 +14,7 @@ const eslintConfig = defineConfig([
     "next-env.d.ts",
     // The marketing site is a separate Next.js project with its own lint config
     "marketing-site/**",
+    ".claude/**",
   ]),
 ]);
 
