@@ -3,7 +3,7 @@ import * as React from "react"
 import Link from "next/link"
 import { use } from "react"
 import { useRouter } from "next/navigation"
-import { ArrowLeft, BadgeCheck, Clock, Flag, Globe, Heart, MapPin, MoreHorizontal, Phone, Share2, ShieldCheck, Store, UserPlus } from "lucide-react"
+import { ArrowLeft, BadgeCheck, Clock, Flag, Globe, Heart, MapPin, MoreHorizontal, Phone, Share2, ShieldCheck, Star, Store, UserPlus } from "lucide-react"
 import { AppScreen } from "@/components/shells/AppScreen"
 import { ActionBar } from "@/components/answerd/ActionBar"
 import { BadgeRow } from "@/components/answerd/Badges"
@@ -175,6 +175,15 @@ export default function ListingPage({ params }: { params: Promise<{ slug: string
             {status.label}
           </p>
         </div>
+        {(() => {
+          // A tracked call over 60 s also allows a review (spec: Review a business)
+          const call = s.calls.find((c) => c.listingId === listing.id && c.customerId === userId && userId && c.durationSec > 60 && !s.reviews.some((r) => r.callId === c.id))
+          return call ? (
+            <Link href={`/app/b/${slug}/review?call=${call.id}`} className="mt-3 flex items-center gap-2 rounded-xl bg-blue-tint px-3 py-2.5 t-label text-blue hover:underline">
+              <Star className="size-4 fill-blue" aria-hidden /> You called {listing.name}. How did it go? Leave a review
+            </Link>
+          ) : null
+        })()}
         {status.holiday && (
           <Banner tone="warning" className="mt-3" title={`${status.label}`}>
             {listing.name} is away ({status.holiday.toLowerCase()}). You can still message them{desk ? " and their Answerd desk will reply" : ""}.

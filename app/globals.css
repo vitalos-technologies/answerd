@@ -2,6 +2,8 @@
 @import "tw-animate-css";
 @import "shadcn/tailwind.css";
 
+@source not "../marketing-site";
+
 /* Answerd design tokens (docs/answerd-spec.md › Design system). Light only. */
 
 @theme inline {

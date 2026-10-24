@@ -19,7 +19,9 @@ export default function BookedPage({ params }: { params: Promise<{ id: string }>
   const s = useStore()
   const b = s.bookings.find((x) => x.id === id)
   const clearDraft = s.setDraft
-  React.useEffect(() => clearDraft(null), [clearDraft])
+  React.useEffect(() => {
+    clearDraft(null)
+  }, [clearDraft])
   const listing = s.listings.find((l) => l.id === b?.listingId)
   if (!b || !listing) return <AppScreen id="C-28"><EmptyState title="Booking not found" body="It may have been cancelled." /></AppScreen>
   const svc = serviceById(s, b.serviceId)
