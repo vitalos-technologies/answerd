@@ -49,6 +49,7 @@ import { buildScript, deskReply as computeDeskReply, ownerUserIds, stepsToTransc
 import { initials, slugify, gbp, priceWithVat } from "./format"
 import { DISTRICTS, lookupPostcode } from "./geo"
 import { toast } from "./toast"
+import { findCompany, matchDirector } from "./companiesHouse"
 
 export type StateOverride = "none" | "loading" | "empty" | "error"
 
@@ -159,7 +160,7 @@ export interface Actions {
   // claim and setup
   createListing: (input: { name: string; categoryId: string; phone: string; postcode: string; legalType: Business["legalType"]; companyNumber?: string }) => string
   claimListing: (listingId: string, method: Claim["method"]) => string
-  verifyClaim: (claimId: string, method: Claim["method"], input?: { code?: string; directorName?: string; dob?: string; document?: string; documentKind?: string }) => { ok: boolean; pending?: boolean; businessId?: string; error?: string }
+  verifyClaim: (claimId: string, method: Claim["method"], input?: { code?: string; directorName?: string; dob?: string; companyNumber?: string; document?: string; documentKind?: string }) => { ok: boolean; pending?: boolean; businessId?: string; error?: string }
   disputeClaim: (listingId: string, details: string, evidence: string) => void
   updateBusiness: (businessId: string, patch: Partial<Business> & { name?: string; phonePublic?: string; categoryIds?: string[] }) => void
   upsertService: (businessId: string, service: Partial<Service> & { name: string }) => string
@@ -1272,9 +1273,9 @@ export const useStore = create<Store>()(
             if (input.code === "000000") return { ok: false, error: "That code didn't match" }
           }
           if (method === "director") {
-            const ok = /samuel okafor|sam okafor/i.test(input.directorName ?? "") && input.dob === "03/1985"
-            const other = /(kwame asante|dele johnson)/i.test(input.directorName ?? "")
-            if (!ok && !other) return { ok: false, error: "We couldn't match that to a director at Companies House." }
+            const listing = s.listings.find((l) => l.id === claim.listingId)
+            const company = findCompany(input.companyNumber || listing?.name || "")
+            if (!matchDirector(company, input.directorName ?? "", input.dob ?? "")) return { ok: false, error: "We couldn't match that to a director at Companies House." }
           }
           let businessId = ""
           mut((d) => {

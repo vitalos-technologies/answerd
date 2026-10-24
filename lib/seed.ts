@@ -134,9 +134,9 @@ function buildUsers(rng: Rng): User[] {
 
 // ---------------------------------------------------------------- listings
 
-type SvcT = [name: string, dur: number, type: PriceType, from: number, to: number | undefined, bookable: boolean, desc: string]
+export type SvcT = [name: string, dur: number, type: PriceType, from: number, to: number | undefined, bookable: boolean, desc: string]
 
-const SERVICE_TEMPLATES: Record<string, SvcT[]> = {
+export const SERVICE_TEMPLATES: Record<string, SvcT[]> = {
   plumbers: [
     ["Leaking tap repair", 60, "from", 6000, 9000, true, "Fix a dripping or leaking tap, including washers and cartridges."],
     ["Blocked sink or toilet", 60, "from", 7000, 11000, true, "Clear blockages with rods or a plunger pump."],
