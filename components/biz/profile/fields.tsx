@@ -111,7 +111,7 @@ export function CategoryPicker({ value, onChange, max = 3, id, invalid }: { valu
               <li key={cid}>
                 <span className="inline-flex h-9 items-center gap-1 rounded-full border border-blue bg-blue-tint pl-3.5 pr-1 t-label text-blue">
                   {c?.name ?? cid}
-                  {i === 0 && max > 1 && <span className="t-caption text-blue/80">· main</span>}
+                  {i === 0 && max > 1 && <span className="t-caption text-blue">· main</span>}
                   <button type="button" onClick={() => onChange(value.filter((x) => x !== cid))} aria-label={`Remove ${c?.name ?? cid}`} className="inline-flex size-8 items-center justify-center rounded-full hover:bg-white/60">
                     <X className="size-4" aria-hidden />
                   </button>

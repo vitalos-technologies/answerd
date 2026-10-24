@@ -391,7 +391,6 @@ function JobCard({ b, top, height, lane, of, selected, onOpen }: { b: Booking; t
       role="button"
       tabIndex={0}
       aria-roledescription={movable ? "draggable job" : undefined}
-      aria-label={`${svc}, ${b.customerName}, ${fmtDate(b.startAt)} ${fmtTime(b.startAt)} to ${fmtTime(b.endAt)}, ${STATUS_LABEL[b.status]}`}
       onClick={() => onOpen(b)}
       onKeyDown={(e) => {
         listeners?.onKeyDown?.(e)
@@ -419,6 +418,10 @@ function JobCard({ b, top, height, lane, of, selected, onOpen }: { b: Booking; t
       <span className="flex items-center gap-0.5">
         <span className="min-w-0 flex-1 truncate text-[11px] font-semibold leading-4 tnum">
           {fmtTime(b.startAt)} {svc}
+          <span className="sr-only">
+            , {fmtDate(b.startAt)} to {fmtTime(b.endAt)}
+            {tall ? "" : `, ${b.customerName}`}
+          </span>
         </span>
         {movable && <GripVertical className="size-3 shrink-0 text-slate opacity-60 group-hover:opacity-100" aria-hidden />}
       </span>

@@ -64,7 +64,7 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
       <div className="flex min-w-0 flex-1 flex-col">
         <header className="sticky top-0 z-30 flex h-16 items-center gap-3 border-b border-line bg-white px-6">
           <DropdownMenu>
-            <DropdownMenuTrigger className="inline-flex h-11 items-center gap-2 rounded-xl px-3 t-subhead hover:bg-sky" aria-label="Switch business">
+            <DropdownMenuTrigger className="inline-flex h-11 items-center gap-2 rounded-xl px-3 t-subhead hover:bg-sky" aria-label={`${listing?.name ?? "No business yet"}, switch business`}>
               {listing?.name ?? "No business yet"}
               <ChevronDown className="size-4 text-muted-ink" aria-hidden />
             </DropdownMenuTrigger>
@@ -92,8 +92,11 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
               Open in the app
             </Link>
             <DropdownMenu>
-              <DropdownMenuTrigger className="rounded-full" aria-label="Account menu">
-                <PersonAvatar name={user ? `${user.firstName} ${user.lastName}` : "Guest"} size={36} tone="navy" />
+              <DropdownMenuTrigger className="rounded-full">
+                <span className="sr-only">Account menu</span>
+                <span aria-hidden>
+                  <PersonAvatar name={user ? `${user.firstName} ${user.lastName}` : "Guest"} size={36} tone="navy" />
+                </span>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end">
                 <DropdownMenuLabel>{user ? `${user.firstName} ${user.lastName}` : "Not signed in"}</DropdownMenuLabel>

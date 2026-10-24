@@ -114,7 +114,7 @@ export function MockMap({
     for (const p of points) {
       const { x, y } = proj(p.lat, p.lng)
       if (x < -40 || x > W + 40 || y < -40 || y > H + 40) continue
-      const near = p.id === selectedId ? undefined : out.find((c) => !c.items.some((i) => i.id === selectedId) && Math.hypot(c.x - x, c.y - y) < 28)
+      const near = p.id === selectedId ? undefined : out.find((c) => !c.items.some((i) => i.id === selectedId) && Math.hypot(c.x - x, c.y - y) < 64)
       if (near) near.items.push(p)
       else out.push({ x, y, items: [p] })
     }

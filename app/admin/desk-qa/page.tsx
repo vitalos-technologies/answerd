@@ -82,10 +82,10 @@ export default function DeskQa() {
           {call && listing && (
             <Panel title={`${listing.name} · call from ${call.customerName ?? call.callerMasked}`}>
               <div className="grid grid-cols-[1.4fr_1fr] gap-5">
-                <ol className="max-h-[440px] space-y-2 overflow-y-auto pr-2" aria-label="Transcript">
+                <ol className="max-h-[440px] space-y-2 overflow-y-auto pr-2" aria-label="Transcript" tabIndex={0}>
                   {call.transcript!.map((t, i) => (
                     <li key={i} className={cn("max-w-[85%] rounded-2xl px-3 py-2 text-[13.5px]", t.speaker === "caller" ? "ml-auto bg-blue text-white" : t.speaker === "desk" ? "bg-teal-tint text-navy" : "border border-line bg-white text-navy")}>
-                      <span className={cn("block text-[11px] font-semibold", t.speaker === "caller" ? "text-white/85" : "text-slate")}>
+                      <span className={cn("block text-[11px] font-semibold", t.speaker === "caller" ? "text-white" : "text-slate")}>
                         {t.speaker === "desk" ? "Answerd desk" : t.speaker === "caller" ? "Caller" : "Owner"} · {fmtDuration(t.atSec)}
                       </span>
                       {t.text}
