@@ -368,7 +368,7 @@ function Unclaimed({ listingSlug, share, setShare, dist }: { listingSlug: string
           </IconButton>
         </div>
       }
-      footer={<ActionBar variant="unclaimed" businessName={listing.name} callHref={`/app/b/${listingSlug}/call`} claimHref={`/app/biz/claim/${listing.id}`} />}
+      footer={<ActionBar variant="unclaimed" businessName={listing.name} callHref={`/app/b/${listingSlug}/call`} claimHref={`/app/biz/claim?listing=${listing.id}`} />}
     >
       <div className="bg-white px-4 pb-5 pt-4">
         <div className="flex items-start gap-3">
@@ -405,7 +405,7 @@ function Unclaimed({ listingSlug, share, setShare, dist }: { listingSlug: string
           <p className="t-subhead">This business hasn&apos;t joined Answerd yet</p>
           <p className="mt-1 t-label font-normal text-slate">You can still call them. Calls go through an Answerd number so they know you found them here.</p>
         </div>
-        <Link href={`/app/biz/claim/${listing.id}`} className="card flex items-center gap-3 p-4 hover:border-blue">
+        <Link href={`/app/biz/claim?listing=${listing.id}`} className="card flex items-center gap-3 p-4 hover:border-blue">
           <Store className="size-5 text-blue" aria-hidden />
           <span className="flex-1">
             <span className="block t-label text-navy">Is this your business? Claim it</span>

@@ -174,6 +174,7 @@ export interface Service {
   vatIncluded: boolean
   bookable: boolean
   order: number
+  photo?: Photo // P4: optional service photo (B-12)
 }
 
 export interface DayHours {
@@ -233,6 +234,8 @@ export interface Claim {
   status: "started" | "pending" | "approved" | "rejected" | "disputed" | "more_info"
   evidenceUrl?: string
   evidenceKind?: string
+  legalType?: "sole_trader" | "partnership" | "ltd" // P4: from B-03, applied to the Business on claim
+  companyNumber?: string
   details?: string
   decidedBy?: ID
   reason?: string

@@ -1,5 +1,8 @@
-import { Placeholder } from "@/components/shells/Placeholder"
+"use client"
+import { BizScreen } from "@/components/app/biz"
+import { ServicesList } from "@/components/biz/profile"
 
-export default function Page() {
-  return <Placeholder id="B-11" surface="app" />
+/** B-11: Services and prices. */
+export default function ServicesPage() {
+  return <BizScreen id="B-11" title="Services and prices">{({ biz }) => <ServicesList businessId={biz!.id} />}</BizScreen>
 }

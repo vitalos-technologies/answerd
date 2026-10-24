@@ -9,10 +9,12 @@ import { useStore } from "@/lib/store"
 export default function SplashPage() {
   const router = useRouter()
   const onboarded = useStore((s) => s.session.onboarded)
+  // The app reopens in the last mode used (business mode is remembered after a claim)
+  const business = useStore((s) => s.session.mode === "business" && !!s.session.currentBusinessId)
   React.useEffect(() => {
-    const t = setTimeout(() => router.replace(onboarded ? "/app" : "/app/welcome"), 1200)
+    const t = setTimeout(() => router.replace(business ? "/app/biz" : onboarded ? "/app" : "/app/welcome"), 1200)
     return () => clearTimeout(t)
-  }, [onboarded, router])
+  }, [onboarded, business, router])
   return (
     <div className="t-app absolute inset-0 flex flex-col items-center justify-center bg-white">
       <ScreenMeta id="C-01" />
