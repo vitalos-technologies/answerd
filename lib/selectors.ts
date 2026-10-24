@@ -225,3 +225,28 @@ export function isStaffOnly(s: S, userId: string | null) {
 export function roleIn(s: S, userId: string | null, businessId: string | null) {
   return s.members.find((m) => m.userId === userId && m.businessId === businessId && m.joinedAt)?.role ?? null
 }
+
+// P5
+/**
+ * Up to n similar businesses to offer when a request is declined or expires:
+ * same city and category, claimed businesses with a free slot that day first, then other claimed,
+ * then seeded and Places listings (call to check), nearest first.
+ */
+export function alternativesFor(s: S, listingId: string, startAt: string, n = 3) {
+  const l = listingById(s, listingId)
+  if (!l) return []
+  const day = dayKey(startAt)
+  const rank = (x: Listing) => {
+    if (x.layer === "claimed") {
+      const svc = servicesFor(s, x.businessId).find((v) => v.bookable)
+      return slotsForDay(s, x, svc, day).length ? 0 : 1
+    }
+    return x.layer === "seeded" ? 2 : 3
+  }
+  return s.listings
+    .filter((x) => x.id !== l.id && !x.mergedInto && !x.suspended && !x.unpublished && x.city === l.city && x.categoryIds.some((c) => l.categoryIds.includes(c)))
+    .map((x) => ({ x, r: rank(x), d: milesBetween(l.geo, x.geo) }))
+    .sort((a, b) => a.r - b.r || a.d - b.d)
+    .slice(0, n)
+    .map((a) => a.x)
+}

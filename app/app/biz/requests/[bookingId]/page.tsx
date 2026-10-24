@@ -1,5 +1,20 @@
-import { Placeholder } from "@/components/shells/Placeholder"
+"use client"
+import { use } from "react"
+import { useRouter } from "next/navigation"
+import { OpsScreen } from "@/components/biz/ops/OpsScreen"
+import { BookingRequestCard } from "@/components/biz/ops/RequestCard"
 
-export default function Page() {
-  return <Placeholder id="B-22" surface="app" />
+/** B-22 Booking request: Accept → B-24, Decline → B-19, Suggest → slot picker. */
+export default function RequestPage({ params }: { params: Promise<{ bookingId: string }> }) {
+  const { bookingId } = use(params)
+  const router = useRouter()
+  return (
+    <OpsScreen id="B-22" title="Booking request" back="/app/biz/inbox?filter=requests">
+      {() => (
+        <div className="p-4">
+          <BookingRequestCard bookingId={bookingId} onAccepted={(id) => router.push(`/app/biz/jobs/${id}`)} onDeclined={() => router.push("/app/biz/inbox")} />
+        </div>
+      )}
+    </OpsScreen>
+  )
 }

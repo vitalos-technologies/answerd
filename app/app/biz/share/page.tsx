@@ -1,5 +1,16 @@
-import { Placeholder } from "@/components/shells/Placeholder"
+"use client"
+import { OpsScreen } from "@/components/biz/ops/OpsScreen"
+import { ShareProfile } from "@/components/biz/ops/ShareProfile"
 
-export default function Page() {
-  return <Placeholder id="B-29" surface="app" />
+/** B-29 Share your profile. */
+export default function SharePage() {
+  return (
+    <OpsScreen id="B-29" title="Share your profile" back="/app/biz/more" ownerOnly>
+      {({ biz, listing }) => (
+        <div className="p-4">
+          <ShareProfile biz={biz} listing={listing} />
+        </div>
+      )}
+    </OpsScreen>
+  )
 }
