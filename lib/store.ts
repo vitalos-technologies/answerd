@@ -212,6 +212,8 @@ export interface Actions {
   adminRefund: (invoiceId: string, reason: string) => void
   adminStaff: (op: "invite" | "remove" | "role", input: { userId?: string; firstName?: string; lastName?: string; email?: string; role?: "admin" | "support" }, reason: string) => void
   adminDeleteCustomer: (userId: string, reason: string) => void
+  // P6
+  setListingPublished: (businessId: string, published: boolean) => void
 }
 
 export type Store = Data & Actions
@@ -440,6 +442,12 @@ function approveClaim(d: D, claim: Claim, actorId: string, reason: string) {
   claim.reason = reason
 }
 
+/** Who the desk alerts: the owner, plus staff when B-35 says so. */
+function deskAlertIds(d: D, businessId: string | undefined) {
+  const c = d.deskConfigs.find((x) => x.businessId === businessId)
+  return ownerUserIds(d as DemoData, businessId, !!c?.alertWho.includes("staff"))
+}
+
 function applyStep(d: D, run: Draft<DeskRunState>, index: number) {
   const step = run.steps[index]
   if (!step) return
@@ -453,12 +461,12 @@ function applyStep(d: D, run: Draft<DeskRunState>, index: number) {
     pushMessage(d, run.threadId, author, step.text, { card: step.card })
   }
   if (step.effect === "alert_owner") {
-    notify(d, { userId: "", userIds: ownerUserIds(d as DemoData, businessId, true), event: plan.ownerPush.event, mode: "business", businessId, title: plan.ownerPush.title, body: plan.ownerPush.body, href: run.callId ? `/app/biz/calls/${run.callId}` : run.threadId ? `/app/biz/inbox/${run.threadId}` : "/app/biz/inbox", channels: plan.ownerPush.channels })
+    notify(d, { userId: "", userIds: deskAlertIds(d, businessId), event: plan.ownerPush.event, mode: "business", businessId, title: plan.ownerPush.title, body: plan.ownerPush.body, href: run.callId ? `/app/biz/calls/${run.callId}` : run.threadId ? `/app/biz/inbox/${run.threadId}` : "/app/biz/inbox", channels: plan.ownerPush.channels })
     if (run.threadId) {
       const t = d.threads.find((x) => x.id === run.threadId)
       if (t) {
         t.status = "needs_owner"
-        t.handoffReason = "Emergency: gas smell"
+        t.handoffReason = plan.handoff ?? "Emergency"
       }
     }
   }
@@ -472,6 +480,7 @@ function applyStep(d: D, run: Draft<DeskRunState>, index: number) {
   if (step.effect === "book" && plan.booking && !run.bookingId) {
     const b = plan.booking
     const id = uid("bk")
+    const requested = b.status === "requested"
     d.bookings.push({
       id,
       listingId: listing.id,
@@ -486,16 +495,19 @@ function applyStep(d: D, run: Draft<DeskRunState>, index: number) {
       accessNotes: "",
       notes: plan.summary,
       photos: [],
-      status: "confirmed",
+      status: requested ? "requested" : "confirmed",
       createdBy: "desk",
       policy: "Free to cancel until 24 hours before",
       priceText: deskPriceText(serviceById(d as DemoData, b.serviceId)),
+      requestExpiresAt: requested ? addHours(d.clock, 2) : undefined,
       createdAt: d.clock,
     })
-    event(d, id, "confirmed", "desk")
+    event(d, id, requested ? "requested" : "confirmed", "desk")
     enquiry(d, listing.id, "booking")
     run.bookingId = id
-    if (run.threadId) pushMessage(d, run.threadId, "system", "Booked by the Answerd desk", { card: { kind: "booking", bookingId: id } })
+    if (run.threadId) pushMessage(d, run.threadId, "system", requested ? "Booking request sent by the Answerd desk" : "Booked by the Answerd desk", { card: { kind: "booking", bookingId: id } })
+    // D-04: confirmation (and calendar invite) to a customer with the app
+    if (plan.caller.customerId && !requested) notify(d, { userId: plan.caller.customerId, event: "booking_confirmed", mode: "customer", title: "You're booked", body: `You're booked with ${listing.name}, ${fmtDate(b.startAt)}, ${fmtTime(b.startAt)}`, href: bookingCustomerHref(id), channels: ["push", "sms", "email"] })
   }
 }
 
@@ -552,8 +564,9 @@ function completeRun(d: D, run: Draft<DeskRunState>) {
   }
   // Owner push (not for spam; emergencies already alerted)
   if (!plan.spam && plan.scriptId !== "D-09" && plan.ownerPush.body) {
-    const href = run.callId ? `/app/biz/calls/${run.callId}` : run.threadId ? `/app/biz/inbox/${run.threadId}` : "/app/biz"
-    notify(d, { userId: "", userIds: ownerUserIds(d as DemoData, businessId, plan.scriptId === "D-07" ? false : true), event: plan.ownerPush.event, mode: "business", businessId, title: plan.ownerPush.title, body: plan.ownerPush.body, href, channels: plan.ownerPush.channels })
+    const requested = plan.booking?.status === "requested" && run.bookingId
+    const href = requested ? `/app/biz/requests/${run.bookingId}` : run.callId ? `/app/biz/calls/${run.callId}` : run.threadId ? `/app/biz/inbox/${run.threadId}` : "/app/biz"
+    notify(d, { userId: "", userIds: plan.scriptId === "D-07" ? ownerUserIds(d as DemoData, businessId) : deskAlertIds(d, businessId), event: plan.ownerPush.event, mode: "business", businessId, title: plan.ownerPush.title, body: plan.ownerPush.body, href, channels: plan.ownerPush.channels })
   }
   if (plan.handoff && run.threadId) {
     const t = d.threads.find((x) => x.id === run.threadId)
@@ -597,9 +610,17 @@ function startRun(d: D, scriptId: ScriptId, listingId: string, opts: ScriptOptio
     d.threads.unshift(t)
     run.threadId = t.id
     if (plan.channel === "call") pushMessage(d, t.id, "system", "Call in progress: answered by the Answerd desk")
-    if (plan.channel !== "call") enquiry(d, listingId, "message")
+    // Outbound follow-ups (D-05 quote, D-06 review request) aren't enquiries
+    if (plan.channel !== "call" && plan.scriptId !== "D-05" && plan.scriptId !== "D-06") enquiry(d, listingId, "message")
   }
   if (plan.channel === "call") run.callId = uid("call")
+  if (plan.scriptId === "D-06" && plan.completedJob) {
+    // The trigger: the owner has just marked this job Completed
+    const j = plan.completedJob
+    const svc = serviceById(d as DemoData, j.serviceId)
+    d.bookings.push({ id: j.id, listingId, customerId: plan.caller.customerId, customerName: plan.caller.name, customerPhone: plan.caller.phone, serviceId: j.serviceId, startAt: j.startAt, endAt: j.endAt, address: j.address, postcode: j.postcode, accessNotes: "", notes: "", photos: [], status: "completed", createdBy: "customer", policy: "Free to cancel until 24 hours before", priceText: deskPriceText(svc), createdAt: addDays(d.clock, -3) })
+    event(d, j.id, "completed", "owner")
+  }
   if (plan.scriptId === "D-05" && run.threadId && plan.quote) {
     const qid = uid("q")
     const total = plan.quote.pricePence
@@ -1414,7 +1435,7 @@ export const useStore = create<Store>()(
         runDeskScript: (scriptId, listingId, opts = {}) => {
           let runId = ""
           mut((d) => {
-            const run = startRun(d, scriptId, listingId, { caller: opts.caller, noBook: opts.noBook })
+            const run = startRun(d, scriptId, listingId, { caller: opts.caller, noBook: opts.noBook, emergency: opts.emergency, outsideArea: opts.outsideArea })
             if (run) runId = run.id
           })
           if (!runId) return ""
@@ -1812,6 +1833,12 @@ export const useStore = create<Store>()(
               event(d, b.id, "cancelled", "system", "Customer account deleted")
             }
             d.audit.unshift({ id: uid("au"), actorId: d.session.userId ?? "", action: "customer.delete", targetType: "customer", targetId: userId, reason, at: d.clock })
+          }),
+        // P6
+        setListingPublished: (businessId, published) =>
+          mut((d) => {
+            const l = d.listings.find((x) => x.businessId === businessId)
+            if (l) l.unpublished = !published
           }),
       }
     },

@@ -1,12 +1,12 @@
 "use client"
 import * as React from "react"
 import Link from "next/link"
-import { CheckCircle2, Circle, Clock, FastForward, Layers, PlayCircle, RotateCcw, Hash, Eye, CalendarPlus, Gauge, ArrowRight, Smartphone, Globe, LayoutDashboard, Shield } from "lucide-react"
+import { CheckCircle2, Circle, Clock, FastForward, Layers, PlayCircle, RotateCcw, Hash, Eye, CalendarPlus, Gauge, ArrowRight, Smartphone, Globe, LayoutDashboard, Shield, UserCheck } from "lucide-react"
 import { Logo } from "@/components/brand/Logo"
 import { useStore } from "@/lib/store"
 import { PERSONAS } from "@/lib/seed"
 import { SCREENS, SURFACES, BUILT, type Surface } from "@/lib/screens"
-import { DESK_SCRIPTS } from "@/lib/deskScripts"
+import { DESK_EMERGENCIES, DESK_SCRIPTS } from "@/lib/deskScripts"
 import { Button } from "@/components/answerd/Button"
 import { SegmentedControl } from "@/components/answerd/Status"
 import { ToggleRow } from "@/components/answerd/Fields"
@@ -224,7 +224,32 @@ export default function HubPage() {
               </button>
             ))}
           </div>
+          <div className="mt-2 flex flex-wrap items-center gap-2">
+            <span className="t-caption text-muted-ink">Variants:</span>
+            {DESK_EMERGENCIES.map((e) => (
+              <Button key={e.id} size="sm" variant="secondary" onClick={() => {
+                s.runDeskScript("D-09", SWIFT, { emergency: e.id })
+                toast(`D-09 running: ${e.label}`)
+              }}>
+                D-09 {e.label.toLowerCase()}
+              </Button>
+            ))}
+            <Button size="sm" variant="secondary" onClick={() => {
+              s.runDeskScript("D-01", SWIFT, { outsideArea: true })
+              toast("D-01 running: caller outside the service area")
+            }}>
+              D-01 outside the area
+            </Button>
+          </div>
           <div className="mt-3 flex flex-wrap gap-2">
+            <Button size="md" variant="secondary" onClick={() => {
+              const m = s.members.filter((x) => !x.joinedAt).at(-1)
+              if (!m) return toast("No pending staff invites. Invite someone in B-38 first.")
+              s.acceptInvite(m.id)
+              toast(`${m.name} accepted the invite`)
+            }}>
+              <UserCheck /> Accept pending staff invite
+            </Button>
             <Button size="md" variant="secondary" onClick={customerBooks}>
               <CalendarPlus /> Customer books Swift Plumbing
             </Button>
