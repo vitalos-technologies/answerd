@@ -33,9 +33,12 @@ export const TextArea = React.forwardRef<HTMLTextAreaElement, React.TextareaHTML
   return <textarea ref={ref} className={cn(inputCls, "h-auto min-h-24 py-3", className)} {...props} />
 })
 
-export function SelectInput({ className, children, ...props }: React.SelectHTMLAttributes<HTMLSelectElement>) {
+const CHEVRON = `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='20' height='20' fill='none' stroke='%230F2D5B' stroke-width='1.75'%3E%3Cpath d='m6 8 4 4 4-4'/%3E%3C/svg%3E")`
+
+export function SelectInput({ className, children, style, ...props }: React.SelectHTMLAttributes<HTMLSelectElement>) {
   return (
-    <select className={cn(inputCls, "appearance-none bg-[url('data:image/svg+xml;utf8,<svg xmlns=%22http://www.w3.org/2000/svg%22 width=%2220%22 height=%2220%22 fill=%22none%22 stroke=%22%230F2D5B%22 stroke-width=%221.75%22><path d=%22m6 8 4 4 4-4%22/></svg>')] bg-[right_12px_center] bg-no-repeat pr-10", className)} {...props}>
+    // The chevron is an inline style: as a Tailwind arbitrary class, cn() split the data URL apart
+    <select className={cn(inputCls, "appearance-none bg-[right_12px_center] bg-no-repeat pr-10", className)} style={{ backgroundImage: CHEVRON, ...style }} {...props}>
       {children}
     </select>
   )

@@ -39,16 +39,22 @@ export function BottomSheet({
   const panelRef = React.useRef<HTMLDivElement>(null)
   const titleId = React.useId()
 
+  // Latest onClose without re-running the open effect (which moves focus) whenever its identity changes
+  const closeRef = React.useRef(onClose)
+  React.useEffect(() => {
+    closeRef.current = onClose
+  })
+
   React.useEffect(() => {
     if (!open) return
-    const onKey = (e: KeyboardEvent) => e.key === "Escape" && onClose()
+    const onKey = (e: KeyboardEvent) => e.key === "Escape" && closeRef.current()
     window.addEventListener("keydown", onKey)
     const t = setTimeout(() => panelRef.current?.querySelector<HTMLElement>("button, a, input, textarea, select")?.focus(), 50)
     return () => {
       window.removeEventListener("keydown", onKey)
       clearTimeout(t)
     }
-  }, [open, onClose])
+  }, [open])
 
   if (!open) return null
   const inFrame = root?.id === "phone-overlay"
