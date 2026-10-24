@@ -2,7 +2,7 @@
 
 Every ID in `docs/answerd-spec.md`, generated from `lib/screens.ts` by `pnpm coverage`.
 
-**148 of 155 built.** Customer app: 48/48 · Business mode: 41/41 · Web: 20/27 · Admin console: 23/23 · AI desk behaviours: 10/10 · Ask Answerd: 6/6
+**155 of 155 built.** Customer app: 48/48 · Business mode: 41/41 · Web: 27/27 · Admin console: 23/23 · AI desk behaviours: 10/10 · Ask Answerd: 6/6
 
 ## Prototype-wide decisions
 
@@ -125,13 +125,13 @@ Every ID in `docs/answerd-spec.md`, generated from `lib/screens.ts` by `pnpm cov
 | W-10 | Pricing | `/pricing` | Built |  |
 | W-11 | Claim or add | `/claim` | Built | Guests sign in through W-12 first (with next=), which handles the new-account name step. |
 | W-12 | Sign in | `/sign-in` | Built |  |
-| W-13 | Dashboard: Overview | `/dashboard` | Missing |  |
-| W-14 | Dashboard: Inbox | `/dashboard/inbox` | Missing |  |
-| W-15 | Dashboard: Diary | `/dashboard/diary` | Missing |  |
-| W-16 | Dashboard: Profile | `/dashboard/profile` | Missing |  |
-| W-17 | Dashboard: AI desk | `/dashboard/desk` | Missing |  |
-| W-18 | Dashboard: Billing | `/dashboard/billing` | Missing |  |
-| W-19 | Dashboard: Team and settings | `/dashboard/team` | Missing |  |
+| W-13 | Dashboard: Overview | `/dashboard` | Built |  |
+| W-14 | Dashboard: Inbox | `/dashboard/inbox` | Built |  |
+| W-15 | Dashboard: Diary | `/dashboard/diary` | Built |  |
+| W-16 | Dashboard: Profile | `/dashboard/profile` | Built |  |
+| W-17 | Dashboard: AI desk | `/dashboard/desk` | Built |  |
+| W-18 | Dashboard: Billing | `/dashboard/billing` | Built |  |
+| W-19 | Dashboard: Team and settings | `/dashboard/team` | Built |  |
 | W-20 | Help centre | `/help` | Built |  |
 | W-21 | About | `/about` | Built |  |
 | W-22 | Legal | `/legal/[doc]` | Built |  |
