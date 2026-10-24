@@ -219,12 +219,12 @@ export function BookingRequestCard({ bookingId, onAccepted, onDeclined, classNam
 
 function Row({ icon: I, label, value }: { icon: typeof MapPin; label: string; value: string }) {
   return (
-    <div className="flex items-start gap-3 py-3">
-      <I className="mt-0.5 size-5 shrink-0 text-blue" aria-hidden />
-      <div className="min-w-0">
-        <dt className="t-caption text-muted-ink">{label}</dt>
-        <dd className="t-label text-navy">{value}</dd>
-      </div>
+    <div className="relative min-w-0 py-3 pl-8">
+      <dt className="t-caption text-muted-ink">
+        <I className="absolute left-0 top-3.5 size-5 text-blue" aria-hidden />
+        {label}
+      </dt>
+      <dd className="t-label text-navy">{value}</dd>
     </div>
   )
 }

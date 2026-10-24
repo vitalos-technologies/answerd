@@ -57,7 +57,8 @@ export default function HomePage() {
         <div className="flex items-center gap-2">
           <div className="min-w-0 flex-1">
             <p className="t-title">{user ? `${greeting(s.clock)}, ${user.firstName}` : "Find local help"}</p>
-            <Link href="/app/location?next=/app" className="mt-0.5 inline-flex min-h-8 items-center gap-1 t-label text-slate hover:text-navy" aria-label={`Location: ${loc ? loc.label : "not set"}. Change`}>
+            <Link href="/app/location?next=/app" className="mt-0.5 inline-flex min-h-8 items-center gap-1 t-label text-slate hover:text-navy">
+              <span className="sr-only">Location: </span>
               <MapPin className="size-4 text-blue" aria-hidden />
               {loc ? (
                 <span className="tnum">
@@ -67,6 +68,7 @@ export default function HomePage() {
                 "Set your location"
               )}
               <ChevronRight className="size-4 text-muted-ink" aria-hidden />
+              <span className="sr-only">, change</span>
             </Link>
           </div>
           <Link href={user ? "/app/notifications" : "/app/sign-in?next=%2Fapp%2Fnotifications"} className="relative inline-flex size-11 items-center justify-center rounded-full text-navy hover:bg-sky" aria-label={`Notifications${unread ? `, ${unread} unread` : ""}`}>

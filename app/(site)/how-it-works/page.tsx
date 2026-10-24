@@ -64,7 +64,7 @@ export default function Page() {
           </ul>
           <p className="mt-6 t-label font-normal text-slate">
             Read the{" "}
-            <Link href="/legal/reviews" className="text-blue hover:underline">
+            <Link href="/legal/reviews" className="text-blue underline underline-offset-2">
               review policy
             </Link>{" "}
             and the{" "}

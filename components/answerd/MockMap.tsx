@@ -219,7 +219,7 @@ export function MockMap({
               onClick={() => onSelect?.(p.id)}
               aria-label={p.label}
               aria-pressed={sel}
-              className={cn("pointer-events-auto absolute -translate-x-1/2 -translate-y-full transition-transform duration-150", sel && "z-10 scale-[1.35]")}
+              className={cn("pointer-events-auto absolute flex min-h-6 min-w-6 -translate-x-1/2 -translate-y-full items-center justify-center transition-transform duration-150", sel && "z-10 scale-[1.35]")}
               style={{ left, top }}
             >
               {p.desk ? (

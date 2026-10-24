@@ -43,7 +43,7 @@ function Gallery({ slug }: { slug: string }) {
       </div>
       {photos.length ? (
         <>
-          <div ref={ref} onScroll={(e) => setI(Math.round(e.currentTarget.scrollLeft / e.currentTarget.clientWidth))} className="no-scrollbar flex flex-1 snap-x snap-mandatory overflow-x-auto" aria-roledescription="carousel" aria-label={`${listing?.name} photos`}>
+          <div ref={ref} onScroll={(e) => setI(Math.round(e.currentTarget.scrollLeft / e.currentTarget.clientWidth))} className="no-scrollbar flex flex-1 snap-x snap-mandatory overflow-x-auto" aria-roledescription="carousel" aria-label={`${listing?.name} photos`} tabIndex={0}>
             {photos.map((p, k) => (
               <figure key={p.id} className="flex w-full shrink-0 snap-center flex-col items-center justify-center px-3" aria-roledescription="slide" aria-label={`${k + 1} of ${photos.length}`}>
                 <PhotoTile hue={p.hue} icon={p.icon} className="aspect-[4/3] w-full" label={p.caption} rounded="rounded-2xl" />

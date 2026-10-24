@@ -58,7 +58,7 @@ export default function Page() {
             </ul>
             <p className="mt-3 t-label font-normal text-slate">
               Press or partnerships? Use the{" "}
-              <Link href="/help#contact" className="text-blue hover:underline">
+              <Link href="/help#contact" className="text-blue underline underline-offset-2">
                 contact form
               </Link>
               .

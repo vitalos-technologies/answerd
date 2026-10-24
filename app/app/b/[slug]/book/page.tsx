@@ -55,7 +55,7 @@ export default function BookService({ params }: { params: Promise<{ slug: string
             {services.map((x) => {
               const on = sel === x.id
               return (
-                <li key={x.id}>
+                <li key={x.id} role="none">
                   <button
                     type="button"
                     role="radio"

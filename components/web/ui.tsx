@@ -106,7 +106,7 @@ export function PillLink({ href, children, variant = "primary", className, ...re
 export function StoreBadges({ className }: { className?: string }) {
   return (
     <div className={cn("flex flex-wrap gap-3", className)}>
-      <Link href="/app" aria-label="Download on the App Store (opens the prototype app)" className="inline-flex h-12 items-center gap-2.5 rounded-xl bg-black px-4 text-white hover:bg-black/85">
+      <Link href="/app" className="inline-flex h-12 items-center gap-2.5 rounded-xl bg-black px-4 text-white hover:bg-black/85">
         <svg viewBox="0 0 24 24" className="size-6" aria-hidden fill="currentColor">
           <path d="M16.37 12.6c-.02-2.2 1.8-3.26 1.88-3.31-1.03-1.5-2.62-1.7-3.18-1.73-1.35-.14-2.64.8-3.33.8-.69 0-1.74-.78-2.86-.76a4.24 4.24 0 0 0-3.58 2.18c-1.53 2.65-.39 6.57 1.1 8.72.73 1.05 1.59 2.23 2.72 2.19 1.1-.05 1.51-.71 2.83-.71 1.32 0 1.69.71 2.85.69 1.18-.02 1.92-1.07 2.64-2.12a9.4 9.4 0 0 0 1.2-2.46 3.8 3.8 0 0 1-2.27-3.49zM14.2 6.13A3.85 3.85 0 0 0 15.1 3.4a3.94 3.94 0 0 0-2.56 1.32 3.67 3.67 0 0 0-.92 2.65 3.25 3.25 0 0 0 2.58-1.24z" />
         </svg>
@@ -114,8 +114,9 @@ export function StoreBadges({ className }: { className?: string }) {
           <span className="text-[10px]">Download on the</span>
           <span className="text-[17px] font-semibold">App Store</span>
         </span>
+        <span className="sr-only"> (opens the prototype app)</span>
       </Link>
-      <Link href="/app" aria-label="Get it on Google Play (opens the prototype app)" className="inline-flex h-12 items-center gap-2.5 rounded-xl bg-black px-4 text-white hover:bg-black/85">
+      <Link href="/app" className="inline-flex h-12 items-center gap-2.5 rounded-xl bg-black px-4 text-white hover:bg-black/85">
         <svg viewBox="0 0 24 24" className="size-6" aria-hidden>
           <path fill="#34A853" d="M3.6 2.2 13.4 12l-9.8 9.8a1.6 1.6 0 0 1-.6-1.3V3.5c0-.5.2-1 .6-1.3z" />
           <path fill="#FBBC05" d="m16.7 15.3-3.3-3.3 3.3-3.3 3.7 2.1c1 .6 1 1.9 0 2.4z" />
@@ -126,6 +127,7 @@ export function StoreBadges({ className }: { className?: string }) {
           <span className="text-[10px] uppercase">Get it on</span>
           <span className="text-[17px] font-semibold">Google Play</span>
         </span>
+        <span className="sr-only"> (opens the prototype app)</span>
       </Link>
     </div>
   )

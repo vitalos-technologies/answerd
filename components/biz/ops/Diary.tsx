@@ -154,7 +154,6 @@ function JobBlock({ b, style, compact }: { b: Booking; style: React.CSSPropertie
     <Link
       href={href}
       style={style}
-      aria-label={`${svc}, ${b.customerName}, ${fmtTime(b.startAt)}, ${STATUS_LABEL[b.status]}`}
       className={cn("absolute z-10 overflow-hidden rounded-lg border-l-[3px] px-1.5 py-1 text-navy shadow-card hover:ring-2 hover:ring-blue", JOB_TONE[b.status])}
     >
       {compact ? (
@@ -162,6 +161,7 @@ function JobBlock({ b, style, compact }: { b: Booking; style: React.CSSPropertie
           <span className="block truncate text-[10px] font-semibold leading-3 tnum">{fmtTime(b.startAt)}</span>
           <span className="block truncate text-[10px] leading-3">{svc}</span>
           <span className="block truncate text-[10px] leading-3 text-slate">{STATUS_LABEL[b.status]}</span>
+          <span className="sr-only">, {b.customerName}</span>
         </>
       ) : (
         <>
@@ -202,6 +202,9 @@ function DayGrid({ listingId, businessId, staffUserId, day, canAdd }: { listingI
           {canAdd &&
             [0, 30].map((m) => {
               const at = atMinutes(day, h * 60 + m)
+              const from = h * 60 + m
+              const busy = jobs.some((b) => minutesOfDay(b.startAt) < from + 30 && from < (minutesOfDay(b.endAt) || 24 * 60)) || blocks.some((b) => b.start < from + 30 && from < b.end)
+              if (busy) return null
               return (
                 <Link
                   key={m}
@@ -230,7 +233,7 @@ function DayGrid({ listingId, businessId, staffUserId, day, canAdd }: { listingI
         return <JobBlock key={b.id} b={b} style={{ top: top + 1, height: h, left: `calc(56px + (100% - 60px) * ${l.lane / l.of})`, width: `calc((100% - 60px) / ${l.of} - 2px)` }} />
       })}
       {nowMin !== null && nowMin >= START_H * 60 && nowMin <= END_H * 60 && (
-        <div className="pointer-events-none absolute left-12 right-0 z-20 flex items-center" style={{ top: y(nowMin) - 4 }} aria-label={`Now, ${fmtTime(s.clock)}`}>
+        <div className="pointer-events-none absolute left-12 right-0 z-20 flex items-center" style={{ top: y(nowMin) - 4 }} role="img" aria-label={`Now, ${fmtTime(s.clock)}`}>
           <span className="size-2.5 rounded-full bg-red" />
           <span className="h-0.5 flex-1 bg-red" />
         </div>

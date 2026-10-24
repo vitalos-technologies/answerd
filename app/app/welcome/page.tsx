@@ -96,6 +96,7 @@ export default function WelcomePage() {
           className="no-scrollbar flex flex-1 snap-x snap-mandatory overflow-x-auto"
           aria-roledescription="carousel"
           aria-label="Welcome to Answerd"
+          tabIndex={0}
         >
           {SLIDES.map((s, k) => (
             <section key={k} className="flex w-full shrink-0 snap-center flex-col justify-center px-6" aria-roledescription="slide" aria-label={`${k + 1} of 3`}>

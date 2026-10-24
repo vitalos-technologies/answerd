@@ -185,12 +185,12 @@ export default function BookingDetail({ params }: { params: Promise<{ id: string
 
 function Detail({ icon: I, label, value }: { icon: typeof MapPin; label: string; value: string }) {
   return (
-    <div className="flex items-start gap-3 p-4">
-      <I className="mt-0.5 size-5 shrink-0 text-blue" aria-hidden />
-      <div>
-        <dt className="t-caption text-muted-ink">{label}</dt>
-        <dd className="t-label text-navy">{value}</dd>
-      </div>
+    <div className="relative py-4 pl-12 pr-4">
+      <dt className="t-caption text-muted-ink">
+        <I className="absolute left-4 top-4.5 size-5 text-blue" aria-hidden />
+        {label}
+      </dt>
+      <dd className="t-label text-navy">{value}</dd>
     </div>
   )
 }

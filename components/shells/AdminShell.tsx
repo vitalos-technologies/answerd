@@ -63,7 +63,7 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
   return (
     <div className="flex min-h-dvh bg-white">
       <aside className="sticky top-0 flex h-dvh w-[232px] shrink-0 flex-col bg-navy text-white">
-        <Link href="/admin" className="flex h-16 items-center gap-2 px-5" aria-label="Admin overview">
+        <Link href="/admin" className="flex h-16 items-center gap-2 px-5" aria-label="Answerd admin overview">
           <Logo variant="reversed" layout="horizontal" size={26} />
         </Link>
         <nav className="flex-1 overflow-y-auto px-2 pb-4" aria-label="Admin">

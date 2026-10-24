@@ -214,11 +214,11 @@ function SignInInner() {
           </div>
           <p className="mt-6 text-center t-caption text-muted-ink">
             By continuing you agree to our{" "}
-            <Link href="/legal/terms" className="text-blue hover:underline">
+            <Link href="/legal/terms" className="text-blue underline underline-offset-2">
               terms
             </Link>{" "}
             and{" "}
-            <Link href="/legal/privacy" className="text-blue hover:underline">
+            <Link href="/legal/privacy" className="text-blue underline underline-offset-2">
               privacy notice
             </Link>
             .

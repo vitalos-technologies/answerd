@@ -12,7 +12,7 @@ export default function SiteError({ reset }: { error: Error & { digest?: string 
         <ErrorState title="Something went wrong" body="That page didn't load. It's not you; try again in a moment." onRetry={reset} />
         <p className="pb-6 text-center t-label font-normal text-slate">
           Still stuck?{" "}
-          <Link href="/help#contact" className="text-blue hover:underline">
+          <Link href="/help#contact" className="text-blue underline underline-offset-2">
             Contact us
           </Link>
         </p>

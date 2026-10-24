@@ -196,7 +196,7 @@ export function ReviewFromLink({ token }: { token: string }) {
         </div>
         <p className="t-caption text-muted-ink">
           Posted publicly as <span className="font-semibold text-navy">{booking.customerName}</span>. Reviews follow our{" "}
-          <Link href="/legal/reviews" className="text-blue hover:underline">
+          <Link href="/legal/reviews" className="text-blue underline underline-offset-2">
             review policy
           </Link>
           .

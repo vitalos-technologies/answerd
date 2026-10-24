@@ -18,13 +18,17 @@
   --color-sky: #f1f5f9;
   --color-white: #ffffff;
   --color-slate: #475569;
-  --color-muted-ink: #64748b;
+  /* Darkened from #64748b so muted text passes 4.5:1 on sky and tints too */
+  --color-muted-ink: #5b6b80;
   --color-line: #e2e8f0;
   --color-amber: #f59e0b;
   --color-amber-ink: #b45309;
   --color-amber-tint: #fef3c7;
   --color-red: #dc2626;
   --color-red-tint: #fee2e2;
+  /* Text-only shades: brand blue and red stay as fills; as text they're a touch deeper so they pass 4.5:1 on sky and tints */
+  --text-color-blue: #1f5cf0;
+  --text-color-red: #c81e1e;
   --color-park: #d9f2e1;
   --color-river: #cfe3fa;
 
