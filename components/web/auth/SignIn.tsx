@@ -4,7 +4,7 @@ import Link from "next/link"
 import { useRouter, useSearchParams } from "next/navigation"
 import { ArrowLeft, Mail, MailCheck, Smartphone } from "lucide-react"
 import { ScreenMeta } from "@/components/shells/ScreenMeta"
-import { Button } from "@/components/answerd/Button"
+import { Button, ButtonLink } from "@/components/answerd/Button"
 import { Banner } from "@/components/answerd/Feedback"
 import { Field, TextInput, CheckRow } from "@/components/answerd/Fields"
 import { OTPInput, ResendTimer } from "@/components/answerd/OTPInput"
@@ -138,6 +138,23 @@ function SignInInner() {
 
   if (s.hydrated && s.session.userId && step === "start") {
     const u = s.users.find((x) => x.id === s.session.userId)
+    // Sent here by the business dashboard (W-13 to W-19) while signed in as a customer only
+    if (reason === "business" && !membershipsFor(s, s.session.userId).length)
+      return (
+        <Card>
+          <h1 className="t-title">No business on this account</h1>
+          <p className="mt-2 t-body text-slate">{u ? `${u.firstName} ${u.lastName} is` : "You're"} signed in as a customer. The dashboard is for business owners and their team.</p>
+          <div className="mt-6 grid gap-2">
+            <Button onClick={() => s.signOut()}>Sign in with a business account</Button>
+            <ButtonLink href="/claim" variant="secondary">
+              List or claim your business
+            </ButtonLink>
+            <ButtonLink href="/account" variant="ghost">
+              Go to your account
+            </ButtonLink>
+          </div>
+        </Card>
+      )
     return (
       <Card>
         <h1 className="t-title">You&apos;re signed in</h1>

@@ -1,5 +1,15 @@
-import { Placeholder } from "@/components/shells/Placeholder"
+"use client"
+import { withSuspense } from "@/components/app/helpers"
+import { DashPage } from "@/components/dashboard/kit"
+import { InboxPanes } from "@/components/dashboard/InboxPanes"
 
-export default function Page() {
-  return <Placeholder id="W-14" surface="dashboard" />
+/** W-14 Dashboard inbox: filters, thread list and conversation side by side. */
+function InboxPage() {
+  return (
+    <DashPage id="W-14" title="Inbox" className="max-w-none" headerSrOnlyFromLg>
+      {({ listing }) => <InboxPanes listingId={listing.id} />}
+    </DashPage>
+  )
 }
+
+export default withSuspense(InboxPage)

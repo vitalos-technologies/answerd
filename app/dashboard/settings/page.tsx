@@ -1,5 +1,7 @@
-import { Placeholder } from "@/components/shells/Placeholder"
+"use client"
+import { TeamSettings } from "@/components/dashboard/TeamSettings"
 
-export default function Page() {
-  return <Placeholder id="W-19" surface="dashboard" />
+/** W-19 Dashboard settings: the Business settings tab (B-40). */
+export default function SettingsPage() {
+  return <TeamSettings tab="settings" />
 }
