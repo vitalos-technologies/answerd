@@ -233,6 +233,9 @@ export const BUILT = new Set<string>([
   // P6
   ...Array.from({ length: 12 }, (_, i) => `B-${i + 30}`),
   ...Array.from({ length: 10 }, (_, i) => `D-${String(i + 1).padStart(2, "0")}`),
+  // P7
+  ...Array.from({ length: 12 }, (_, i) => `W-${String(i + 1).padStart(2, "0")}`),
+  ...Array.from({ length: 8 }, (_, i) => `W-${i + 20}`),
   // P9
   ...Array.from({ length: 23 }, (_, i) => `A-${String(i + 1).padStart(2, "0")}`),
 ])
