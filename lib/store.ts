@@ -35,6 +35,7 @@ import { uid } from "./prng"
 import { addDays, addHours, addMinutes, fmtDate, fmtDateTime, fmtRelDay, fmtTime, ms, dayKey, MS_HOUR, MS_DAY } from "./time"
 import { search as runSearch, type SearchFilters } from "./search"
 import {
+  alternativesFor,
   availabilityFor,
   businessById,
   gateStatus,
@@ -202,6 +203,10 @@ export interface Actions {
   triggerMonetiseGate: (businessId?: string) => void
   setCookieConsent: (c: { analytics: boolean; marketing: boolean } | null) => void
   resetDemo: () => void
+  // P5
+  setThreadNotes: (threadId: string, notes: string) => void
+  ensureThread: (listingId: string, customer: { customerId: string | null; name: string; phone?: string }) => string
+  assignBooking: (bookingId: string, userId: string | null) => void
 }
 
 export type Store = Data & Actions
@@ -318,13 +323,8 @@ function deskPriceText(svc?: Service) {
 }
 
 function similarFree(d: D, listingId: string, startAt: string, n = 3) {
-  const l = d.listings.find((x) => x.id === listingId)
-  if (!l) return []
-  return d.listings
-    .filter((x) => x.id !== listingId && x.businessId && x.city === l.city && x.categoryIds.some((c) => l.categoryIds.includes(c)))
-    .filter((x) => nextSlots(d as DemoData, x, servicesFor(d as DemoData, x.businessId).find((s) => s.bookable), 1, addHours(startAt, -2)).length)
-    .slice(0, n)
-    .map((x) => x.name)
+  // P5: same ranking as C-30 shows, so the "3 others" in the notification are the 3 on screen
+  return alternativesFor(d as DemoData, listingId, startAt, n).map((x) => x.name)
 }
 
 function finaliseClaim(d: D, claim: Claim, pending: boolean) {
@@ -941,8 +941,9 @@ export const useStore = create<Store>()(
             } else if (action === "suggest" && opts.startAt) {
               event(d, b.id, "time_proposed", "owner", fmtDateTime(opts.startAt))
               b.changeRequest = { startAt: opts.startAt, reason: "proposed_by_business", at: d.clock }
+              b.requestExpiresAt = undefined
               const t = threadFor(d, b.listingId, b.customerId, b.customerName)
-              pushMessage(d, t.id, "owner", `I can't do ${fmtDateTime(b.startAt)}. How about this instead?`, { card: { kind: "slot", slots: [opts.startAt], serviceId: b.serviceId }, authorName: currentUser(d) ? `${currentUser(d)!.firstName} ${currentUser(d)!.lastName}` : undefined })
+              pushMessage(d, t.id, "owner", `I can't do ${fmtDateTime(b.startAt)}. How about this instead?`, { card: { kind: "slot", slots: [opts.startAt], serviceId: b.serviceId, bookingId: b.id }, authorName: currentUser(d) ? `${currentUser(d)!.firstName} ${currentUser(d)!.lastName}` : undefined })
               if (b.customerId) notify(d, { userId: b.customerId, event: "time_proposed", mode: "customer", title: lname, body: `${lname} suggested ${fmtDate(opts.startAt).split(" ")[0]} ${fmtTime(opts.startAt)} instead`, href: `/app/messages/${t.id}` })
             }
           }),
@@ -1684,6 +1685,31 @@ export const useStore = create<Store>()(
           set((s) => ({ ...s, ...createSeed(), ...initialUi, hydrated: true, builtIds: s.builtIds }))
           toast("Demo data reset")
         },
+        // P5
+        setThreadNotes: (threadId, notes) =>
+          mut((d) => {
+            const t = d.threads.find((x) => x.id === threadId)
+            if (t) t.notes = notes
+          }),
+        /** Business-side: the app thread with a customer (from a call or a booking), created if missing. */
+        ensureThread: (listingId, customer) => {
+          const s = get()
+          const existing = s.threads.find((t) => t.listingId === listingId && t.channel === "app" && ((customer.customerId && t.customerId === customer.customerId) || (!customer.customerId && t.customerId === null && t.customerName === customer.name)))
+          if (existing) return existing.id
+          const id = uid("t")
+          mut((d) => {
+            d.threads.unshift({ id, listingId, customerId: customer.customerId, customerName: customer.name, customerPhone: customer.phone, channel: "app", status: "open", deskActive: false, createdAt: d.clock, updatedAt: d.clock, unreadCustomer: 0, unreadBusiness: 0 })
+          })
+          return id
+        },
+        assignBooking: (bookingId, userId) =>
+          mut((d) => {
+            const b = d.bookings.find((x) => x.id === bookingId)
+            if (!b) return
+            b.assignedTo = userId ?? undefined
+            const l = d.listings.find((x) => x.id === b.listingId)
+            if (userId && userId !== d.session.userId) notify(d, { userId, event: "job_assigned", mode: "business", businessId: l?.businessId, title: "New job for you", body: `${serviceById(d as DemoData, b.serviceId)?.name ?? "A job"} for ${b.customerName}, ${fmtDate(b.startAt)}, ${fmtTime(b.startAt)}`, href: `/app/biz/jobs/${b.id}` })
+          }),
       }
     },
     {
@@ -1729,7 +1755,7 @@ function tick(d: D) {
       event(d, b.id, "expired", "system")
       const lname = listingName(d, b.listingId)
       const others = similarFree(d, b.listingId, b.startAt)
-      if (b.customerId) notify(d, { userId: b.customerId, event: "booking_expired", mode: "customer", title: `${lname} can't make it`, body: `${lname} can't make it. Here are ${Math.max(3, others.length)} others free that day.`, href: bookingCustomerHref(b.id), channels: ["push", "sms"] })
+      if (b.customerId) notify(d, { userId: b.customerId, event: "booking_expired", mode: "customer", title: `${lname} can't make it`, body: `${lname} can't make it. Here are ${others.length || 3} others free that day.`, href: bookingCustomerHref(b.id), channels: ["push", "sms"] })
     }
   }
   // D-05 quote follow-ups at 2 and 7 days

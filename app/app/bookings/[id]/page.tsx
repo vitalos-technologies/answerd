@@ -11,7 +11,7 @@ import { ListingAvatar } from "@/components/answerd/Media"
 import { MockMap } from "@/components/answerd/MockMap"
 import { StatusPill } from "@/components/answerd/Status"
 import { useStore } from "@/lib/store"
-import { bookingTitle, nextSlots, servicesFor } from "@/lib/selectors"
+import { alternativesFor, bookingTitle } from "@/lib/selectors"
 import { lookupPostcode } from "@/lib/geo"
 import { fmtDateLong, fmtDateTime, fmtTime, ms, MS_HOUR } from "@/lib/time"
 import { toast } from "@/lib/toast"
@@ -58,12 +58,7 @@ export default function BookingDetail({ params }: { params: Promise<{ id: string
   const canReview = b.status === "completed" && !b.reviewId
   const proposal = b.changeRequest?.reason === "proposed_by_business" ? b.changeRequest : null
   const myChange = b.changeRequest && !proposal ? b.changeRequest : null
-  const similar = b.status === "declined"
-    ? s.listings
-        .filter((x) => x.id !== l.id && x.layer === "claimed" && x.categoryIds.some((c) => l.categoryIds.includes(c)) && x.city === l.city)
-        .filter((x) => nextSlots(s, x, servicesFor(s, x.businessId).find((v) => v.bookable), 1).length)
-        .slice(0, 3)
-    : []
+  const similar = b.status === "declined" ? alternativesFor(s, l.id, b.startAt) : []
   const noShowRecent = b.status === "no_show" && ms(s.clock) - ms(events.find((e) => e.type === "no_show")?.at ?? b.startAt) < 48 * MS_HOUR
 
   return (
