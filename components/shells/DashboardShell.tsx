@@ -5,7 +5,7 @@ import { usePathname } from "next/navigation"
 import { BarChart3, Bot, CalendarDays, CreditCard, Inbox, LayoutDashboard, Settings, Star, Store, Users, ChevronDown, ExternalLink } from "lucide-react"
 import { Logo } from "@/components/brand/Logo"
 import { useStore, useCurrentBusiness, useCurrentUser } from "@/lib/store"
-import { membershipsFor } from "@/lib/selectors"
+import { membershipsFor, roleIn } from "@/lib/selectors"
 import { PersonAvatar } from "@/components/answerd/Media"
 import { cn } from "@/lib/utils"
 import { OfflineBanner, Toaster } from "@/components/answerd/Feedback"
@@ -35,6 +35,9 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
   const offline = useStore((x) => x.offline)
   const listing = s.listings.find((l) => l.id === biz?.listingId)
   const mems = membershipsFor(s, s.session.userId)
+  // Staff see what the app lets staff see: Overview (Today), Inbox and Diary
+  const staff = roleIn(s, s.session.userId, biz?.id ?? null) === "staff"
+  const nav = staff ? NAV.filter((n) => ["/dashboard", "/dashboard/inbox", "/dashboard/diary"].includes(n.href)) : NAV
   const isActive = (href: string) => (href === "/dashboard" ? pathname === href : pathname.startsWith(href))
 
   return (
@@ -44,7 +47,7 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
           <Logo size={28} />
         </Link>
         <nav className="flex-1 space-y-0.5 px-3 py-2" aria-label="Dashboard">
-          {NAV.map((n) => (
+          {nav.map((n) => (
             <Link
               key={n.href}
               href={n.href}
@@ -94,7 +97,7 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end">
                 <DropdownMenuLabel>{user ? `${user.firstName} ${user.lastName}` : "Not signed in"}</DropdownMenuLabel>
-                <DropdownMenuItem onSelect={() => router.push("/dashboard/settings")}>Settings</DropdownMenuItem>
+                {!staff && <DropdownMenuItem onSelect={() => router.push("/dashboard/settings")}>Settings</DropdownMenuItem>}
                 <DropdownMenuItem
                   onSelect={() => {
                     s.signOut()
@@ -108,8 +111,8 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
           </div>
         </header>
         <nav className="flex gap-1 overflow-x-auto border-b border-line bg-white px-4 py-2 lg:hidden" aria-label="Dashboard sections">
-          {NAV.map((n) => (
-            <Link key={n.href} href={n.href} className={cn("inline-flex h-9 shrink-0 items-center rounded-full px-3 t-label", isActive(n.href) ? "bg-blue-tint text-blue" : "text-slate")}>
+          {nav.map((n) => (
+            <Link key={n.href} href={n.href} aria-current={isActive(n.href) ? "page" : undefined} className={cn("inline-flex h-11 shrink-0 items-center rounded-full px-3 t-label", isActive(n.href) ? "bg-blue-tint text-blue" : "text-slate")}>
               {n.label}
             </Link>
           ))}

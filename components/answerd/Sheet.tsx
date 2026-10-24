@@ -14,6 +14,15 @@ function useOverlayRoot() {
   )
 }
 
+/**
+ * Where BottomSheets sit outside the phone frame. "sheet" (default) docks them to the bottom;
+ * "dialog" centres them as a rounded dialog from 640 px up (the web dashboard uses this).
+ */
+const SheetLayoutContext = React.createContext<"sheet" | "dialog">("sheet")
+export function SheetLayoutProvider({ value, children }: { value: "sheet" | "dialog"; children: React.ReactNode }) {
+  return <SheetLayoutContext.Provider value={value}>{children}</SheetLayoutContext.Provider>
+}
+
 /** White, 24 top radius, grabber, title row with close. */
 export function BottomSheet({
   open,
@@ -36,6 +45,7 @@ export function BottomSheet({
   labelledBy?: string
 }) {
   const root = useOverlayRoot()
+  const layout = React.useContext(SheetLayoutContext)
   const panelRef = React.useRef<HTMLDivElement>(null)
   const titleId = React.useId()
 
@@ -58,8 +68,9 @@ export function BottomSheet({
 
   if (!open) return null
   const inFrame = root?.id === "phone-overlay"
+  const asDialog = layout === "dialog" && !inline && !inFrame
   const sheet = (
-    <div className={cn(inline ? "relative" : "absolute inset-0 z-50 flex flex-col justify-end", !inline && !inFrame && "fixed")}>
+    <div className={cn(inline ? "relative" : "absolute inset-0 z-50 flex flex-col justify-end", !inline && !inFrame && "fixed", asDialog && "sm:justify-center sm:p-6")}>
       {!inline && <button type="button" aria-label="Close" tabIndex={-1} className="absolute inset-0 bg-navy/40 animate-fade-in" onClick={onClose} />}
       <div
         ref={panelRef}
@@ -70,10 +81,11 @@ export function BottomSheet({
           "relative mx-auto flex max-h-[88%] w-full max-w-[520px] flex-col rounded-t-3xl bg-white shadow-overlay",
           !inline && "animate-sheet-up",
           inline && "max-h-none border border-line",
+          asDialog && "sm:max-h-[85vh] sm:rounded-3xl",
           className,
         )}
       >
-        <div className="flex justify-center pt-2.5" aria-hidden>
+        <div className={cn("flex justify-center pt-2.5", asDialog && "sm:invisible sm:pt-1")} aria-hidden>
           <span className="h-1 w-10 rounded-full bg-line" />
         </div>
         {title !== undefined && (

@@ -50,7 +50,7 @@ const PLANS = [
  * B-36 plan and billing: current plan, monetise-gate progress, plans with Upgrade / Get Featured (gated),
  * payment method and invoices. Cancel needs an SMS code. Reused by W-18.
  */
-export function PlanBilling({ businessId, checkoutHref = CHECKOUT_HREF, manageHref = "/dashboard/billing", portalHref = "/dashboard/billing/portal", readOnly }: { businessId: string; checkoutHref?: (plan: "desk" | "featured") => string; manageHref?: string; portalHref?: string; readOnly?: boolean }) {
+export function PlanBilling({ businessId, checkoutHref = CHECKOUT_HREF, manageHref = "/dashboard/billing", portalHref = "/dashboard/billing/portal", readOnly, wide, manageLabel = "Manage on web" }: { businessId: string; checkoutHref?: (plan: "desk" | "featured") => string; manageHref?: string; portalHref?: string; readOnly?: boolean; /** Desktop layout (W-18): plan cards and sections side by side from 768 px. */ wide?: boolean; manageLabel?: string }) {
   const s = useStore()
   const g = gateStatus(s, businessId)
   const desk = deskFor(s, businessId)
@@ -76,6 +76,7 @@ export function PlanBilling({ businessId, checkoutHref = CHECKOUT_HREF, manageHr
           We couldn&apos;t take this month&apos;s payment. Update your card to keep your desk.
         </Banner>
       )}
+      <div className={wide ? "grid items-start gap-4 md:grid-cols-2" : "space-y-4"}>
       <div className="card p-4">
         <p className="t-caption text-muted-ink">Current plan</p>
         <ul className="mt-1 space-y-2">
@@ -94,11 +95,13 @@ export function PlanBilling({ businessId, checkoutHref = CHECKOUT_HREF, manageHr
       </div>
 
       <GateProgress businessId={businessId} />
+      </div>
 
       <section aria-labelledby="plans-h" className="space-y-2">
         <h2 id="plans-h" className="t-heading">
           Plans
         </h2>
+        <div className={wide ? "grid gap-4 md:grid-cols-2" : "space-y-2"}>
         {PLANS.map((p) => {
           const sub = p.plan === "desk" ? deskSub : featSub
           const active = sub?.status === "active" || sub?.status === "past_due"
@@ -145,8 +148,10 @@ export function PlanBilling({ businessId, checkoutHref = CHECKOUT_HREF, manageHr
             </div>
           )
         })}
+        </div>
       </section>
 
+      <div className={wide ? "grid items-start gap-4 md:grid-cols-2" : "space-y-4"}>
       <section aria-labelledby="pm-h">
         <h2 id="pm-h" className="mb-2 t-heading">
           Payment method
@@ -168,7 +173,7 @@ export function PlanBilling({ businessId, checkoutHref = CHECKOUT_HREF, manageHr
           </div>
           {!readOnly && (
             <Link href={manageHref} className="inline-flex min-h-11 items-center gap-1 rounded-full px-2 t-label text-blue hover:underline">
-              Manage on web <ExternalLink className="size-4" aria-hidden />
+              {manageLabel} <ExternalLink className="size-4" aria-hidden />
             </Link>
           )}
         </div>
@@ -198,6 +203,7 @@ export function PlanBilling({ businessId, checkoutHref = CHECKOUT_HREF, manageHr
           </ul>
         </DataGate>
       </section>
+      </div>
 
       <SmsConfirmSheet
         open={!!cancel}
