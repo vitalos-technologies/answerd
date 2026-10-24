@@ -867,7 +867,7 @@ export function createSeed(): DemoData {
     .filter((u) => !u.staffRole)
     .map((u) => ({
       userId: u.id,
-      savedPlaces: u.id === "u-tayo" ? [{ id: "sp-home", label: "Home", postcode: "SE25 4AA", area: "South Norwood" }, { id: "sp-work", label: "Work", postcode: "EC2A 4BX", area: "Shoreditch" }] : [],
+      savedPlaces: u.id === "u-tayo" ? [{ id: "sp-home", label: "Home", line1: "12 Elm Rd", postcode: "SE25 4AA", area: "South Norwood" }, { id: "sp-work", label: "Work", line1: "40 Paul Street", postcode: "EC2A 4BX", area: "Shoreditch" }] : [],
       savedListingIds: u.id === "u-tayo" ? [lid("swift-plumbing-heating"), lid("sparkle-clean-co"), lid("fade-lab-barbers")] : [],
       referralCode: u.id === "u-tayo" ? "TAYO-7K2" : `${u.firstName.toUpperCase().slice(0, 4)}-${u.id.slice(-3).toUpperCase()}`,
       recentSearches: u.id === "u-tayo" ? ["boiler service", "end of tenancy clean", "skin fade"] : [],

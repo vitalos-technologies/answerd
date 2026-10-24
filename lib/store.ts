@@ -45,7 +45,7 @@ import {
   serviceById,
   servicesFor,
 } from "./selectors"
-import { buildScript, deskReply as computeDeskReply, ownerUserIds, stepsToTranscript, type ScriptId, type ScriptPlan, type ScriptStep } from "./deskScripts"
+import { buildScript, deskReply as computeDeskReply, ownerUserIds, stepsToTranscript, type ScriptId, type ScriptOptions, type ScriptPlan, type ScriptStep } from "./deskScripts"
 import { initials, slugify, gbp, priceWithVat } from "./format"
 import { DISTRICTS, lookupPostcode } from "./geo"
 import { toast } from "./toast"
@@ -64,6 +64,7 @@ export interface DeskRunState {
   callId?: string
   bookingId?: string
   startedAt: string
+  afterCall?: "booked" | "not_booked" | "no_answer"
 }
 
 interface UiState {
@@ -173,7 +174,8 @@ export interface Actions {
   updateDeskConfig: (businessId: string, patch: Partial<DeskConfig>) => void
   upsertQna: (businessId: string, qna: QnA) => void
   deleteQna: (businessId: string, id: string) => void
-  runDeskScript: (scriptId: ScriptId, listingId: string, opts?: { instant?: boolean; stepMs?: number }) => string
+  runDeskScript: (scriptId: ScriptId, listingId: string, opts?: { instant?: boolean; stepMs?: number } & ScriptOptions) => string
+  setAfterCall: (callId: string, answer: "booked" | "not_booked" | "no_answer") => void
   finishRuns: () => void
   // billing and team
   startSubscription: (businessId: string, plan: "desk" | "featured") => void
@@ -512,6 +514,7 @@ function completeRun(d: D, run: Draft<DeskRunState>) {
       threadId: run.threadId,
       spam: plan.spam,
       scriptId: plan.scriptId,
+      afterCall: run.afterCall,
     })
     if (!plan.spam) enquiry(d, listing.id, "call")
     if (run.threadId) {
@@ -558,10 +561,10 @@ function completeRun(d: D, run: Draft<DeskRunState>) {
   run.cursor = run.steps.length
 }
 
-function startRun(d: D, scriptId: ScriptId, listingId: string): Draft<DeskRunState> | null {
+function startRun(d: D, scriptId: ScriptId, listingId: string, opts: ScriptOptions = {}): Draft<DeskRunState> | null {
   const listing = d.listings.find((l) => l.id === listingId)
   if (!listing) return null
-  const built = buildScript(d as DemoData, scriptId, listing as Listing, d.runs.length)
+  const built = buildScript(d as DemoData, scriptId, listing as Listing, d.runs.length, opts)
   const run: DeskRunState = { id: uid("run"), scriptId, listingId, plan: built.plan, steps: built.steps, cursor: 0, done: false, startedAt: d.clock }
   const plan = built.plan
   if (plan.channel === "sms" || plan.channel === "app" || (plan.channel === "call" && !plan.spam)) {
@@ -1399,7 +1402,7 @@ export const useStore = create<Store>()(
         runDeskScript: (scriptId, listingId, opts = {}) => {
           let runId = ""
           mut((d) => {
-            const run = startRun(d, scriptId, listingId)
+            const run = startRun(d, scriptId, listingId, { caller: opts.caller, noBook: opts.noBook })
             if (run) runId = run.id
           })
           if (!runId) return ""
@@ -1430,6 +1433,14 @@ export const useStore = create<Store>()(
           timers.set(runId, handles)
           return runId
         },
+        setAfterCall: (callId, answer) =>
+          mut((d) => {
+            const c = d.calls.find((x) => x.id === callId)
+            if (c) c.afterCall = answer
+            // A desk call may still be playing; remember the answer for when its record lands
+            const r = d.runs.find((x) => x.callId === callId)
+            if (r) r.afterCall = answer
+          }),
         finishRuns: () =>
           mut((d) => {
             for (const r of d.runs) {

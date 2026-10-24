@@ -24,6 +24,7 @@ export interface User {
 export interface SavedPlace {
   id: ID
   label: string
+  line1?: string
   postcode: string
   area: string
 }
@@ -261,7 +262,7 @@ export interface Thread {
 export type MessageAuthor = "customer" | "owner" | "staff" | "desk" | "system"
 
 export type MessageCard =
-  | { kind: "slot"; slots: ISO[]; serviceId?: ID }
+  | { kind: "slot"; slots: ISO[]; serviceId?: ID; bookingId?: ID }
   | { kind: "quote"; quoteId: ID }
   | { kind: "booking"; bookingId: ID }
 
@@ -301,6 +302,7 @@ export interface Call {
   spam?: boolean
   scriptId?: string
   qa?: "good" | "wrong_info" | "bad_handoff" | "unsafe"
+  afterCall?: "booked" | "not_booked" | "no_answer"
 }
 
 export interface Enquiry {

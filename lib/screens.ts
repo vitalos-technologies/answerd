@@ -221,6 +221,8 @@ export const SURFACES: { id: Surface; name: string; count: number }[] = [
 export const BUILT = new Set<string>([
   // P1
   ...["C-01", "C-02", "C-03", "C-04", "C-05", "C-06", "C-07", "C-08", "C-09", "C-10", "C-11", "C-12", "C-13", "C-14", "C-15", "C-48"],
+  // P2
+  ...["C-16", "C-17", "C-18", "C-19", "C-20", "C-21", "C-22", "C-23", "C-24", "C-25", "C-26", "C-27", "C-28", "C-33"],
 ])
 
 export function screenById(id: string) {

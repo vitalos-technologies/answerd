@@ -95,7 +95,9 @@ function ownerFirstName(s: S, listing: Listing) {
 function pickService(s: S, listing: Listing): Service | undefined {
   const svcs = servicesFor(s, listing.businessId).filter((x) => x.bookable)
   const cat = listing.categoryIds[0]
-  if (cat === "heating-engineers" || listing.slug.startsWith("swift")) return svcs.find((x) => /boiler service/i.test(x.name)) ?? svcs[0]
+  // Match the job the caller describes (JOB_LINES keys off the first category)
+  if (cat === "heating-engineers") return svcs.find((x) => /boiler service/i.test(x.name)) ?? svcs[0]
+  if (cat === "plumbers") return svcs.find((x) => /tap/i.test(x.name)) ?? svcs[0]
   return svcs[0]
 }
 
@@ -108,8 +110,16 @@ export function greetingFor(s: S, listing: Listing) {
   return deskFor(s, listing.businessId)?.greeting || `Hi, you've reached ${listing.name}. I'm their Answerd assistant and this call is recorded. How can I help?`
 }
 
-export function buildScript(s: S, scriptId: ScriptId, listing: Listing, runIndex = 0): BuiltScript {
-  const caller = { ...CALLERS[runIndex % CALLERS.length]!, postcode: callerPostcode(s, listing), customerId: null as string | null }
+export interface ScriptOptions {
+  caller?: { name: string; phone: string; customerId: string | null; postcode?: string }
+  /** The caller books in the app afterwards (C-20 → C-21), so the desk shares times but doesn't book. */
+  noBook?: boolean
+}
+
+export function buildScript(s: S, scriptId: ScriptId, listing: Listing, runIndex = 0, opts: ScriptOptions = {}): BuiltScript {
+  const caller = opts.caller
+    ? { ...opts.caller, postcode: opts.caller.postcode && coversPostcode(s, listing.businessId, opts.caller.postcode) ? opts.caller.postcode : callerPostcode(s, listing) }
+    : { ...CALLERS[runIndex % CALLERS.length]!, postcode: callerPostcode(s, listing), customerId: null as string | null }
   const owner = ownerFirstName(s, listing)
   const svc = pickService(s, listing)
   const slots = nextSlots(s, listing, svc, 2)
@@ -126,7 +136,23 @@ export function buildScript(s: S, scriptId: ScriptId, listing: Listing, runIndex
 
   switch (scriptId) {
     case "D-01": {
-      const b = bookingFor(slots[0])
+      const b = opts.noBook ? undefined : bookingFor(slots[0])
+      if (opts.noBook) {
+        return {
+          plan: {
+            scriptId, channel: "call", caller, service: svc,
+            summary: `${first}, ${caller.postcode}: ${job}. Shared prices and free times (${slots.map((x) => spokenSlot(x, s.clock)).join(", ") || "none this week"}); ${first} will book in the app.`,
+            ownerPush: { ...pushBase, event: "desk_call", title: "Your desk took a call", body: `Your desk took a call from ${first}: ${svc?.name.toLowerCase() ?? "new job"}, ${caller.postcode.split(" ")[0]}. Shared prices and times.` },
+          },
+          steps: [
+            { speaker: "desk", text: greeting },
+            { speaker: "caller", text: `Hi, ${job}.` },
+            { speaker: "desk", text: `${owner} is busy right now, but I can help. ${svc ? `${svc.name} is ${range}.` : ""} ${slots.length ? `The next free times are ${slots.map((x) => spokenSlot(x, s.clock)).join(" or ")}.` : ""}` },
+            { speaker: "caller", text: "Thanks, I'll book in the app." },
+            { speaker: "desk", text: `Lovely. I've texted you the details. Thanks for calling ${listing.name}.` },
+          ],
+        }
+      }
       return {
         plan: {
           scriptId, channel: "call", caller, service: svc, booking: b,
@@ -301,7 +327,10 @@ export interface DeskReply {
 }
 
 /** What the desk says in C-22 when the owner hasn't replied. Never quotes outside listed ranges. */
-export function deskReply(s: S, listing: Listing, customerText: string, customerFirstName = ""): DeskReply {
+export function deskReply(s: S, listing: Listing, fullText: string, customerFirstName = ""): DeskReply {
+  // Enquiries (C-23) append "Postcode: … · When: …"; read intent from the message itself
+  const [customerText = "", meta = ""] = fullText.split("\n\n")
+  const metaPostcode = meta.match(/Postcode: ([A-Z0-9 ]+)/i)?.[1]?.trim()
   const t = customerText.toLowerCase()
   const svcs = servicesFor(s, listing.businessId)
   const owner = ownerFirstName(s, listing)
@@ -332,6 +361,13 @@ export function deskReply(s: S, listing: Listing, customerText: string, customer
   const svc = scored[0]?.score ? scored[0].x : svcs.find((x) => x.bookable)
   const slots = nextSlots(s, listing, svc, 2)
   const status = openStatus(s, listing, s.clock)
+
+  if (metaPostcode) {
+    const pc = lookupPostcode(metaPostcode)
+    if (pc && !coversPostcode(s, listing.businessId, pc.postcode)) {
+      return { intent: "area", body: `${intro} Sorry, ${pc.postcode} is outside ${listing.name}'s service area, so I can't book that. Answerd can show you businesses that cover it.` }
+    }
+  }
 
   const pcMatch = customerText.toUpperCase().match(/\b([A-Z]{1,2}\d{1,2}[A-Z]?)(\s*\d[A-Z]{2})?\b/)
   if (pcMatch && /(cover|area|come to|travel|postcode)/.test(t)) {
