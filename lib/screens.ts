@@ -228,6 +228,11 @@ export const BUILT = new Set<string>([
   ...["Q-01", "Q-02", "Q-03", "Q-04", "Q-05", "Q-06"],
   // P4
   ...Array.from({ length: 17 }, (_, i) => `B-${String(i + 1).padStart(2, "0")}`),
+  // P6
+  ...Array.from({ length: 12 }, (_, i) => `B-${i + 30}`),
+  ...Array.from({ length: 10 }, (_, i) => `D-${String(i + 1).padStart(2, "0")}`),
+  // P9
+  ...Array.from({ length: 23 }, (_, i) => `A-${String(i + 1).padStart(2, "0")}`),
 ])
 
 export function screenById(id: string) {
