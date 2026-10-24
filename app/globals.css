@@ -1,0 +1,224 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+@import "shadcn/tailwind.css";
+
+/* Answerd design tokens (docs/answerd-spec.md › Design system). Light only. */
+
+@theme inline {
+  /* Brand palette */
+  --color-navy: #0f2d5b;
+  --color-blue: #2563ff;
+  --color-blue-hover: #1d4ed8;
+  --color-blue-tint: #eaf0ff;
+  --color-teal: #14b8a6;
+  --color-teal-ink: #0f766e;
+  --color-teal-tint: #e6f7f5;
+  --color-sky: #f1f5f9;
+  --color-white: #ffffff;
+  --color-slate: #475569;
+  --color-muted-ink: #64748b;
+  --color-line: #e2e8f0;
+  --color-amber: #f59e0b;
+  --color-amber-ink: #b45309;
+  --color-amber-tint: #fef3c7;
+  --color-red: #dc2626;
+  --color-red-tint: #fee2e2;
+  --color-park: #d9f2e1;
+  --color-river: #cfe3fa;
+
+  /* shadcn mapping */
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --color-chart-1: var(--chart-1);
+  --color-chart-2: var(--chart-2);
+  --color-chart-3: var(--chart-3);
+  --color-chart-4: var(--chart-4);
+  --color-chart-5: var(--chart-5);
+
+  --font-sans: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
+  --font-heading: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
+
+  --radius-sm: 8px;
+  --radius-md: 10px;
+  --radius-lg: 12px;
+  --radius-xl: 16px;
+  --radius-2xl: 20px;
+  --radius-3xl: 24px;
+  --radius-4xl: 32px;
+  --radius-input: 12px;
+  --radius-card: 16px;
+  --radius-sheet: 24px;
+
+  --shadow-card: 0 1px 2px rgba(15, 45, 91, 0.06), 0 4px 16px rgba(15, 45, 91, 0.06);
+  --shadow-overlay: 0 24px 64px rgba(15, 45, 91, 0.18);
+
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+  --animate-pulse-dot: pulse-dot 1.6s ease-out infinite;
+  --animate-sheet-up: sheet-up 250ms var(--ease-out);
+  --animate-fade-in: fade-in 150ms ease-out;
+  --animate-shake: shake 300ms ease-out;
+  --animate-tick: tick 500ms var(--ease-out);
+
+  @keyframes pulse-dot {
+    0% { box-shadow: 0 0 0 0 rgba(20, 184, 166, 0.55); }
+    70% { box-shadow: 0 0 0 6px rgba(20, 184, 166, 0); }
+    100% { box-shadow: 0 0 0 0 rgba(20, 184, 166, 0); }
+  }
+  @keyframes sheet-up {
+    from { transform: translateY(100%); }
+    to { transform: translateY(0); }
+  }
+  @keyframes fade-in {
+    from { opacity: 0; }
+    to { opacity: 1; }
+  }
+  @keyframes shake {
+    0%, 100% { transform: translateX(0); }
+    20%, 60% { transform: translateX(-6px); }
+    40%, 80% { transform: translateX(6px); }
+  }
+  @keyframes tick {
+    from { transform: scale(0.4); opacity: 0; }
+    to { transform: scale(1); opacity: 1; }
+  }
+}
+
+:root {
+  --background: #f1f5f9;
+  --foreground: #0f2d5b;
+  --card: #ffffff;
+  --card-foreground: #0f2d5b;
+  --popover: #ffffff;
+  --popover-foreground: #0f2d5b;
+  --primary: #2563ff;
+  --primary-foreground: #ffffff;
+  --secondary: #ffffff;
+  --secondary-foreground: #0f2d5b;
+  --muted: #f1f5f9;
+  --muted-foreground: #64748b;
+  --accent: #eaf0ff;
+  --accent-foreground: #0f2d5b;
+  --destructive: #dc2626;
+  --border: #e2e8f0;
+  --input: #e2e8f0;
+  --ring: #2563ff;
+  --chart-1: #2563ff;
+  --chart-2: #14b8a6;
+  --chart-3: #0f2d5b;
+  --chart-4: #f59e0b;
+  --chart-5: #64748b;
+  --radius: 12px;
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  html {
+    @apply font-sans;
+    -webkit-font-smoothing: antialiased;
+  }
+  body {
+    @apply bg-sky text-slate;
+    font-size: 15px;
+    line-height: 22px;
+  }
+  @media (min-width: 768px) {
+    body { font-size: 16px; line-height: 24px; }
+  }
+  h1, h2, h3, h4 {
+    @apply text-navy;
+  }
+  :focus-visible {
+    outline: 2px solid #2563ff;
+    outline-offset: 2px;
+  }
+  button:not(:disabled),
+  [role="button"]:not(:disabled) {
+    cursor: pointer;
+  }
+  svg.lucide {
+    stroke-width: 1.75;
+  }
+}
+
+/* Type scale: mobile first, md: for web */
+@utility t-display {
+  font-size: 30px; line-height: 36px; font-weight: 700; letter-spacing: -0.02em; color: var(--color-navy);
+  @media (min-width: 768px) { font-size: 48px; line-height: 56px; }
+}
+@utility t-title {
+  font-size: 24px; line-height: 30px; font-weight: 700; letter-spacing: -0.01em; color: var(--color-navy);
+  @media (min-width: 768px) { font-size: 32px; line-height: 40px; }
+}
+@utility t-heading {
+  font-size: 19px; line-height: 26px; font-weight: 600; color: var(--color-navy);
+  @media (min-width: 768px) { font-size: 24px; line-height: 32px; }
+}
+@utility t-subhead {
+  font-size: 16px; line-height: 22px; font-weight: 600; color: var(--color-navy);
+  @media (min-width: 768px) { font-size: 18px; line-height: 26px; }
+}
+@utility t-body {
+  font-size: 15px; line-height: 22px; font-weight: 400;
+  @media (min-width: 768px) { font-size: 16px; line-height: 24px; }
+}
+@utility t-label {
+  font-size: 14px; line-height: 20px; font-weight: 500;
+}
+@utility t-caption {
+  font-size: 12px; line-height: 16px; font-weight: 500;
+}
+/* Inside the phone frame the viewport is wide, so app screens opt out of md: sizes */
+@utility t-app {
+  & .t-display { font-size: 30px; line-height: 36px; }
+  & .t-title { font-size: 24px; line-height: 30px; }
+  & .t-heading { font-size: 19px; line-height: 26px; }
+  & .t-subhead { font-size: 16px; line-height: 22px; }
+  & .t-body { font-size: 15px; line-height: 22px; }
+}
+@utility tnum {
+  font-variant-numeric: tabular-nums;
+}
+@utility card {
+  background: #ffffff;
+  border: 1px solid var(--color-line);
+  border-radius: 16px;
+  box-shadow: var(--shadow-card);
+}
+@utility hatched {
+  background-image: repeating-linear-gradient(135deg, rgba(100, 116, 139, 0.16) 0 6px, transparent 6px 12px);
+}
+@utility no-scrollbar {
+  scrollbar-width: none;
+  &::-webkit-scrollbar { display: none; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+@media print {
+  .no-print { display: none !important; }
+  body { background: #fff; }
+}
