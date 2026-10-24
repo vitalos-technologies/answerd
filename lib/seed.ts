@@ -959,6 +959,7 @@ export function createSeed(): DemoData {
     adminSignedIn: false,
     supportViewBusinessId: null,
     recentAreas: ["SE25 · South Norwood", "CR0 · Croydon"],
+    guestRecentSearches: [],
   }
 
   return {

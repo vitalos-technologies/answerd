@@ -105,7 +105,7 @@ export default function HubPage() {
             <Link href="/hub/components" className="inline-flex h-11 items-center rounded-full border border-line bg-white px-4 t-label text-navy hover:bg-sky">
               Components
             </Link>
-            <Link href="/app" className="inline-flex h-11 items-center gap-2 rounded-full bg-blue px-4 t-label font-semibold text-white hover:bg-blue-hover">
+            <Link href="/app/splash" className="inline-flex h-11 items-center gap-2 rounded-full bg-blue px-4 t-label font-semibold text-white hover:bg-blue-hover">
               <Smartphone className="size-4" /> Open the app
             </Link>
             <Link href="/" className="inline-flex h-11 items-center gap-2 rounded-full border border-line bg-white px-4 t-label text-navy hover:bg-sky">

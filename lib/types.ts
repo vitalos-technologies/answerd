@@ -603,6 +603,7 @@ export interface Session {
   adminSignedIn: boolean
   supportViewBusinessId: ID | null
   recentAreas: string[]
+  guestRecentSearches: string[]
   pendingPhone?: string
 }
 

@@ -79,6 +79,7 @@ function SidePanel() {
 export function PhoneFrame({ children }: { children: React.ReactNode }) {
   const pathname = usePathname()
   const biz = pathname.startsWith("/app/biz") && !pathname.startsWith("/app/biz/claim")
+  const hydrated = useStore((s) => s.hydrated)
   const [scale, setScale] = React.useState(1)
   React.useEffect(() => {
     const fit = () => setScale(window.innerWidth < 500 ? 1 : Math.min(1, (window.innerHeight - 48) / 844))
@@ -96,7 +97,7 @@ export function PhoneFrame({ children }: { children: React.ReactNode }) {
           data-phone-frame
         >
           <StatusBar dark={biz} />
-          <div className="relative min-h-0 flex-1">{children}</div>
+          <div className="relative min-h-0 flex-1">{hydrated ? children : <div className="absolute inset-0 bg-sky" aria-busy="true" />}</div>
           <div id="phone-overlay" className="pointer-events-none absolute inset-0 z-50 [&>*]:pointer-events-auto" />
           <ScreenIdBadge className="absolute left-[78px] top-[13px] h-5 max-[499px]:left-1/2 max-[499px]:top-1 max-[499px]:-translate-x-1/2" />
           <Toaster className="absolute bottom-24" />

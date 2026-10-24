@@ -218,7 +218,10 @@ export const SURFACES: { id: Surface; name: string; count: number }[] = [
 ]
 
 /** IDs built so far. Each build prompt adds its IDs here. */
-export const BUILT = new Set<string>([])
+export const BUILT = new Set<string>([
+  // P1
+  ...["C-01", "C-02", "C-03", "C-04", "C-05", "C-06", "C-07", "C-08", "C-09", "C-10", "C-11", "C-12", "C-13", "C-14", "C-15", "C-48"],
+])
 
 export function screenById(id: string) {
   return SCREENS.find((s) => s.id === id)

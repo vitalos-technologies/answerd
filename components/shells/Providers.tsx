@@ -11,7 +11,9 @@ import { ScreenIdBadge } from "./ScreenMeta"
 /** Rehydrates the persisted demo store after mount so server and first client render match. */
 export function Providers({ children }: { children: React.ReactNode }) {
   React.useEffect(() => {
-    void useStore.persist.rehydrate()
+    void Promise.resolve(useStore.persist.rehydrate()).finally(() => {
+      if (!useStore.getState().hydrated) useStore.setState({ hydrated: true })
+    })
   }, [])
   return <TooltipProvider delayDuration={300}>{children}</TooltipProvider>
 }

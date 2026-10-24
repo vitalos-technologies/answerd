@@ -736,14 +736,16 @@ export const useStore = create<Store>()(
         recordSearch: (query) =>
           mut((d) => {
             const q = query.trim()
-            if (!q || !d.session.userId) return
+            if (!q) return
             const p = d.customerProfiles.find((x) => x.userId === d.session.userId)
             if (p) p.recentSearches = [q, ...p.recentSearches.filter((x) => x.toLowerCase() !== q.toLowerCase())].slice(0, 6)
+            else d.session.guestRecentSearches = [q, ...d.session.guestRecentSearches.filter((x) => x.toLowerCase() !== q.toLowerCase())].slice(0, 6)
           }),
         clearRecentSearches: () =>
           mut((d) => {
             const p = d.customerProfiles.find((x) => x.userId === d.session.userId)
             if (p) p.recentSearches = []
+            else d.session.guestRecentSearches = []
           }),
         recordProfileView: (listingId) => mut((d) => enquiry(d, listingId, "profile_view")),
         toggleSave: (listingId) => {
