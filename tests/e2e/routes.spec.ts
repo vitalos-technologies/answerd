@@ -7,7 +7,8 @@ for (const s of ROUTED) {
     const errors: string[] = []
     page.on("pageerror", (e) => errors.push(e.message))
     page.on("console", (m) => {
-      if (m.type() === "error") errors.push(m.text())
+      // W-24 is the not-found page: the browser logs the document's own 404
+      if (m.type() === "error" && !(s.id === "W-24" && m.text().includes("status of 404"))) errors.push(m.text())
     })
     await prepare(page, s)
     const res = await page.goto(withClean(s.example))
