@@ -59,7 +59,15 @@ export function BizHeader({ right, title }: { right?: React.ReactNode; title?: s
   const name = title ?? listings.find((l) => l.id === biz?.listingId)?.name ?? "Your business"
   return (
     <div className="shrink-0 bg-navy text-white">
-      {supportView && <p className="bg-amber px-4 py-1 text-center t-caption text-navy">Viewing as support (audited) · read only</p>}
+      {supportView && (
+        <p className="flex items-center justify-center gap-2 bg-amber px-4 py-1 text-center t-caption text-navy">
+          Viewing as support (audited) · read only
+          {/* P9: back to the admin console, which ends the support view */}
+          <Link href="/admin/businesses" className="inline-flex min-h-6 items-center font-semibold underline underline-offset-2">
+            Exit
+          </Link>
+        </p>
+      )}
       <div className="flex min-h-12 items-center gap-2 px-4 pb-2.5 pt-1">
         <p className="min-w-0 flex-1 truncate t-subhead text-white">{name}</p>
         <span className="rounded-full bg-white/15 px-2.5 py-0.5 t-caption text-white">Business</span>

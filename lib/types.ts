@@ -577,6 +577,9 @@ export interface Settings {
   homeCategoryOrder: ID[]
   homeBanner: string
   seoIntroTemplate: string
+  // P9
+  killSwitchPaused?: ID[] // desks paused by the kill switch, restored when it is turned off
+  faqs?: { id: ID; q: string; a: string }[]
 }
 
 export interface BookingDraft {

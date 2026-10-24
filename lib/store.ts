@@ -193,7 +193,7 @@ export interface Actions {
   mergeListings: (survivorId: string, otherId: string, fields: Partial<Listing>, reason: string) => void
   runImport: (reason: string) => void
   updateSettings: (patch: Partial<Settings>, reason: string) => void
-  setSupportView: (businessId: string | null) => void
+  setSupportView: (businessId: string | null, reason?: string) => void
   // prototype controls
   advanceClock: (hours: number) => void
   setOffline: (v: boolean) => void
@@ -204,6 +204,14 @@ export interface Actions {
   resetDemo: () => void
   // P4
   setClaimDetails: (claimId: string, patch: Pick<Claim, "legalType" | "companyNumber">) => void
+  // P9
+  adminKillSwitch: (on: boolean, reason: string) => void
+  adminContact: (userId: string, body: string, targetType: string, targetId: string, reason: string) => void
+  adminTaxonomy: (op: "add" | "rename" | "merge" | "map", input: { id?: string; name?: string; parentId?: string | null; intoId?: string; sicCodes?: string[]; osmTags?: string[]; placesTypes?: string[] }, reason: string) => void
+  adminFeatured: (slotId: string, op: "assign" | "waitlist_add" | "waitlist_remove", businessId: string, reason: string) => void
+  adminRefund: (invoiceId: string, reason: string) => void
+  adminStaff: (op: "invite" | "remove" | "role", input: { userId?: string; firstName?: string; lastName?: string; email?: string; role?: "admin" | "support" }, reason: string) => void
+  adminDeleteCustomer: (userId: string, reason: string) => void
 }
 
 export type Store = Data & Actions
@@ -1644,10 +1652,10 @@ export const useStore = create<Store>()(
             Object.assign(d.settings, patch)
             d.audit.unshift({ id: uid("au"), actorId: d.session.userId ?? "", action: "settings.update", targetType: "settings", targetId: Object.keys(patch).join(","), reason, at: d.clock })
           }),
-        setSupportView: (businessId) =>
+        setSupportView: (businessId, reason) =>
           mut((d) => {
             d.session.supportViewBusinessId = businessId
-            if (businessId) d.audit.unshift({ id: uid("au"), actorId: d.session.userId ?? "", action: "tenant.view_as_support", targetType: "business", targetId: businessId, reason: "Support view", at: d.clock })
+            if (businessId) d.audit.unshift({ id: uid("au"), actorId: d.session.userId ?? "", action: "tenant.view_as_support", targetType: "business", targetId: businessId, reason: reason || "Support view", at: d.clock })
           }),
 
         // ---------------------------------------------------------- prototype controls
@@ -1692,6 +1700,118 @@ export const useStore = create<Store>()(
           mut((d) => {
             const c = d.claims.find((x) => x.id === claimId)
             if (c) Object.assign(c, patch)
+          }),
+
+        // P9
+        adminKillSwitch: (on, reason) =>
+          mut((d) => {
+            const actorId = d.session.userId ?? ""
+            if (on) {
+              const paused: string[] = []
+              for (const c of d.deskConfigs) {
+                if (c.status !== "live" && c.status !== "trial") continue
+                c.pausedFrom = c.status
+                c.status = "paused"
+                paused.push(c.businessId)
+                notify(d, { userId: "", userIds: ownerUserIds(d as DemoData, c.businessId), event: "desk_paused", mode: "business", businessId: c.businessId, title: "AI desk paused by Answerd", body: "We've paused every AI desk while we fix a problem. Customers see your normal reply times.", href: "/app/biz/desk", channels: ["push", "email"] })
+              }
+              d.settings.killSwitch = true
+              d.settings.killSwitchPaused = paused
+            } else {
+              for (const id of d.settings.killSwitchPaused ?? []) {
+                const c = d.deskConfigs.find((x) => x.businessId === id)
+                if (!c || c.status !== "paused") continue
+                c.status = c.pausedFrom === "trial" ? "trial" : "live"
+                c.pausedFrom = undefined
+              }
+              d.settings.killSwitch = false
+              d.settings.killSwitchPaused = []
+            }
+            d.audit.unshift({ id: uid("au"), actorId, action: on ? "desk.kill_switch_on" : "desk.kill_switch_off", targetType: "settings", targetId: "killSwitch", reason, at: d.clock })
+          }),
+        adminContact: (userId, body, targetType, targetId, reason) =>
+          mut((d) => {
+            notify(d, { userId, event: "support_message", mode: "customer", title: "A message from Answerd", body, href: "/app/notifications", channels: ["push", "email"] })
+            d.audit.unshift({ id: uid("au"), actorId: d.session.userId ?? "", action: `${targetType}.contact`, targetType, targetId, reason, at: d.clock })
+          }),
+        adminTaxonomy: (op, input, reason) =>
+          mut((d) => {
+            let targetId = input.id ?? ""
+            if (op === "add" && input.name) {
+              let id = slugify(input.name)
+              if (d.categories.some((c) => c.id === id)) id = `${id}-${d.categories.length}`
+              const parent = d.categories.find((c) => c.id === input.parentId)
+              d.categories.push({ id, name: input.name, plural: input.name, slug: id, parentId: input.parentId ?? null, icon: parent?.icon ?? "Store", sicCodes: input.sicCodes ?? [], osmTags: input.osmTags ?? [], placesTypes: input.placesTypes ?? [] })
+              targetId = id
+            }
+            const c = d.categories.find((x) => x.id === input.id)
+            if (op === "rename" && c && input.name) {
+              c.name = input.name
+              c.plural = input.name
+            }
+            if (op === "map" && c) {
+              if (input.sicCodes) c.sicCodes = input.sicCodes
+              if (input.osmTags) c.osmTags = input.osmTags
+              if (input.placesTypes) c.placesTypes = input.placesTypes
+            }
+            if (op === "merge" && c && input.intoId && input.intoId !== c.id) {
+              const into = input.intoId
+              for (const l of d.listings) if (l.categoryIds.includes(c.id)) l.categoryIds = [...new Set(l.categoryIds.map((x) => (x === c.id ? into : x)))]
+              for (const x of d.categories) if (x.parentId === c.id) x.parentId = into
+              for (const f of d.featuredSlots) if (f.categoryId === c.id) f.categoryId = into
+              d.settings.homeCategoryOrder = [...new Set(d.settings.homeCategoryOrder.map((x) => (x === c.id ? into : x)))]
+              d.categories = d.categories.filter((x) => x.id !== c.id)
+            }
+            d.audit.unshift({ id: uid("au"), actorId: d.session.userId ?? "", action: `taxonomy.${op}`, targetType: "category", targetId, reason, at: d.clock })
+          }),
+        adminFeatured: (slotId, op, businessId, reason) =>
+          mut((d) => {
+            const f = d.featuredSlots.find((x) => x.id === slotId)
+            if (!f) return
+            if (op === "assign") {
+              f.businessId = businessId
+              f.startsAt = d.clock
+              f.waitlist = f.waitlist.filter((x) => x !== businessId)
+              notify(d, { userId: "", userIds: ownerUserIds(d as DemoData, businessId), event: "featured_assigned", mode: "business", businessId, title: "You're featured", body: "A Featured slot is now yours. You show first in your category and area.", href: "/app/biz/featured", channels: ["push", "email"] })
+            }
+            if (op === "waitlist_add" && !f.waitlist.includes(businessId)) f.waitlist.push(businessId)
+            if (op === "waitlist_remove") f.waitlist = f.waitlist.filter((x) => x !== businessId)
+            d.audit.unshift({ id: uid("au"), actorId: d.session.userId ?? "", action: `featured.${op}`, targetType: "featured", targetId: slotId, reason, at: d.clock })
+          }),
+        adminRefund: (invoiceId, reason) =>
+          mut((d) => {
+            const inv = d.invoices.find((x) => x.id === invoiceId)
+            if (!inv || inv.status !== "paid") return
+            inv.status = "refunded"
+            notify(d, { userId: "", userIds: ownerUserIds(d as DemoData, inv.businessId), event: "refund", mode: "business", businessId: inv.businessId, title: "Refund on its way", body: `We've refunded ${gbp(inv.amountPence)} for ${inv.description}. It takes 5 to 10 working days to reach your card.`, href: "/app/biz/billing", channels: ["email"] })
+            d.audit.unshift({ id: uid("au"), actorId: d.session.userId ?? "", action: "billing.refund", targetType: "invoice", targetId: invoiceId, reason, at: d.clock })
+          }),
+        adminStaff: (op, input, reason) =>
+          mut((d) => {
+            let targetId = input.userId ?? ""
+            if (op === "invite" && input.email) {
+              const id = uid("u")
+              d.users.push({ id, phone: "", email: input.email, firstName: input.firstName ?? "", lastName: input.lastName ?? "", authProviders: ["google"], marketingConsent: false, createdAt: d.clock, staffRole: input.role ?? "support" })
+              targetId = id
+            }
+            const u = d.users.find((x) => x.id === input.userId)
+            if (op === "remove" && u) u.staffRole = undefined
+            if (op === "role" && u && input.role) u.staffRole = input.role
+            d.audit.unshift({ id: uid("au"), actorId: d.session.userId ?? "", action: `admin_user.${op}`, targetType: "user", targetId, reason, at: d.clock })
+          }),
+        adminDeleteCustomer: (userId, reason) =>
+          mut((d) => {
+            const u = d.users.find((x) => x.id === userId)
+            if (!u) return
+            u.deleted = true
+            for (const b of d.bookings) {
+              if (b.customerId !== userId || !["requested", "confirmed"].includes(b.status) || ms(b.startAt) < ms(d.clock)) continue
+              b.status = "cancelled"
+              b.cancelledBy = "customer"
+              b.cancelReason = "Customer account deleted"
+              event(d, b.id, "cancelled", "system", "Customer account deleted")
+            }
+            d.audit.unshift({ id: uid("au"), actorId: d.session.userId ?? "", action: "customer.delete", targetType: "customer", targetId: userId, reason, at: d.clock })
           }),
       }
     },
@@ -1832,3 +1952,6 @@ export function getState() {
 }
 
 export { businessById, availabilityFor }
+
+// P9: a handle for acceptance scripts (Playwright) to call store actions directly
+if (typeof window !== "undefined") (window as unknown as { __answerdStore?: typeof useStore }).__answerdStore = useStore
