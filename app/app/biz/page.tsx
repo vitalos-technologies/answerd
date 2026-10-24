@@ -2,7 +2,7 @@
 import Link from "next/link"
 import { OpsScreen } from "@/components/biz/ops/OpsScreen"
 import { DeskPill, GateCard, JobsTimeline, NeedsYouList, TodayStatRow } from "@/components/biz/ops/Today"
-import { SetupCard } from "@/components/biz/ops/SetupCard"
+import { SetupChecklistCard } from "@/components/biz/profile"
 import { DataGate } from "@/components/app/helpers"
 import { EmptyState } from "@/components/answerd/Feedback"
 import { fmtDateLong, greeting } from "@/lib/time"
@@ -29,7 +29,7 @@ export default function Today() {
               {!staff && <GateCard businessId={biz.id} className="mt-5" />}
               {!staff && (
                 <div className="mt-5 empty:hidden">
-                  <SetupCard biz={biz} listing={listing} />
+                  <SetupChecklistCard businessId={biz.id} />
                 </div>
               )}
               <section className="mt-5" aria-labelledby="needs">
