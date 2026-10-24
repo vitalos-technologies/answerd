@@ -1,7 +1,7 @@
 "use client"
 import * as React from "react"
 import Link from "next/link"
-import { useRouter } from "next/navigation"
+import { useRouter, useSearchParams } from "next/navigation"
 import { ChevronRight, Plus, Search, ShieldAlert } from "lucide-react"
 import { AppScreen, TopBar } from "@/components/shells/AppScreen"
 import { Button } from "@/components/answerd/Button"
@@ -10,21 +10,26 @@ import { EmptyState } from "@/components/answerd/Feedback"
 import { Field, TextArea, TextInput, inputCls } from "@/components/answerd/Fields"
 import { ListingAvatar } from "@/components/answerd/Media"
 import { useClaimAuth, sourceHint, claimState, nameSimilarity } from "@/components/app/claim"
+import { withSuspense } from "@/components/app/helpers"
 import { useStore } from "@/lib/store"
 import { districtOf, lookupPostcode } from "@/lib/geo"
 import { toast } from "@/lib/toast"
 import { cn } from "@/lib/utils"
 import type { Listing } from "@/lib/types"
 
-/** B-01: search all three layers by name and postcode. */
-export default function FindBusiness() {
-  useClaimAuth("/app/biz/claim")
+/** B-01: search all three layers by name and postcode. ?listing= (from C-17) or ?name=&postcode= prefill and search. */
+function FindBusiness() {
+  const sp = useSearchParams()
+  const qs = sp.toString()
+  useClaimAuth(qs ? `/app/biz/claim?${qs}` : "/app/biz/claim")
   const router = useRouter()
   const s = useStore()
-  const [name, setName] = React.useState("")
-  const [postcode, setPostcode] = React.useState("")
-  const [searched, setSearched] = React.useState(false)
+  const prefill = s.listings.find((l) => l.id === sp.get("listing"))
+  const [name, setName] = React.useState(prefill?.name ?? sp.get("name") ?? "")
+  const [postcode, setPostcode] = React.useState(prefill?.postcode ?? sp.get("postcode") ?? "")
+  const [searched, setSearched] = React.useState(!!prefill || !!sp.get("name"))
   const [dispute, setDispute] = React.useState<Listing | null>(null)
+  const closeDispute = React.useCallback(() => setDispute(null), [])
   const [details, setDetails] = React.useState("")
   const [evidence, setEvidence] = React.useState("")
 
@@ -83,7 +88,7 @@ export default function FindBusiness() {
                               <ShieldAlert className="size-3.5" aria-hidden /> Already claimed
                             </p>
                           </div>
-                          <Button size="sm" variant="secondary" onClick={() => setDispute(l)}>
+                          <Button size="sm" variant="secondary" onClick={() => setDispute(l)} aria-label={`Dispute this claim on ${l.name}`}>
                             Dispute
                           </Button>
                         </div>
@@ -118,7 +123,7 @@ export default function FindBusiness() {
         </button>
       </div>
 
-      <BottomSheet open={!!dispute} onClose={() => setDispute(null)} title="Dispute this claim">
+      <BottomSheet open={!!dispute} onClose={closeDispute} title="Dispute this claim">
         <p className="t-body text-slate">Someone has already claimed {dispute?.name}. Tell us why it&apos;s yours and our team will check within 1 working day.</p>
         <form
           className="mt-4 space-y-4"
@@ -146,3 +151,5 @@ export default function FindBusiness() {
     </AppScreen>
   )
 }
+
+export default withSuspense(FindBusiness)

@@ -32,7 +32,7 @@ import type {
   Settings,
 } from "./types"
 import { uid } from "./prng"
-import { addDays, addHours, addMinutes, fmtDate, fmtDateTime, fmtRelDay, fmtTime, ms, dayKey, MS_HOUR, MS_DAY } from "./time"
+import { addDays, addHours, addMinutes, fmtDate, fmtDateTime, fmtRelDay, fmtTime, ms, dayKey, MS_HOUR, MS_DAY, DEMO_START } from "./time"
 import { search as runSearch, type SearchFilters } from "./search"
 import {
   availabilityFor,
@@ -202,6 +202,8 @@ export interface Actions {
   triggerMonetiseGate: (businessId?: string) => void
   setCookieConsent: (c: { analytics: boolean; marketing: boolean } | null) => void
   resetDemo: () => void
+  // P4
+  setClaimDetails: (claimId: string, patch: Pick<Claim, "legalType" | "companyNumber">) => void
 }
 
 export type Store = Data & Actions
@@ -337,7 +339,8 @@ function finaliseClaim(d: D, claim: Claim, pending: boolean) {
       id: bizId,
       listingId: l.id,
       tenantId: `wf-tenant-${2000 + d.businesses.length}`,
-      legalType: "sole_trader",
+      legalType: claim.legalType ?? (findCompany(l.name) ? "ltd" : "sole_trader"),
+      companyNumber: claim.companyNumber ?? findCompany(l.name)?.number,
       tradingName: l.name,
       description: l.description,
       email: user?.email ?? "",
@@ -1306,7 +1309,7 @@ export const useStore = create<Store>()(
               if (name) {
                 l.name = name
                 l.initials = initials(name)
-                b.tradingName = name
+                if (rest.tradingName === undefined) b.tradingName = name
               }
               if (phonePublic) l.phonePublic = phonePublic
               if (categoryIds?.length) l.categoryIds = categoryIds
@@ -1684,6 +1687,12 @@ export const useStore = create<Store>()(
           set((s) => ({ ...s, ...createSeed(), ...initialUi, hydrated: true, builtIds: s.builtIds }))
           toast("Demo data reset")
         },
+        // P4
+        setClaimDetails: (claimId, patch) =>
+          mut((d) => {
+            const c = d.claims.find((x) => x.id === claimId)
+            if (c) Object.assign(c, patch)
+          }),
       }
     },
     {
@@ -1775,6 +1784,14 @@ function tick(d: D) {
     const g = gateStatus(d as DemoData, b.id)
     const prev = gateStatus({ ...(d as DemoData), clock: new Date(now - MS_HOUR).toISOString() }, b.id)
     if (g.met && !prev.met) gateReached(d, b.id)
+  }
+  // P4: credentials uploaded during the demo are checked after a working day (prototype)
+  for (const c of d.credentials) {
+    if (c.status === "pending" && ms(c.submittedAt) >= ms(DEMO_START) && now - ms(c.submittedAt) >= MS_DAY) {
+      c.status = "verified"
+      for (const o of d.credentials) if (o.id !== c.id && o.businessId === c.businessId && o.type === c.type && o.status === "verified") o.status = "expired"
+      notify(d, { userId: "", userIds: ownerUserIds(d as DemoData, c.businessId), event: "credential", mode: "business", businessId: c.businessId, title: "Credential verified", body: `Your ${c.label.toLowerCase()} is verified and shows on your listing.`, href: "/app/biz/profile/credentials", channels: ["push", "email"] })
+    }
   }
   // Daily digest at 7am (D-07)
   const hour = new Date(now).getUTCHours()
