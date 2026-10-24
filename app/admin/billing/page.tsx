@@ -76,7 +76,7 @@ export default function AdminBilling() {
   return (
     <AdminPage id="A-17" title="Billing" perm="billing" description="Answerd billing runs in Stripe. Prices include VAT.">
       <div className="mb-4 grid grid-cols-4 gap-3">
-        <Kpi label="MRR" value={gbp(mrr)} sub="Active paid plans, VAT included" />
+        <Kpi label="MRR" value={gbp(mrr)} sub="Active paid plans, ex VAT" />
         <Kpi label="Paid subscriptions" value={subs.filter((x) => x.status === "active").length} sub={`${subs.filter((x) => x.status === "trialing").length} trialing`} />
         <Kpi label="Trials ending in 7 days" value={trialsEnding.length} href="#trials" />
         <Kpi label="Failed payments" value={failed.length + pastDue.length} tone={failed.length + pastDue.length ? "bad" : "plain"} href="#failed" />

@@ -29,8 +29,8 @@ export default function AdminOverview() {
         <div className="grid grid-cols-3 gap-3 xl:grid-cols-6">
           <Kpi label="Desks live" value={k.desksLive} href="/admin/businesses?desk=live" sub={s.settings.killSwitch ? "Kill switch on: all paused" : "Answering calls and texts"} tone={s.settings.killSwitch ? "bad" : "plain"} />
           <Kpi label="Trials" value={k.trials} href="/admin/billing" sub="14-day desk trials running" />
-          <Kpi label="Paying desks" value={k.payingDesks} href="/admin/billing" sub="£49/month, VAT included" />
-          <Kpi label="MRR" value={gbp(k.mrr)} href="/admin/billing" sub="Active paid plans, VAT included" />
+          <Kpi label="Paying desks" value={k.payingDesks} href="/admin/billing" sub="£49/month ex VAT" />
+          <Kpi label="MRR" value={gbp(k.mrr)} href="/admin/billing" sub="Active paid plans, ex VAT" />
           <Kpi label="Places spend today" value={gbp(k.placesSpend)} href="/admin/places" sub={`${capPct}% of the ${gbp(k.placesCap)} daily cap`} tone={capPct >= 100 ? "bad" : capPct >= 80 ? "warn" : "plain"} />
           <Kpi label="Desk QA to rate" value={k.queues.deskQa} href="/admin/desk-qa" sub="Unrated desk calls" />
         </div>
