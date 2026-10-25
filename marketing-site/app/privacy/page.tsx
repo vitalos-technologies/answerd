@@ -1,12 +1,8 @@
 import type { Metadata } from "next"
+import { pageMeta } from "@/lib/seo"
 import { LegalPage, LegalSection } from "@/components/site/legal-page"
-import { SITE_URL } from "@/content/site"
 
-export const metadata: Metadata = {
-  title: "Privacy notice · Answerd",
-  description: "How Answerd collects, uses and protects your personal data. Placeholder: the final text will come from Vitalos legal.",
-  alternates: { canonical: `${SITE_URL}/privacy` },
-}
+export const metadata: Metadata = pageMeta({ title: "Privacy notice · Answerd", description: "How Answerd collects, uses and protects your personal data. Placeholder: the final text will come from Vitalos legal.", path: "/privacy" })
 
 const sections = [
   { title: "Who we are", body: "Vitalos Technologies is the controller of your personal data for Answerd. Contact details, including for data protection questions, will go here." },
@@ -23,7 +19,7 @@ const sections = [
 
 export default function PrivacyPage() {
   return (
-    <LegalPage title="Privacy notice" intro="How Answerd collects, uses and protects your personal data.">
+    <LegalPage href="/privacy" title="Privacy notice" intro="How Answerd collects, uses and protects your personal data.">
       {sections.map((s) => (
         <LegalSection key={s.title} title={s.title}>
           <p>{s.body}</p>

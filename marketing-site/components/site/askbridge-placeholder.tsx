@@ -4,8 +4,11 @@ import dynamic from "next/dynamic"
 import { ChevronDown } from "lucide-react"
 import { Mark } from "@/components/brand/Mark"
 import type { site } from "@/content/site"
+import type { Suggestion } from "@/lib/data/queries"
 
 export type AskbridgeCopy = (typeof site)["askbridge"]
+/** Placeholder matches per chip, from the mock data (built on the server in islands.tsx). */
+export type Suggestions = Record<string, Suggestion[]>
 
 /*
  * LOCAL PLACEHOLDER for the Askbridge chat widget (askbridge.vitalos.co.uk). It loads nothing third-party.
@@ -17,7 +20,7 @@ const AskbridgePanel = dynamic(() => import("./askbridge-panel"), { ssr: false }
 const PANEL_ID = "askbridge-panel"
 const focusRing = "focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue"
 
-export function AskbridgePlaceholder({ copy }: { copy: AskbridgeCopy }) {
+export function AskbridgePlaceholder({ copy, suggestions }: { copy: AskbridgeCopy; suggestions: Suggestions }) {
   const [open, setOpen] = React.useState(false)
   const [used, setUsed] = React.useState(false)
   const pillRef = React.useRef<HTMLButtonElement>(null)
@@ -29,10 +32,10 @@ export function AskbridgePlaceholder({ copy }: { copy: AskbridgeCopy }) {
 
   return (
     <div
-      className="fixed right-4 bottom-[max(16px,env(safe-area-inset-bottom))] z-40 flex flex-col items-end transition-transform duration-300 ease-out [--offset:var(--app-bar-h,0px)] motion-reduce:transition-none max-md:[--offset:calc(var(--app-bar-h,0px)+var(--cookie-banner-h,0px))] md:right-6 md:bottom-6"
+      className="fixed right-4 bottom-[max(16px,env(safe-area-inset-bottom))] z-40 flex flex-col items-end transition-transform duration-300 ease-out [--offset:calc(var(--app-bar-h,0px)+var(--listing-bar-h,0px))] motion-reduce:transition-none max-md:[--offset:calc(var(--app-bar-h,0px)+var(--listing-bar-h,0px)+var(--cookie-banner-h,0px))] md:right-6 md:bottom-6"
       style={{ transform: "translateY(calc(-1 * var(--offset)))" }}
     >
-      {used && <AskbridgePanel copy={copy} open={open} close={close} />}
+      {used && <AskbridgePanel copy={copy} suggestions={suggestions} open={open} close={close} />}
 
       <button
         ref={pillRef}

@@ -39,6 +39,7 @@ export function Logo({
         >
           Answerd
         </span>
+        {tagline && " "}
         {tagline && (
           <span className={cn("font-normal", tag)} style={{ fontSize: size * 0.42, marginTop: size * 0.16 }}>
             Every business picks up.
@@ -58,6 +59,7 @@ export function Logo({
         >
           Answerd
         </span>
+        {tagline && " "}
         {tagline && (
           <span className={cn("font-normal leading-tight", tag)} style={{ fontSize: size * 0.34, marginTop: size * 0.1 }}>
             Every business picks up.

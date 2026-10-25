@@ -1,12 +1,8 @@
 import type { Metadata } from "next"
+import { pageMeta } from "@/lib/seo"
 import { LegalPage, LegalSection } from "@/components/site/legal-page"
-import { SITE_URL } from "@/content/site"
 
-export const metadata: Metadata = {
-  title: "Terms of use · Answerd",
-  description: "The terms for using the Answerd website and app. Placeholder: the final text will come from Vitalos legal.",
-  alternates: { canonical: `${SITE_URL}/terms` },
-}
+export const metadata: Metadata = pageMeta({ title: "Terms of use · Answerd", description: "The terms for using the Answerd website and app. Placeholder: the final text will come from Vitalos legal.", path: "/terms" })
 
 const sections = [
   { title: "About these terms", body: "Who we are (Vitalos Technologies, the company behind Answerd), how to contact us, and when these terms apply." },
@@ -23,7 +19,7 @@ const sections = [
 
 export default function TermsPage() {
   return (
-    <LegalPage title="Terms of use" intro="The rules for using the Answerd website and app.">
+    <LegalPage href="/terms" title="Terms of use" intro="The rules for using the Answerd website and app.">
       {sections.map((s) => (
         <LegalSection key={s.title} title={s.title}>
           <p>{s.body}</p>

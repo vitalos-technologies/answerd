@@ -1,10 +1,11 @@
 "use client"
 import * as React from "react"
 import { AnimatePresence, motion, MotionConfig } from "motion/react"
-import { SendHorizontal, X } from "lucide-react"
+import Link from "next/link"
+import { ChevronRight, SendHorizontal, X } from "lucide-react"
 import { Mark } from "@/components/brand/Mark"
 import { GetAppButton } from "./get-app"
-import type { AskbridgeCopy } from "./askbridge-placeholder"
+import type { AskbridgeCopy, Suggestions } from "./askbridge-placeholder"
 
 /*
  * The Askbridge placeholder's chat panel. Loaded on the first tap of the pill (see askbridge-placeholder.tsx),
@@ -16,9 +17,11 @@ const PANEL_ID = "askbridge-panel"
 const TITLE_ID = "askbridge-title"
 const focusRing = "focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue"
 
-type Msg = { from: "user" | "assistant"; text: string; cta?: boolean }
+type Msg = { from: "user" | "assistant"; text: string; cta?: boolean; chip?: string }
 
-export default function AskbridgePanel({ copy, open, close }: { copy: AskbridgeCopy; open: boolean; close: (returnFocus?: boolean) => void }) {
+const TONES: Record<string, string> = { blue: "bg-blue-tint text-blue-hover", teal: "bg-teal-tint text-teal-ink", amber: "bg-amber-tint text-amber-ink", sky: "bg-sky text-navy" }
+
+export default function AskbridgePanel({ copy, suggestions, open, close }: { copy: AskbridgeCopy; suggestions: Suggestions; open: boolean; close: (returnFocus?: boolean) => void }) {
   const [messages, setMessages] = React.useState<Msg[]>([])
   const panelRef = React.useRef<HTMLDivElement>(null)
   const logRef = React.useRef<HTMLDivElement>(null)
@@ -55,7 +58,8 @@ export default function AskbridgePanel({ copy, open, close }: { copy: AskbridgeC
     panelRef.current?.focus({ preventScroll: true })
     window.clearTimeout(timer.current)
     timer.current = window.setTimeout(() => {
-      setMessages((m) => [...m, { from: "assistant", text: copy.reply, cta: true }])
+      const found = suggestions[chip]?.length
+      setMessages((m) => [...m, found ? { from: "assistant", text: copy.matches, cta: true, chip } : { from: "assistant", text: copy.reply, cta: true }])
     }, 450)
   }
 
@@ -129,6 +133,25 @@ export default function AskbridgePanel({ copy, open, close }: { copy: AskbridgeC
                 ) : (
                   <AssistantBubble key={i}>
                     {m.text}
+                    {m.chip && (
+                      <ul className="mt-3 flex flex-col gap-2" aria-label={m.chip}>
+                        {suggestions[m.chip]!.map((s) => (
+                          <li key={s.slug}>
+                            <Link href={`/b/${s.slug}`} onClick={() => close(false)} className={`flex items-center gap-3 rounded-xl border border-line bg-white p-3 text-left hover:border-blue/40 ${focusRing}`}>
+                              <span aria-hidden className={`grid size-10 shrink-0 place-items-center rounded-lg text-[14px] font-bold ${TONES[s.tone]}`}>
+                                {s.initials}
+                              </span>
+                              <span className="min-w-0 flex-1">
+                                <span className="block truncate text-[15px] leading-5 font-semibold text-navy">{s.name}</span>
+                                <span className="block truncate text-[13px] leading-5 text-muted-ink">{s.meta}</span>
+                                <span className="block text-[13px] leading-5 text-teal-ink">{s.why}</span>
+                              </span>
+                              <ChevronRight className="size-4 shrink-0 text-muted-ink" aria-hidden />
+                            </Link>
+                          </li>
+                        ))}
+                      </ul>
+                    )}
                     {m.cta && (
                       <span className="mt-3 block">
                         <GetAppButton size="sm" icon />

@@ -1,14 +1,10 @@
 import type { Metadata } from "next"
+import { pageMeta } from "@/lib/seo"
 import Link from "next/link"
 import { LegalPage, LegalSection } from "@/components/site/legal-page"
 import { CookieSettingsButton } from "@/components/site/islands"
-import { SITE_URL } from "@/content/site"
 
-export const metadata: Metadata = {
-  title: "Cookie policy · Answerd",
-  description: "The cookies and similar storage the Answerd website uses, and how to change your choice. Placeholder: the final text will come from Vitalos legal.",
-  alternates: { canonical: `${SITE_URL}/cookies` },
-}
+export const metadata: Metadata = pageMeta({ title: "Cookie policy · Answerd", description: "The cookies and similar storage the Answerd website uses, and how to change your choice. Placeholder: the final text will come from Vitalos legal.", path: "/cookies" })
 
 const essential = [
   { name: "Your cookie choice", provider: "Answerd", purpose: "Remembers whether you accepted or rejected non-essential cookies, so we don't ask on every page.", storage: "Browser storage on this site" },
@@ -67,7 +63,7 @@ function CookieTable({ caption, rows }: { caption: string; rows: typeof essentia
 
 export default function CookiesPage() {
   return (
-    <LegalPage title="Cookie policy" intro="The cookies and similar storage this website uses, and how to change your choice.">
+    <LegalPage href="/cookies" title="Cookie policy" intro="The cookies and similar storage this website uses, and how to change your choice.">
       <LegalSection id="what" title="What cookies are">
         <p>Cookies and similar technologies, such as browser storage, are small pieces of data a website saves on your device.</p>
       </LegalSection>
