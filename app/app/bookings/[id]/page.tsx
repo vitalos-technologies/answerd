@@ -66,7 +66,7 @@ export default function BookingDetail({ params }: { params: Promise<{ id: string
       <div className="space-y-3 p-4">
         <div className="card p-4">
           <div className="flex items-start gap-3">
-            <ListingAvatar initials={l.initials} hue={l.hue} size={52} />
+            <ListingAvatar listing={l} size={52} />
             <div className="min-w-0 flex-1">
               <p className="t-subhead">{bookingTitle(s, b)}</p>
               <Link href={`/app/b/${l.slug}`} className="t-label text-blue hover:underline">
@@ -99,7 +99,7 @@ export default function BookingDetail({ params }: { params: Promise<{ id: string
               {similar.map((x) => (
                 <li key={x.id}>
                   <Link href={`/app/b/${x.slug}`} className="flex items-center gap-2 rounded-xl bg-white p-2 hover:bg-sky">
-                    <ListingAvatar initials={x.initials} hue={x.hue} size={32} />
+                    <ListingAvatar listing={x} size={32} />
                     <span className="flex-1 t-label text-navy">{x.name}</span>
                     <ChevronRight className="size-4 text-muted-ink" aria-hidden />
                   </Link>

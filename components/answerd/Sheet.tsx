@@ -100,6 +100,8 @@ export function BottomSheet({
         )}
         <div className="min-h-0 flex-1 overflow-y-auto px-4 pb-4">{children}</div>
         {footer && <div className="border-t border-line px-4 py-3">{footer}</div>}
+        {/* In the phone, the sheet's last row keeps clear of the home indicator */}
+        {inFrame && !inline && <div aria-hidden className="shrink-0 pb-home" />}
       </div>
     </div>
   )

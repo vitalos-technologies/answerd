@@ -2,7 +2,8 @@
 import * as React from "react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
-import { Bot, CalendarCheck, ChevronRight, MessageCircle, MicOff, Pause, Phone, PhoneIncoming, PhoneMissed, Play, ShieldAlert } from "lucide-react"
+import { CalendarCheck, ChevronRight, MessageCircle, MicOff, Pause, Phone, PhoneIncoming, PhoneMissed, Play, ShieldAlert } from "lucide-react"
+import { DeskIcon } from "@/components/brand/DeskIcon"
 import { useStore } from "@/lib/store"
 import { Banner, EmptyState } from "@/components/answerd/Feedback"
 import { Button } from "@/components/answerd/Button"
@@ -105,7 +106,7 @@ export function RecordingPlayer({ durationSec, transcript, className }: { durati
 
 export function OutcomePill({ outcome }: { outcome: Call["outcome"] }) {
   const m = {
-    desk: { label: "Answered by desk", icon: Bot, cls: "bg-teal-tint text-teal-ink" },
+    desk: { label: "Answered by desk", icon: DeskIcon, cls: "bg-teal-tint text-teal-ink" },
     owner: { label: "Answered by you", icon: PhoneIncoming, cls: "bg-blue-tint text-blue" },
     missed: { label: "Missed", icon: PhoneMissed, cls: "bg-red-tint text-red" },
   }[outcome]
@@ -168,7 +169,7 @@ export function CallDetail({ callId, className }: { callId: string; className?: 
       {call.summary && (
         <section className="rounded-2xl bg-teal-tint p-4" aria-labelledby="summary">
           <h3 id="summary" className="flex items-center gap-1.5 t-caption text-teal-ink">
-            <Bot className="size-4" aria-hidden /> {call.outcome === "desk" ? "Answerd desk summary" : "Summary"}
+            <DeskIcon className="size-4" aria-hidden /> {call.outcome === "desk" ? "Answerd desk summary" : "Summary"}
           </h3>
           <p className="mt-1 t-body text-navy">{call.summary}</p>
         </section>

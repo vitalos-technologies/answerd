@@ -80,7 +80,7 @@ export default function ThreadPage({ params }: { params: Promise<{ threadId: str
           title={listing.name}
           sub={desk ? "Answerd desk online · replies in a minute" : replyLine(s, listing)}
           online={desk}
-          avatar={<ListingAvatar initials={listing.initials} hue={listing.hue} size={36} />}
+          avatar={<ListingAvatar listing={listing} size={36} />}
           href={`/app/b/${listing.slug}`}
           callHref={`/app/b/${listing.slug}/call`}
         />

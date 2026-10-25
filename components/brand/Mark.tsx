@@ -1,7 +1,7 @@
 import { useId } from "react"
 import { cn } from "@/lib/utils"
 
-export type MarkVariant = "color" | "reversed" | "mono" | "white"
+export type MarkVariant = "color" | "reversed" | "mono" | "white" | "current"
 
 // Speech bubble (tail bottom-left) with a handset and two signal arcs, drawn from the brand board.
 const BUBBLE = "M20.6 53.2 A21 21 0 1 0 9.6 41.4 L5.2 59.2 Z"
@@ -23,11 +23,11 @@ export function Mark({
 }) {
   const id = useId().replace(/:/g, "")
   const bubbleFill =
-    variant === "color" ? `url(#b${id})` : variant === "mono" ? "#0F2D5B" : "#FFFFFF"
+    variant === "color" ? `url(#b${id})` : variant === "mono" ? "#0F2D5B" : variant === "current" ? "currentColor" : "#FFFFFF"
   const handsetFill =
-    variant === "color" || variant === "mono" ? "#FFFFFF" : variant === "reversed" ? "#0F2D5B" : "#2563FF"
-  const arcInner = variant === "mono" ? "#0F2D5B" : variant === "white" ? "#FFFFFF" : `url(#a${id})`
-  const arcOuter = variant === "mono" ? "#0F2D5B" : "#14B8A6"
+    variant === "color" || variant === "mono" || variant === "current" ? "#FFFFFF" : variant === "reversed" ? "#0F2D5B" : "#2563FF"
+  const arcInner = variant === "mono" ? "#0F2D5B" : variant === "current" ? "currentColor" : variant === "white" ? "#FFFFFF" : `url(#a${id})`
+  const arcOuter = variant === "mono" ? "#0F2D5B" : variant === "current" ? "currentColor" : "#14B8A6"
   return (
     <svg
       width={size}

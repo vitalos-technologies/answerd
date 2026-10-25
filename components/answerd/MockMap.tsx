@@ -45,6 +45,47 @@ function fitBox(points: { lat: number; lng: number }[], center?: { lat: number; 
   return { north: north + padLat, south: south - padLat, east: east + padLng, west: west - padLng }
 }
 
+type Padding = { top: number; right: number; bottom: number; left: number }
+
+/**
+ * A box that shows every point inside the visible part of the map (the SVG is drawn with "slice",
+ * so a portrait phone sees a narrow middle strip), inset by the padding in px, at one scale for both axes.
+ */
+function fitToView(points: { lat: number; lng: number }[], size: { w: number; h: number }, pad: Padding): BBox {
+  const H = 640
+  const s = Math.max(size.w / W, size.h / H)
+  const vw = size.w / s
+  const vh = size.h / s
+  const x0 = (W - vw) / 2
+  const y0 = (H - vh) / 2
+  const L = x0 + pad.left / s
+  const R = x0 + vw - pad.right / s
+  const T = y0 + pad.top / s
+  const B = y0 + vh - pad.bottom / s
+  let north = -90,
+    south = 90,
+    east = -180,
+    west = 180
+  for (const p of points) {
+    north = Math.max(north, p.lat)
+    south = Math.min(south, p.lat)
+    east = Math.max(east, p.lng)
+    west = Math.min(west, p.lng)
+  }
+  const cLat = (north + south) / 2
+  const cLng = (east + west) / 2
+  const cos = Math.cos((cLat * Math.PI) / 180)
+  const wU = Math.max(40, R - L)
+  const hU = Math.max(40, B - T)
+  // Miles per map unit: enough for both axes, and never closer than about half a mile across
+  const mpu = Math.max(((east - west) * 69 * cos) / wU, ((north - south) * 69) / hU, 0.5 / wU)
+  const dLng = mpu / (69 * cos)
+  const dLat = mpu / 69
+  const westEdge = cLng - ((L + R) / 2) * dLng
+  const northEdge = cLat + ((T + B) / 2) * dLat
+  return { north: northEdge, south: northEdge - H * dLat, west: westEdge, east: westEdge + W * dLng }
+}
+
 /** Stylised SVG map (no map provider in the prototype). */
 export function MockMap({
   points,
@@ -58,6 +99,7 @@ export function MockMap({
   height = 320,
   showSearchArea = true,
   ariaLabel = "Map of results",
+  fitPadding,
 }: {
   points: MapPoint[]
   selectedId?: string | null
@@ -70,11 +112,28 @@ export function MockMap({
   height?: number | string
   showSearchArea?: boolean
   ariaLabel?: string
+  /** Fit every point inside the visible map with this padding in px (C-13); used when there's no center or circle. */
+  fitPadding?: Padding
 }) {
+  const rootRef = React.useRef<HTMLDivElement>(null)
+  const [size, setSize] = React.useState<{ w: number; h: number } | null>(null)
+  React.useEffect(() => {
+    const el = rootRef.current
+    if (!fitPadding || !el || typeof ResizeObserver === "undefined") return
+    const ro = new ResizeObserver(([e]) => {
+      const w = Math.round(e!.contentRect.width)
+      const h = Math.round(e!.contentRect.height)
+      setSize((s) => (s && s.w === w && s.h === h ? s : { w, h }))
+    })
+    ro.observe(el)
+    return () => ro.disconnect()
+  }, [fitPadding])
+  const pointsKey = points.map((p) => p.id).join(",")
+  const fit = !circle && !center && !!fitPadding && !!size && size.w > 0 && size.h > 0 && points.length > 0
   const initial = React.useMemo(
-    () => (circle ? fitBox([], { lat: circle.lat, lng: circle.lng }, (circle.radiusMiles * 2.5) / 0.64) : fitBox(points, center, spanMiles)),
+    () => (circle ? fitBox([], { lat: circle.lat, lng: circle.lng }, (circle.radiusMiles * 2.5) / 0.64) : fit ? fitToView(points, size!, fitPadding!) : fitBox(points, center, spanMiles)),
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [circle?.lat, circle?.lng, circle?.radiusMiles, center?.lat, center?.lng, points.length],
+    [circle?.lat, circle?.lng, circle?.radiusMiles, center?.lat, center?.lng, fit ? pointsKey : points.length, fit, size?.w, size?.h],
   )
   const [box, setBox] = React.useState<BBox>(initial)
   const [moved, setMoved] = React.useState(false)
@@ -114,7 +173,8 @@ export function MockMap({
     for (const p of points) {
       const { x, y } = proj(p.lat, p.lng)
       if (x < -40 || x > W + 40 || y < -40 || y > H + 40) continue
-      const near = p.id === selectedId ? undefined : out.find((c) => !c.items.some((i) => i.id === selectedId) && Math.hypot(c.x - x, c.y - y) < 64)
+      // Every pin clusters (the selected one too, shown with a ring) so no two targets overlap
+      const near = out.find((c) => Math.hypot(c.x - x, c.y - y) < 64)
       if (near) near.items.push(p)
       else out.push({ x, y, items: [p] })
     }
@@ -136,7 +196,7 @@ export function MockMap({
   const path = (pts: [number, number][]) => pts.map(([la, ln], i) => `${i ? "L" : "M"}${proj(la, ln).x.toFixed(1)},${proj(la, ln).y.toFixed(1)}`).join(" ")
 
   return (
-    <div className={cn("relative overflow-hidden rounded-2xl border border-line bg-sky", className)} style={{ height }}>
+    <div ref={rootRef} className={cn("relative overflow-hidden rounded-2xl border border-line bg-sky", className)} style={{ height }}>
       <svg
         ref={svgRef}
         viewBox={`0 0 ${W} ${H}`}
@@ -198,7 +258,7 @@ export function MockMap({
               <button
                 key={c.items.map((i) => i.id).join("-")}
                 type="button"
-                className="pointer-events-auto absolute flex size-10 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full border-[3px] border-white bg-navy t-label text-white shadow-card tnum"
+                className={cn("pointer-events-auto absolute flex size-10 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full border-[3px] border-white bg-navy t-label text-white shadow-card tnum", c.items.some((i) => i.id === selectedId) && "z-10 ring-2 ring-blue")}
                 style={{ left, top }}
                 onClick={() => {
                   onSelect?.(c.items[0]!.id)

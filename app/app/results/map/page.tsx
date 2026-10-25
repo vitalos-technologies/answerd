@@ -24,7 +24,8 @@ function ResultsMap() {
   const sel = selected ?? results[0]?.listing.id ?? null
   const rail = React.useRef<HTMLDivElement>(null)
   const loc = s.session.location
-  const center = loc ? { lat: loc.lat, lng: loc.lng } : results[0] ? undefined : DISTRICTS.SE25
+  // Fit to all results on open (48 px padding, plus the carousel at the bottom); with none, centre on the location
+  const center = results.length ? undefined : loc ? { lat: loc.lat, lng: loc.lng } : DISTRICTS.SE25
 
   const pick = (id: string) => {
     setSelected(id)
@@ -40,6 +41,8 @@ function ResultsMap() {
           height="100%"
           center={center}
           spanMiles={4}
+          // 48 px padding, plus the pin height above each point, the zoom buttons on the right and the carousel below
+          fitPadding={{ top: 48 + 32, right: 48 + 16, bottom: 48 + 128, left: 48 }}
           points={results.map((r) => ({ id: r.listing.id, lat: r.listing.geo.lat, lng: r.listing.geo.lng, desk: isDeskLive(s, r.listing), label: `${r.listing.name}${r.distance !== null ? `, ${r.distance.toFixed(1)} miles` : ""}` }))}
           selectedId={sel}
           onSelect={pick}
@@ -65,7 +68,7 @@ function ResultsMap() {
                   onPointerEnter={() => setSelected(r.listing.id)}
                   onFocusCapture={() => setSelected(r.listing.id)}
                 >
-                  <ResultRow r={r} selected={sel === r.listing.id} compact />
+                  <ResultRow r={r} selected={sel === r.listing.id} />
                 </div>
               ))}
             </div>

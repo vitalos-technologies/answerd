@@ -78,7 +78,7 @@ export function InstantNear() {
           return (
             <li key={l.id}>
               <Link href={`/b/${l.slug}`} className="card group flex h-full gap-3 p-4 hover:border-blue/40">
-                <ListingAvatar initials={l.initials} hue={l.hue} size={52} />
+                <ListingAvatar listing={l} size={52} />
                 <div className="min-w-0 flex-1">
                   <p className="truncate t-subhead group-hover:underline">{l.name}</p>
                   <p className="t-caption text-muted-ink">

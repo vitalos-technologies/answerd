@@ -19,9 +19,9 @@ import { fmtRelDay, fmtTime, greeting, ms } from "@/lib/time"
 function HomeSkeleton() {
   return (
     <div className="space-y-6 px-4 pt-4" role="status" aria-label="Loading">
-      <div className="grid grid-cols-5 gap-3">
-        {Array.from({ length: 10 }, (_, i) => (
-          <Skeleton key={i} className="h-[92px] rounded-2xl" />
+      <div className="grid grid-cols-4 gap-x-3 gap-y-4">
+        {Array.from({ length: 8 }, (_, i) => (
+          <Skeleton key={i} className="h-[96px] rounded-2xl" />
         ))}
       </div>
       <Skeleton className="h-6 w-48" />
@@ -76,7 +76,8 @@ export default function HomePage() {
             {!!unread && <span className="absolute right-2 top-2 inline-flex h-4 min-w-4 items-center justify-center rounded-full bg-red px-1 text-[10px] font-semibold text-white tnum">{unread}</span>}
           </Link>
         </div>
-        <SearchBar className="mt-3" href="/app/search" locationLabel={loc ? `${loc.postcode.split(" ")[0]} · 5 mi` : undefined} locationHref="/app/location?next=/app" />
+        {/* The location is already in the header, so Home's search bar has no location chip (C-11 and C-12 keep it) */}
+        <SearchBar className="mt-3" href="/app/search" />
       </div>
 
       {override === "loading" ? (
@@ -102,12 +103,15 @@ export default function HomePage() {
             <h2 id="cats" className="sr-only">
               Categories
             </h2>
-            <div className="grid grid-cols-5 gap-x-1 gap-y-3">
+            {/* 4 across with the spec's 72 px tiles: 8 categories in two rows, then "All categories" */}
+            <div className="grid grid-cols-4 gap-x-3 gap-y-4">
               {cats.slice(0, 8).map((c) => (
-                <CategoryTile key={c.id} icon={c.icon} label={c.plural === "Man and van" ? "Man & van" : c.plural.replace("Mobile mechanics", "Mechanics")} href={`/app/results?category=${c.id}`} className="[&>span:first-child]:size-[64px]" />
+                <CategoryTile key={c.id} icon={c.icon} label={c.plural === "Man and van" ? "Man & van" : c.plural.replace("Mobile mechanics", "Mechanics")} href={`/app/results?category=${c.id}`} />
               ))}
-              <CategoryTile icon="LayoutGrid" label="All" href="/app/categories" className="[&>span:first-child]:size-[64px]" />
             </div>
+            <Link href="/app/categories" className="mt-2 inline-flex min-h-11 items-center gap-1 t-label text-blue hover:underline">
+              All categories <ChevronRight className="size-4" aria-hidden />
+            </Link>
           </section>
 
           {upcoming && (
@@ -119,17 +123,20 @@ export default function HomePage() {
                 const l = s.listings.find((x) => x.id === upcoming.listingId)!
                 const svc = serviceById(s, upcoming.serviceId)
                 return (
-                  <Link href={`/app/bookings/${upcoming.id}`} className="card flex items-center gap-3 p-4 hover:border-blue">
-                    <ListingAvatar initials={l.initials} hue={l.hue} size={48} />
+                  <Link href={`/app/bookings/${upcoming.id}`} className="card flex items-start gap-3 p-4 hover:border-blue">
+                    <ListingAvatar listing={l} size={48} />
                     <span className="min-w-0 flex-1">
-                      <span className="block t-subhead truncate">{svc?.name}</span>
-                      <span className="block t-label font-normal text-slate truncate">{l.name}</span>
+                      <span className="line-clamp-2 t-subhead">{svc?.name}</span>
+                      <span className="line-clamp-2 t-label font-normal text-slate">{l.name}</span>
                       <span className="mt-0.5 flex items-center gap-1 t-label text-navy tnum">
                         <Clock className="size-4 text-blue" aria-hidden />
                         {fmtRelDay(upcoming.startAt, s.clock)}, {fmtTime(upcoming.startAt)}
                       </span>
+                      <span className="mt-2 flex">
+                        <StatusPill status={upcoming.status} />
+                      </span>
                     </span>
-                    <StatusPill status={upcoming.status} />
+                    <ChevronRight className="mt-3 size-5 shrink-0 text-muted-ink" aria-hidden />
                   </Link>
                 )
               })()}
@@ -154,7 +161,7 @@ export default function HomePage() {
                   return (
                     <Link key={l.id} href={`/app/b/${l.slug}`} className="card flex w-56 shrink-0 snap-start flex-col p-3.5 hover:border-blue">
                       <div className="flex items-center gap-2.5">
-                        <ListingAvatar initials={l.initials} hue={l.hue} size={44} />
+                        <ListingAvatar listing={l} size={44} />
                         <span className="min-w-0">
                           <span className="block t-label font-semibold text-navy truncate">{l.name}</span>
                           <span className="block t-caption text-muted-ink">

@@ -32,7 +32,7 @@ export function ShareSheet({ open, onClose, listing, title, message, onShared }:
   return (
     <BottomSheet open={open} onClose={onClose} title={title ?? "Share"}>
       <div className="flex items-center gap-3 rounded-2xl bg-sky p-3">
-        <ListingAvatar initials={listing.initials} hue={listing.hue} size={44} />
+        <ListingAvatar listing={listing} size={44} />
         <div className="min-w-0">
           <p className="t-label text-navy truncate">{listing.name}</p>
           <p className="t-caption text-muted-ink truncate">{url}</p>
@@ -75,7 +75,7 @@ export function ListingNotFound() {
 export function ListingMini({ listing, subtitle }: { listing: Listing; subtitle?: string }) {
   return (
     <div className="flex items-center gap-3 border-b border-line bg-white px-4 py-3">
-      <ListingAvatar initials={listing.initials} hue={listing.hue} size={40} />
+      <ListingAvatar listing={listing} size={40} />
       <div className="min-w-0">
         <p className="t-label font-semibold text-navy truncate">{listing.name}</p>
         {subtitle && <p className="t-caption text-muted-ink truncate">{subtitle}</p>}

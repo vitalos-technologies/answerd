@@ -80,7 +80,7 @@ function FindBusiness() {
                     <li key={l.id}>
                       {st === "taken" ? (
                         <div className="flex items-center gap-3 rounded-2xl border border-line p-3">
-                          <ListingAvatar initials={l.initials} hue={l.hue} size={44} />
+                          <ListingAvatar listing={l} size={44} />
                           <div className="min-w-0 flex-1">
                             <p className="truncate t-label text-navy">{l.name}</p>
                             <p className="truncate t-caption text-muted-ink">{l.address}</p>
@@ -94,7 +94,7 @@ function FindBusiness() {
                         </div>
                       ) : (
                         <Link href={st === "mine" ? "/app/biz" : `/app/biz/claim/${l.id}`} onClick={() => st === "mine" && s.setMode("business", l.businessId)} className="flex items-center gap-3 rounded-2xl border border-line p-3 hover:border-blue">
-                          <ListingAvatar initials={l.initials} hue={l.hue} size={44} />
+                          <ListingAvatar listing={l} size={44} />
                           <div className="min-w-0 flex-1">
                             <p className="truncate t-label text-navy">{l.name}</p>
                             <p className="truncate t-caption text-muted-ink">

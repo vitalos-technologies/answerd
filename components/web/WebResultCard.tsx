@@ -33,7 +33,7 @@ export function WebResultCard({ r, selected, onSelect, id }: { r: SearchResult; 
       aria-label={l.name}
     >
       <Link href={`/b/${l.slug}`} onFocus={onSelect} className="group flex gap-4 p-4 pb-3">
-        <ListingAvatar initials={l.initials} hue={l.hue} />
+        <ListingAvatar listing={l} />
         <div className="min-w-0 flex-1">
           {r.featured && <p className="t-caption text-amber-ink">Featured</p>}
           <h3 className="t-subhead truncate group-hover:underline">{l.name}</h3>
@@ -63,7 +63,7 @@ export function WebResultCard({ r, selected, onSelect, id }: { r: SearchResult; 
               <MessageCircle className="size-4 text-blue" aria-hidden /> Message
             </Link>
             {bookable && (
-              <Link href={`/b/${l.slug}/book`} className={action} aria-label={`Book ${l.name}`}>
+              <Link href={`/b/${l.slug}?book=1`} className={action} aria-label={`Book ${l.name}`}>
                 <CalendarPlus className="size-4 text-blue" aria-hidden /> Book
               </Link>
             )}

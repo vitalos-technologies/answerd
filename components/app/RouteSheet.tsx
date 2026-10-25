@@ -43,7 +43,9 @@ export function RouteSheet({
           </button>
         </div>
         <div className="min-h-0 flex-1 overflow-y-auto px-4 pb-5">{children}</div>
-        {footer && <div className="border-t border-line px-4 pb-6 pt-3">{footer}</div>}
+        {footer && <div className="border-t border-line px-4 py-3">{footer}</div>}
+        {/* Clear of the home indicator */}
+        <div aria-hidden className="shrink-0 pb-home" />
       </div>
     </div>
   )

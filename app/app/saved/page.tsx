@@ -31,7 +31,7 @@ export default function SavedPage() {
                 return (
                   <li key={l.id} className="card flex flex-col p-3">
                     <div className="flex items-start justify-between">
-                      <ListingAvatar initials={l.initials} hue={l.hue} size={44} />
+                      <ListingAvatar listing={l} size={44} />
                       <button type="button" aria-label={`Remove ${l.name} from saved`} onClick={() => (s.toggleSave(l.id), toast("Removed from saved", () => s.toggleSave(l.id)))} className="-m-1 inline-flex size-11 items-center justify-center rounded-full hover:bg-sky">
                         <Heart className="size-5 fill-red text-red" />
                       </button>

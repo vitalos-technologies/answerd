@@ -57,7 +57,7 @@ function Tile({ photo, index, count, cover, onCover, onMove, onDelete, onCaption
         >
           <GripVertical className="size-5" aria-hidden />
         </button>
-        <IconButton label={cover ? `Photo ${index + 1} is your cover` : `Set photo ${index + 1} as cover`} tone="white" onClick={onCover} className="absolute bottom-1.5 right-1.5" aria-pressed={cover}>
+        <IconButton label={cover ? `Photo ${index + 1} is your cover. Remove as cover` : `Set photo ${index + 1} as cover`} tone="white" onClick={onCover} className="absolute bottom-1.5 right-1.5" aria-pressed={cover}>
           <Star className={cn(cover && "fill-amber text-amber-ink")} />
         </IconButton>
       </div>
@@ -85,13 +85,14 @@ function Tile({ photo, index, count, cover, onCover, onMove, onDelete, onCaption
 function PhotosInner({ biz, onSaved, className }: EditorProps & { biz: Business }) {
   const updateBusiness = useStore((s) => s.updateBusiness)
   const [photos, setPhotos] = React.useState<Photo[]>(biz.photos)
-  const [coverId, setCoverId] = React.useState<string | undefined>(biz.coverPhotoId ?? biz.photos[0]?.id)
+  // The cover is the owner's choice; without one, C-16 and W-06 show the category band
+  const [coverId, setCoverId] = React.useState<string | undefined>(biz.coverPhotoId)
   const [camera, setCamera] = React.useState(false)
   const closeCamera = React.useCallback(() => setCamera(false), [])
   const fileRef = React.useRef<HTMLInputElement>(null)
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 6 } }), useSensor(KeyboardSensor))
   const full = photos.length >= MAX_PHOTOS
-  const cover = photos.find((p) => p.id === coverId) ?? photos[0]
+  const cover = photos.find((p) => p.id === coverId)
 
   const add = (names: string[]) => {
     const room = MAX_PHOTOS - photos.length
@@ -99,7 +100,7 @@ function PhotosInner({ biz, onSaved, className }: EditorProps & { biz: Business 
     const take = names.slice(0, room)
     const added = take.map((n, i) => ({ id: uid("ph"), caption: n.replace(/\.[a-z0-9]+$/i, "").replace(/[-_]+/g, " ").slice(0, 80), hue: hueOf(n + photos.length + i), icon: ICONS[(photos.length + i) % ICONS.length]! }))
     setPhotos((ps) => [...ps, ...added])
-    if (!coverId) setCoverId(added[0]?.id)
+    if (!coverId && !photos.length) setCoverId(added[0]?.id)
     toast(names.length > room ? `Added ${take.length}. That's the maximum of ${MAX_PHOTOS}.` : `${take.length} photo${take.length === 1 ? "" : "s"} added. Save to publish.`)
   }
   const move = (from: number, to: number) => {
@@ -178,8 +179,9 @@ function PhotosInner({ biz, onSaved, className }: EditorProps & { biz: Business 
                 count={photos.length}
                 cover={p.id === cover?.id}
                 onCover={() => {
-                  setCoverId(p.id)
-                  toast(`Photo ${i + 1} set as cover`)
+                  const unset = p.id === cover?.id
+                  setCoverId(unset ? undefined : p.id)
+                  toast(unset ? "Cover removed. Your listing shows your category instead." : `Photo ${i + 1} set as cover`)
                 }}
                 onMove={(dir) => move(i, i + dir)}
                 onDelete={() => {

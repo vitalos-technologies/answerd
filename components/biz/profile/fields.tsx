@@ -52,6 +52,8 @@ export function SaveBar({ label = "Save", children, className, disabled }: { lab
       <Button block type="submit" disabled={disabled}>
         {label}
       </Button>
+      {/* Clear of the home indicator in the phone (no-op on the web dashboard) */}
+      <div aria-hidden className="pb-home" />
     </div>
   )
 }

@@ -61,7 +61,7 @@ function AfterCall({ slug }: { slug: string }) {
     <AppScreen id="C-21" bg="white" header={<TopBar title="After the call" close={`/app/b/${slug}`} tone="clear" />}>
       <div className="px-4 pb-6">
         <div className="flex items-center gap-3">
-          <ListingAvatar initials={listing.initials} hue={listing.hue} size={48} />
+          <ListingAvatar listing={listing} size={48} />
           <p className="t-subhead">{listing.name}</p>
         </div>
 

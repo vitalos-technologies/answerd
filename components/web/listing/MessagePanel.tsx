@@ -103,7 +103,7 @@ export function MessagePanel({ listing, open, onOpenChange, initialText }: { lis
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent side="right" showCloseButton={false} className="w-full gap-0 bg-white p-0 sm:max-w-[440px]">
         <div className="flex items-center gap-3 border-b border-line px-4 py-3">
-          <ListingAvatar initials={listing.initials} hue={listing.hue} size={40} />
+          <ListingAvatar listing={listing} size={40} />
           <div className="min-w-0 flex-1">
             <SheetTitle className="truncate t-subhead">{listing.name}</SheetTitle>
             <SheetDescription className={desk ? "t-caption text-teal-ink" : "t-caption text-muted-ink"}>{desk ? "Answerd desk online · replies in a minute" : replyLine(s, listing)}</SheetDescription>

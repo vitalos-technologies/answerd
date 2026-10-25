@@ -1,7 +1,7 @@
 "use client"
 import * as React from "react"
 import Link from "next/link"
-import { Bot } from "lucide-react"
+import { DeskIcon } from "@/components/brand/DeskIcon"
 import { AppScreen, TopBar } from "@/components/shells/AppScreen"
 import { ListingAvatar } from "@/components/answerd/Media"
 import { EmptyState } from "@/components/answerd/Feedback"
@@ -34,7 +34,7 @@ export default function MessagesPage() {
               return (
                 <li key={t.id}>
                   <Link href={`/app/messages/${t.id}`} className="flex items-center gap-3 px-4 py-3.5 hover:bg-sky">
-                    <ListingAvatar initials={l.initials} hue={l.hue} size={48} />
+                    <ListingAvatar listing={l} size={48} />
                     <div className="min-w-0 flex-1">
                       <div className="flex items-center gap-2">
                         <p className={cn("flex-1 truncate t-label", unread ? "font-semibold text-navy" : "text-navy")}>{l.name}</p>
@@ -48,7 +48,7 @@ export default function MessagesPage() {
                       </div>
                       {lastBiz?.author === "desk" && (
                         <span className="mt-1 inline-flex h-5 items-center gap-1 rounded-full bg-teal-tint px-2 t-caption text-teal-ink">
-                          <Bot className="size-3" aria-hidden /> Answerd desk
+                          <DeskIcon className="size-3" aria-hidden /> Answerd desk
                         </span>
                       )}
                     </div>

@@ -90,7 +90,9 @@ export function PhoneFrame({ children }: { children: React.ReactNode }) {
 
   return (
     <div className="flex min-h-dvh items-start justify-center gap-8 bg-sky px-4 py-6 max-[499px]:p-0">
-      <div className="shrink-0 max-[499px]:w-full" style={{ width: 390 * scale, height: 844 * scale }}>
+      <div className="relative shrink-0 max-[499px]:w-full" style={{ width: 390 * scale, height: 844 * scale }}>
+        {/* Screen ID: above the frame's top-right corner, clear of the app's own header; top-right corner of the screen below 500 px */}
+        <ScreenIdBadge className="absolute -top-[22px] right-8 h-5 max-[499px]:fixed max-[499px]:right-0.5 max-[499px]:top-0.5 max-[499px]:h-4 max-[499px]:px-1.5 max-[499px]:text-[10px]" />
         <div
           className="relative flex h-[844px] w-[390px] origin-top-left flex-col overflow-hidden rounded-[48px] border-[10px] border-navy bg-sky shadow-overlay max-[499px]:h-dvh max-[499px]:w-full max-[499px]:rounded-none max-[499px]:border-0 max-[499px]:shadow-none"
           style={{ transform: scale < 1 ? `scale(${scale})` : undefined }}
@@ -99,7 +101,6 @@ export function PhoneFrame({ children }: { children: React.ReactNode }) {
           <StatusBar dark={biz} />
           <div className="relative min-h-0 flex-1">{hydrated ? children : <div className="absolute inset-0 bg-sky" aria-busy="true" />}</div>
           <div id="phone-overlay" className="pointer-events-none absolute inset-0 z-50 [&>*]:pointer-events-auto" />
-          <ScreenIdBadge className="absolute left-[78px] top-[13px] h-5 max-[499px]:left-1/2 max-[499px]:top-1 max-[499px]:-translate-x-1/2" />
           <Toaster className="absolute bottom-24" />
           <span className="pointer-events-none absolute bottom-1.5 left-1/2 z-[60] h-[5px] w-[134px] -translate-x-1/2 rounded-full bg-navy/80 max-[499px]:hidden" aria-hidden />
         </div>

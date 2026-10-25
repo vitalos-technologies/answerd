@@ -196,7 +196,7 @@ function AnswerdTurn({ turn, links, compact }: { turn: Turn; links: AskLinks; co
             return (
               <div key={m.listingId} className="card p-3">
                 <Link href={links.listing(l.slug)} className="flex items-start gap-3">
-                  <ListingAvatar initials={l.initials} hue={l.hue} size={44} />
+                  <ListingAvatar listing={l} size={44} />
                   <div className="min-w-0 flex-1">
                     <p className="truncate t-label font-semibold text-navy">{l.name}</p>
                     <p className="t-caption text-muted-ink">

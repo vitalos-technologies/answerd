@@ -62,9 +62,21 @@ export default function BookDetails({ params }: { params: Promise<{ slug: string
   }
 
   return (
-    <AppScreen id="C-26" bg="white" header={<TopBar title="Book" back />}>
+    <AppScreen
+      id="C-26"
+      bg="white"
+      header={<TopBar title="Book" back />}
+      footer={
+        // Sticky like C-24, C-25 and C-27; submits the form below
+        <div className="border-t border-line bg-white px-4 py-3">
+          <Button block type="submit" form="book-details">
+            Continue
+          </Button>
+        </div>
+      }
+    >
       <ListingMini listing={listing} subtitle={svc && draft?.startAt ? `${svc.name} · ${fmtDateTime(draft.startAt)}` : undefined} />
-      <form className="space-y-5 px-4 py-4" onSubmit={submit} noValidate>
+      <form id="book-details" className="space-y-5 px-4 py-4" onSubmit={submit} noValidate>
         <Stepper steps={BOOK_STEPS} current={2} />
         <h1 className="t-title">Your details</h1>
 
@@ -75,7 +87,7 @@ export default function BookDetails({ params }: { params: Promise<{ slug: string
               {alternatives.map((l) => (
                 <li key={l.id}>
                   <Link href={`/app/b/${l.slug}`} className="flex items-center gap-2 rounded-xl bg-white p-2 hover:bg-sky">
-                    <ListingAvatar initials={l.initials} hue={l.hue} size={32} />
+                    <ListingAvatar listing={l} size={32} />
                     <span className="flex-1 t-label text-navy">{l.name}</span>
                     <ChevronRight className="size-4 text-muted-ink" aria-hidden />
                   </Link>
@@ -159,9 +171,6 @@ export default function BookDetails({ params }: { params: Promise<{ slug: string
         <Field label="Contact phone" htmlFor="ph" error={errors.phone}>
           <TextInput id="ph" type="tel" value={phone} onChange={(e) => setPhone(e.target.value)} autoComplete="tel" aria-invalid={!!errors.phone} className="tnum" />
         </Field>
-        <Button block type="submit">
-          Continue
-        </Button>
       </form>
     </AppScreen>
   )
