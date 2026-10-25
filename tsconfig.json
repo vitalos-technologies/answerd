@@ -38,6 +38,8 @@
   ],
   "exclude": [
     ".claude",
+    ".open-next",
+    ".wrangler",
     "node_modules",
     "marketing-site"
   ]

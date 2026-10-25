@@ -15,6 +15,9 @@ const eslintConfig = defineConfig([
     // The marketing site is a separate Next.js project with its own lint config
     "marketing-site/**",
     ".claude/**",
+    // Cloudflare build output
+    ".open-next/**",
+    ".wrangler/**",
   ]),
 ]);
 

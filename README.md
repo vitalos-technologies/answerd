@@ -55,6 +55,15 @@ To sign in by hand, any UK mobile number works. Tayo is 07700 900123, Sam is 077
 | Admin console | `/admin/…` | A-01 to A-23 |
 | AI desk behaviours | Hub › Simulate, B-33, W-17 | D-01 to D-10 |
 
+## Deploy to Cloudflare Workers
+
+Uses OpenNext (`@opennextjs/cloudflare`); config is in `wrangler.jsonc` and `open-next.config.ts`.
+
+```bash
+pnpm preview:cf   # build and run locally in workerd
+pnpm deploy:cf    # build and deploy (needs CLOUDFLARE_API_TOKEN with Workers edit rights, and CLOUDFLARE_ACCOUNT_ID)
+```
+
 ## Tests
 
 ```bash
