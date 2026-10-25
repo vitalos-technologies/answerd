@@ -1,7 +1,7 @@
 "use client"
 import * as React from "react"
 import { useRouter, useSearchParams } from "next/navigation"
-import { ArrowLeft, ShieldCheck } from "lucide-react"
+import { ArrowLeft, KeyRound, ShieldCheck } from "lucide-react"
 import { Logo } from "@/components/brand/Logo"
 import { Button } from "@/components/answerd/Button"
 import { Banner } from "@/components/answerd/Feedback"
@@ -31,17 +31,22 @@ function AdminSignIn() {
   const [chosen, setChosen] = React.useState<string | null>(null)
 
   const accounts = [
-    ...users.filter((u) => u.staffRole && u.email && ["u-ife", "u-dan"].includes(u.id)),
+    ...users.filter((u) => u.staffRole && u.email && ["u-temitope", "u-ife", "u-dan"].includes(u.id)),
     ...users.filter((u) => ["u-tayo", "u-sam"].includes(u.id)),
   ]
 
   const choose = (addr: string) => {
     const a = addr.trim().toLowerCase()
     if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(a)) return setError("Enter a full email address.")
-    if (!a.endsWith(`@${DOMAIN}`)) return setError(`Only ${DOMAIN} Google Workspace accounts can sign in to Answerd admin. Switch to your Vitalos account.`)
+    // R2: refused attempts are recorded for the S-10 security log
+    const refuse = (msg: string, detail: string) => {
+      useStore.getState().recordSignInAttempt({ userId: users.find((x) => x.email?.toLowerCase() === a)?.id ?? null, email: a, method: "Google + authenticator", ok: false, detail })
+      setError(msg)
+    }
+    if (!a.endsWith(`@${DOMAIN}`)) return refuse(`Only ${DOMAIN} Google Workspace accounts can sign in to Answerd admin. Switch to your Vitalos account.`, `Not a ${DOMAIN} account`)
     const u = users.find((x) => x.email?.toLowerCase() === a && x.staffRole)
     const persona = PERSONAS.find((p) => p.userId === u?.id)
-    if (!u || !persona) return setError("This Vitalos account isn't an Answerd admin or support user yet. Ask an admin to invite you.")
+    if (!u || !persona) return refuse("This Vitalos account isn't an Answerd admin or support user yet. Ask an admin to invite you.", "Not an admin user")
     setError(null)
     setChosen(persona.id)
     setStep("code")
@@ -51,15 +56,29 @@ function AdminSignIn() {
     if (v.length < 6) return setCodeError("Enter all 6 digits.")
     if (v === "000000") {
       setCode("")
+      const u = users.find((x) => x.id === who?.userId)
+      useStore.getState().recordSignInAttempt({ userId: u?.id ?? null, email: u?.email ?? "", method: "Google + authenticator", ok: false, detail: "Wrong authenticator code" })
       return setCodeError("That code didn't match. Check your authenticator app and try again.")
     }
+    finish("Google + authenticator")
+  }
+
+  const finish = (method: "Google + authenticator" | "Google + security key") => {
     const st = useStore.getState()
-    st.signIn(chosen as "ife" | "dan", "google")
-    st.adminSignIn()
+    st.signIn(chosen as "ife" | "dan" | "temitope", "google")
+    st.adminSignIn(method)
     router.replace(next)
   }
 
+  const [keyBusy, setKeyBusy] = React.useState(false)
+  const signWithKey = () => {
+    setKeyBusy(true)
+    setTimeout(() => finish("Google + security key"), 600)
+  }
+
   const who = PERSONAS.find((p) => p.id === chosen)
+  const whoUser = users.find((x) => x.id === who?.userId)
+  const roleName = whoUser?.staffRole === "super_admin" ? "Super admin" : whoUser?.staffRole === "admin" ? "Admin" : "Support"
   return (
     <div className="flex min-h-dvh items-center justify-center bg-sky px-6 py-12">
       <ScreenMeta id="A-01" />
@@ -72,7 +91,7 @@ function AdminSignIn() {
             <Button variant="secondary" block className="mt-8" onClick={() => setStep("choose")}>
               <GoogleMark /> Sign in with Google
             </Button>
-            <p className="mt-4 t-caption text-muted-ink">Admin sessions last 12 hours. Every write is recorded in the audit log.</p>
+            <p className="mt-4 t-caption text-muted-ink">Admin sessions last 12 hours; super admin sessions last 8 hours. Every write is recorded in the audit log.</p>
           </>
         )}
         {step === "choose" && (
@@ -136,7 +155,7 @@ function AdminSignIn() {
             </span>
             <h1 className="mt-4 text-[22px] font-semibold text-navy">Enter your authenticator code</h1>
             <p className="mt-1 t-body text-slate">
-              Signed in as {who?.name} ({who?.role === "Answerd admin" ? "Admin" : "Support"}). Open your authenticator app and enter the 6-digit code for Answerd admin.
+              Signed in as {who?.name} ({roleName}). Open your authenticator app and enter the 6-digit code for Answerd admin.
             </p>
             <div className="mt-6">
               <OTPInput
@@ -158,6 +177,11 @@ function AdminSignIn() {
             <Button type="submit" block className="mt-6">
               Verify
             </Button>
+            {whoUser?.twoFactor?.includes("security_key") && (
+              <Button variant="secondary" block className="mt-2" loading={keyBusy} onClick={signWithKey}>
+                <KeyRound aria-hidden /> Use your security key
+              </Button>
+            )}
             <Button
               variant="ghost"
               size="md"

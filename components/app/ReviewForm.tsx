@@ -10,6 +10,7 @@ import { ListingAvatar } from "@/components/answerd/Media"
 import { useStore } from "@/lib/store"
 import type { Listing } from "@/lib/types"
 import { cn } from "@/lib/utils"
+import { rulesFor } from "@/lib/selectors"
 
 const ASPECTS = [
   ["quality", "Quality"],
@@ -60,7 +61,8 @@ export function ReviewForm({ listing, bookingId, callId, doneHref }: { listing: 
           e.preventDefault()
           const errs: typeof errors = {}
           if (!stars) errs.stars = "Choose a star rating"
-          if (text.trim().length < 20) errs.text = `A few more words please (${Math.max(0, 20 - text.trim().length)} to go)`
+          const min = rulesFor(s).reviewMinChars // R2: S-06 review rules
+          if (text.trim().length < min) errs.text = `A few more words please (${Math.max(0, min - text.trim().length)} to go)`
           setErrors(errs)
           if (Object.keys(errs).length) return
           s.postReview({ listingId: listing.id, bookingId, callId, stars, aspects, text: text.trim(), photos })
@@ -91,7 +93,7 @@ export function ReviewForm({ listing, bookingId, callId, doneHref }: { listing: 
             </div>
           ))}
         </fieldset>
-        <Field label="Your review" htmlFor="text" error={errors.text} hint={`${text.trim().length} characters · at least 20`}>
+        <Field label="Your review" htmlFor="text" error={errors.text} hint={`${text.trim().length} characters · at least ${rulesFor(s).reviewMinChars}`}>
           <TextArea id="text" rows={5} value={text} onChange={(e) => setText(e.target.value)} aria-invalid={!!errors.text} placeholder="What went well? Would you use them again?" />
         </Field>
         <div>

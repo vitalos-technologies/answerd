@@ -4,7 +4,7 @@ import Link from "next/link"
 import { AlertTriangle, CalendarPlus, MessageCircle, Phone, SendHorizontal } from "lucide-react"
 import { useStore } from "@/lib/store"
 import { askTurn, emptyContext, ASK_CHIPS, ASK_OPENING, GUEST_LIMIT, type AskContext, type AskReply, type Understanding } from "@/lib/askAnswerd"
-import { listingRating, isDeskLive } from "@/lib/selectors"
+import { listingRating, isDeskLive, platformOn } from "@/lib/selectors"
 import { fmtMiles, milesBetween, lookupPostcode } from "@/lib/geo"
 import { DeskAvatar, ListingAvatar } from "./Media"
 import { Rating } from "./Rating"
@@ -23,7 +23,7 @@ export interface AskLinks {
 let turnId = 0
 
 /** The Ask Answerd conversation (C-38 in the app, W-25 on the web). Runs Q-01 to Q-06. */
-export function AskChat({ links, onGuestLimit, initial, className, compact }: { links: AskLinks; onGuestLimit: () => void; initial?: string | null; className?: string; compact?: boolean }) {
+function AskChatLive({ links, onGuestLimit, initial, className, compact }: { links: AskLinks; onGuestLimit: () => void; initial?: string | null; className?: string; compact?: boolean }) {
   const s = useStore()
   const [turns, setTurns] = React.useState<Turn[]>([])
   const ctxRef = React.useRef<AskContext>(emptyContext())
@@ -230,4 +230,24 @@ function AnswerdTurn({ turn, links, compact }: { turn: Turn; links: AskLinks; co
       )}
     </div>
   )
+}
+
+/** R2 (S-07): a super admin can pause Ask Answerd platform-wide; C-38 and W-25 then show this instead of the chat. */
+export function AskChat(props: React.ComponentProps<typeof AskChatLive>) {
+  const on = useStore((s) => platformOn(s, "ask"))
+  if (!on) {
+    return (
+      <div className={cn("flex flex-col items-center justify-center px-6 py-10 text-center", props.className)} role="status">
+        <span className="inline-flex size-16 items-center justify-center rounded-full bg-amber-tint">
+          <AlertTriangle className="size-7 text-amber-ink" aria-hidden />
+        </span>
+        <h2 className="mt-4 t-heading">Ask Answerd is paused</h2>
+        <p className="mt-1 t-body text-slate">We&apos;ve paused the assistant for a short while. You can still search, call, message and book as normal.</p>
+        <Link href={props.links.listing("").startsWith("/app") ? "/app/search" : "/search"} className="mt-5 inline-flex h-11 items-center rounded-full bg-blue px-5 t-label font-semibold text-white hover:bg-blue-hover">
+          Search instead
+        </Link>
+      </div>
+    )
+  }
+  return <AskChatLive {...props} />
 }

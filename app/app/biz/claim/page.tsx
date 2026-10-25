@@ -16,6 +16,8 @@ import { districtOf, lookupPostcode } from "@/lib/geo"
 import { toast } from "@/lib/toast"
 import { cn } from "@/lib/utils"
 import type { Listing } from "@/lib/types"
+import { PausedNotice } from "@/components/admin/super/live"
+import { platformOn } from "@/lib/selectors"
 
 /** B-01: search all three layers by name and postcode. ?listing= (from C-17) or ?name=&postcode= prefill and search. */
 function FindBusiness() {
@@ -43,6 +45,15 @@ function FindBusiness() {
         .slice(0, 8)
         .map((x) => x.l)
     : []
+
+  // R2 (S-07): claims and new listings can be paused platform-wide
+  if (!platformOn(s, "claims")) {
+    return (
+      <AppScreen id="B-01" bg="white" header={<TopBar title="List your business" back />}>
+        <PausedNotice title="Claims are paused for now" body="We've paused new claims and listings for a short while. Your business can still be found and called on Answerd. Please try again later." action={{ href: "/app", label: "Back to Answerd" }} />
+      </AppScreen>
+    )
+  }
 
   return (
     <AppScreen id="B-01" bg="white" header={<TopBar title="List your business" back />}>

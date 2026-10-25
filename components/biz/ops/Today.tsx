@@ -5,7 +5,8 @@ import { CalendarClock, CalendarPlus, CalendarSync, ChevronRight, Hand, MapPin, 
 import { useStore } from "@/lib/store"
 import { StatusPill } from "@/components/answerd/Status"
 import { ButtonLink } from "@/components/answerd/Button"
-import { gateStatus, serviceById } from "@/lib/selectors"
+import { gateStatus, rulesFor, serviceById } from "@/lib/selectors"
+import { gbp } from "@/lib/format"
 import { dayKey, fmtTime, ms } from "@/lib/time"
 import { cn } from "@/lib/utils"
 import { deskState, jobsOn, needsYou, requestCountdown, todayStats, type NeedItem } from "./data"
@@ -198,7 +199,7 @@ export function GateCard({ businessId, className }: { businessId: string; classN
     <section className={cn("rounded-2xl bg-navy p-4 text-white", className)} aria-labelledby="gate-card">
       <p className="t-caption text-white/80">Your Answerd enquiries</p>
       <h2 id="gate-card" className="mt-1 t-subhead text-white">
-        Answerd sent you {g.count} enquiries. Keep your desk for £49/month.
+        Answerd sent you {g.count} enquiries. Keep your desk for {gbp(rulesFor(s).deskPricePence)}/month.
       </h2>
       <p className="mt-1 t-label font-normal text-white/90">Prices exclude VAT. Your listing stays free whatever you choose.</p>
       <ButtonLink href={links.billing} size="md" className="mt-3">

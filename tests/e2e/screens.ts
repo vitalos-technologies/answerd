@@ -13,6 +13,7 @@ const DASHBOARD = /^W-1[3-9]$/
 /** Who should be looking at a screen for it to show its main state. */
 export function personaFor(s: ScreenDef): PersonaId {
   if (s.surface === "admin") return s.id === "A-01" ? "guest" : "ife"
+  if (s.surface === "super") return "temitope"
   if (s.surface === "business") return "sam"
   if (s.surface === "web") return DASHBOARD.test(s.id) ? "sam" : "guest"
   return SIGN_IN_FLOW.includes(s.id) ? "guest" : "tayo"
@@ -20,7 +21,7 @@ export function personaFor(s: ScreenDef): PersonaId {
 
 export function viewportFor(s: ScreenDef) {
   if (s.surface === "customer" || s.surface === "business") return { width: 390, height: 844 }
-  if (s.surface === "admin" || DASHBOARD.test(s.id)) return { width: 1280, height: 900 }
+  if (s.surface === "admin" || s.surface === "super" || DASHBOARD.test(s.id)) return { width: 1280, height: 900 }
   return { width: 1440, height: 900 }
 }
 
@@ -37,7 +38,7 @@ export async function prepare(page: Page, s: ScreenDef) {
       if (admin) store.getState().adminSignIn()
       store.getState().setCookieConsent({ analytics: false, marketing: false })
     },
-    [persona, s.surface === "admin" && s.id !== "A-01"] as const,
+    [persona, (s.surface === "admin" && s.id !== "A-01") || s.surface === "super"] as const,
   )
 }
 

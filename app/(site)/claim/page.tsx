@@ -1,5 +1,6 @@
 import type { Metadata } from "next"
 import { ClaimStepper } from "@/components/web/claim/ClaimStepper"
+import { ClaimsGate } from "@/components/admin/super/live"
 
 export const metadata: Metadata = {
   title: "Claim or add your business",
@@ -9,5 +10,9 @@ export const metadata: Metadata = {
 
 /** W-11: Claim or add. */
 export default function Page() {
-  return <ClaimStepper />
+  return (
+    <ClaimsGate>
+      <ClaimStepper />
+    </ClaimsGate>
+  )
 }

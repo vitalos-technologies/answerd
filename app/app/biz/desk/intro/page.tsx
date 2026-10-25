@@ -6,7 +6,8 @@ import { BizScreen } from "@/components/app/biz"
 import { SampleCallPlayer } from "@/components/biz/desk/SampleCallPlayer"
 import { useStore } from "@/lib/store"
 import { buildScript } from "@/lib/deskScripts"
-import { deskFor, listingById, servicesFor } from "@/lib/selectors"
+import { deskFor, listingById, rulesFor, servicesFor } from "@/lib/selectors"
+import { gbp } from "@/lib/format"
 import { toast } from "@/lib/toast"
 
 const LINES = [
@@ -26,6 +27,7 @@ export default function DeskIntro() {
   const sampleListing = own ? listing : listingById(s, "l-swift-plumbing-heating")
   const sample = sampleListing ? buildScript(s, "D-01", sampleListing, 0) : null
   const desk = deskFor(s, listing?.businessId)
+  const rules = rulesFor(s) // R2: price, trial length and gate from S-06
   const footer =
     listing && desk ? (
       <div className="border-t border-line bg-white px-4 py-3">
@@ -45,11 +47,11 @@ export default function DeskIntro() {
             block
             onClick={() => {
               s.startDeskTrial(listing.businessId!)
-              toast("Your 14-day free trial has started")
+              toast(`Your ${rules.trialDays}-day free trial has started`)
               router.push("/app/biz/desk/setup")
             }}
           >
-            Start 14-day free trial
+            Start {rules.trialDays}-day free trial
           </Button>
         )}
       </div>
@@ -74,8 +76,8 @@ export default function DeskIntro() {
           </div>
           {sample && <SampleCallPlayer lines={sample.steps} callerName={sample.plan.caller.name} title={own ? `Sample call to ${listing!.name}` : `Sample call to ${sampleListing!.name}`} />}
           <div className="rounded-2xl bg-blue-tint p-4">
-            <p className="t-label text-navy">£49/month after your free trial. You won&apos;t pay anything before you&apos;ve had 10 enquiries from Answerd.</p>
-            <p className="mt-1 t-caption text-muted-ink">£49 ex VAT (£58.80 inc VAT). Cancel any time.</p>
+            <p className="t-label text-navy">{gbp(rules.deskPricePence)}/month after your free trial. You won&apos;t pay anything before you&apos;ve had {rules.gateEnquiries} enquiries from Answerd.</p>
+            <p className="mt-1 t-caption text-muted-ink">{gbp(rules.deskPricePence)} ex VAT ({gbp(Math.round(rules.deskPricePence * 1.2))} inc VAT). Cancel any time.</p>
           </div>
         </div>
       )}

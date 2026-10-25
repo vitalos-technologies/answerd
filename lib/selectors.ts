@@ -1,6 +1,6 @@
 // Pure derived data. Every screen reads through these so all surfaces agree.
 import type { DemoData } from "./seed"
-import type { BadgeKind, Booking, Listing, Service } from "./types"
+import type { BadgeKind, Booking, Listing, PlatformSwitches, PricingRules, RuleVersion, Service } from "./types"
 import { addDays, addMinutes, atMinutes, dayKey, fmtClock, fmtDate, hhmmToMin, minutesOfDay, ms, parts, MS_DAY } from "./time"
 import { districtOf, lookupPostcode, milesBetween, DISTRICTS } from "./geo"
 
@@ -61,8 +61,9 @@ export function verifiedCredentials(s: S, businessId: string | undefined, now: s
 
 export function isFeatured(s: S, listing: Listing, categoryId?: string) {
   if (!s.settings.featuredOn || !listing.businessId) return false
+  const slots = rulesFor(s).featuredSlotsPerArea
   return s.featuredSlots.some(
-    (f) => f.businessId === listing.businessId && (!categoryId || f.categoryId === categoryId) && listing.city === "london",
+    (f) => f.businessId === listing.businessId && f.position <= slots && (!categoryId || f.categoryId === categoryId) && listing.city === "london",
   )
 }
 
@@ -126,13 +127,28 @@ export function answerdEnquiries(s: S, listingId: string) {
 }
 
 export function gateStatus(s: S, businessId: string | undefined | null) {
+  // R2: thresholds come from the S-06 rules (defaults: 10 enquiries, day 60)
+  const r = rulesFor(s)
+  const target = r.gateEnquiries
   const biz = businessById(s, businessId)
-  if (!biz) return { met: false, count: 0, daysOk: false, override: false, gateDate: addDays(s.settings.launchDate, GATE_DAYS) }
+  if (!biz) return { met: false, count: 0, daysOk: false, override: false, gateDate: addDays(s.settings.launchDate, r.gateDays), target, enquiriesOk: false }
   const count = answerdEnquiries(s, biz.listingId).length
-  const gateDate = addDays(s.settings.launchDate, GATE_DAYS)
+  const gateDate = addDays(s.settings.launchDate, r.gateDays)
   const daysOk = ms(s.clock) >= ms(gateDate)
   const override = s.settings.gateOverrides.some((o) => o.businessId === businessId)
-  return { met: override || (count >= GATE_ENQUIRIES && daysOk), count, daysOk, override, gateDate }
+  const enquiriesOk = count >= target
+  return { met: override || (enquiriesOk && daysOk), count, daysOk, override, gateDate, target, enquiriesOk }
+}
+
+/**
+ * R2 (B-36, B-37, W-18): the paid-plan button follows whichever half of the gate is missing.
+ * Enquiries short: "Available after 10 enquiries" (also when both halves are missing);
+ * enquiries met but not the date: "Available from Fri 30 Oct"; both met: the plan's own call to action.
+ */
+export function gateButtonLabel(g: ReturnType<typeof gateStatus>, metLabel: string) {
+  if (g.met) return metLabel
+  if (!g.enquiriesOk) return `Available after ${g.target} enquiries`
+  return `Available from ${fmtDate(g.gateDate)}`
 }
 
 export function coversPostcode(s: S, businessId: string | undefined, postcode: string) {
@@ -249,4 +265,63 @@ export function alternativesFor(s: S, listingId: string, startAt: string, n = 3)
     .sort((a, b) => a.r - b.r || a.d - b.d)
     .slice(0, n)
     .map((a) => a.x)
+}
+
+// ------------------------------------------------------------------ R2 super admin: rules and platform switches
+
+/** S-06 defaults: exactly the behaviour before the rules moved into settings. */
+export const DEFAULT_RULES: PricingRules = {
+  deskPricePence: 4900,
+  featuredPricePence: 2900,
+  trialDays: 14,
+  gateEnquiries: GATE_ENQUIRIES,
+  gateDays: GATE_DAYS,
+  featuredSlotsPerArea: 3,
+  requestExpiryHours: 2,
+  reviewMinChars: 20,
+  reviewCallMinSec: 60,
+}
+
+/** Versions in the order they take effect (ties: the later version wins). */
+export function ruleVersions(s: S): RuleVersion[] {
+  return [...(s.settings.ruleVersions ?? [])].sort((a, b) => ms(a.effectiveAt) - ms(b.effectiveAt) || a.version - b.version)
+}
+
+/** The version in force on the demo clock (null before the first one, or without any). */
+export function currentRuleVersion(s: S): RuleVersion | null {
+  const now = ms(s.clock)
+  let cur: RuleVersion | null = null
+  for (const v of ruleVersions(s)) if (ms(v.effectiveAt) <= now) cur = v
+  return cur
+}
+
+/** The commercial rules in force now. Every price, threshold and limit reads through here. */
+export function rulesFor(s: S): PricingRules {
+  const v = currentRuleVersion(s)
+  return v ? { ...DEFAULT_RULES, ...v.rules } : DEFAULT_RULES
+}
+
+export const DEFAULT_PLATFORM: PlatformSwitches = {
+  signups: true,
+  claims: true,
+  payments: true,
+  ask: true,
+  maintenance: false,
+  maintenanceMessage: "We're making Answerd better. We'll be back by 6am. Calls to businesses still work as normal.",
+}
+
+/**
+ * S-07 platform switches in one cheap place. Gap-fill is the existing A-23 flag.
+ * `platformOn(s, "signups")` etc. is what C-06/C-08, B-01/W-11, checkout, C-38/W-25 and the shells check.
+ */
+export function platformFor(s: S): PlatformSwitches & { gapFill: boolean } {
+  return { ...DEFAULT_PLATFORM, ...s.settings.platform, gapFill: s.settings.gapFillOn }
+}
+
+export function platformOn(s: S, key: "signups" | "claims" | "payments" | "ask" | "gapFill") {
+  return platformFor(s)[key]
+}
+
+export function maintenanceOn(s: S) {
+  return platformFor(s).maintenance
 }

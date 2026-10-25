@@ -2,7 +2,7 @@
 
 Every ID in `docs/answerd-spec.md`, generated from `lib/screens.ts` by `pnpm coverage`.
 
-**155 of 155 built.** Customer app: 48/48 · Business mode: 41/41 · Web: 27/27 · Admin console: 23/23 · AI desk behaviours: 10/10 · Ask Answerd: 6/6
+**165 of 165 built.** Customer app: 48/48 · Business mode: 41/41 · Web: 27/27 · Admin console: 23/23 · Super admin: 10/10 · AI desk behaviours: 10/10 · Ask Answerd: 6/6
 
 ## Prototype-wide decisions
 
@@ -102,7 +102,7 @@ Every ID in `docs/answerd-spec.md`, generated from `lib/screens.ts` by `pnpm cov
 | B-33 | Test call | `/app/biz/desk/test-call` | Built |  |
 | B-34 | What the desk knows | `/app/biz/desk/knowledge` | Built |  |
 | B-35 | Handoff rules | `/app/biz/desk/handoff` | Built |  |
-| B-36 | Plan and billing | `/app/biz/billing` | Built | Upgrade and Get Featured open the web checkout at /dashboard/billing/checkout (W-18). |
+| B-36 | Plan and billing | `/app/biz/billing` | Built | Upgrade and Get Featured open the web checkout at /dashboard/billing/checkout (W-18). The gated button names the missing half of the gate: "Available after 10 enquiries" (also when both halves are missing), "Available from Fri 30 Oct" when only the date is missing, and "Keep your desk for £49/month" once open (same on B-37 and W-18). Numbers and prices come from S-06. |
 | B-37 | Featured | `/app/biz/featured` | Built |  |
 | B-38 | Team | `/app/biz/team` | Built |  |
 | B-39 | Business notifications | `/app/biz/notifications` | Built |  |
@@ -165,9 +165,24 @@ Every ID in `docs/answerd-spec.md`, generated from `lib/screens.ts` by `pnpm cov
 | A-18 | Monetise gate | `/admin/gate` | Built |  |
 | A-19 | Featured slots | `/admin/featured` | Built |  |
 | A-20 | Content | `/admin/content` | Built |  |
-| A-21 | Admin users | `/admin/users` | Built | Invited admin users appear in the list, but only the hub personas Ife and Dan can sign in through A-01. |
+| A-21 | Admin users | `/admin/users` | Built | Invited admin users appear in the list, but only the hub personas Temitope, Ife and Dan can sign in through A-01. Only a super admin can change a super admin. |
 | A-22 | Audit log | `/admin/audit` | Built |  |
 | A-23 | Settings | `/admin/settings` | Built | The desk kill switch accepts any 6-digit code except 000000, like every other code in the prototype. |
+
+## Super admin
+
+| ID | Screen | Route or trigger | Status | Deviation from the spec |
+| --- | --- | --- | --- | --- |
+| S-01 | Super admin overview | `/admin/super` | Built | Live figures are counted from store records. App installs, unit costs (S-03) and the price test (S-02) aren't in the demo data, so they are modelled or simulated from the seed and labelled as such. |
+| S-02 | Revenue and plans | `/admin/super/revenue` | Built |  |
+| S-03 | Costs and margins | `/admin/super/costs` | Built |  |
+| S-04 | Growth | `/admin/super/growth` | Built |  |
+| S-05 | Team and roles | `/admin/super/team` | Built | The permissions matrix edits what Admin and Support may do (useCan reads it); super-admin-only areas are fixed. |
+| S-06 | Pricing and rules | `/admin/super/pricing` | Built | Rules are versioned in Settings.ruleVersions with a reason and an effective date. The version in force on the demo clock drives the monetise gate, request expiry, trial length, plan prices (B-36, B-37, W-10, W-18 and checkout), Featured slots and review rules. |
+| S-07 | Platform switches | `/admin/super/switches` | Built | Switches are checked in one place (platformFor in lib/selectors.ts). Gap-fill is the A-23 flag; the desk kill switch stays in A-23. |
+| S-08 | Integrations | `/admin/super/integrations` | Built |  |
+| S-09 | Impersonate and data requests | `/admin/super/impersonate` | Built | Business views reuse the support view (read-only banner); customer views open the app as the customer with every control disabled. Both end on the demo clock or on returning to the console, and are audited. |
+| S-10 | Security log | `/admin/super/security` | Built | Admin console sign-ins are recorded in the store (A-01 and the hub persona switch); the rest comes from the audit log. |
 
 ## AI desk behaviours
 

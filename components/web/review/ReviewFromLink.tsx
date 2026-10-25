@@ -6,7 +6,7 @@ import { Button, ButtonLink } from "@/components/answerd/Button"
 import { Field, TextArea } from "@/components/answerd/Fields"
 import { ListingAvatar } from "@/components/answerd/Media"
 import { useStore } from "@/lib/store"
-import { serviceById } from "@/lib/selectors"
+import { rulesFor, serviceById } from "@/lib/selectors"
 import { fmtDate } from "@/lib/time"
 import { toast } from "@/lib/toast"
 import { cn } from "@/lib/utils"
@@ -133,7 +133,8 @@ export function ReviewFromLink({ token }: { token: string }) {
           e.preventDefault()
           const errs: typeof errors = {}
           if (!stars) errs.stars = "Choose a star rating"
-          if (text.trim().length < 20) errs.text = `A few more words please (${Math.max(0, 20 - text.trim().length)} to go)`
+          const min = rulesFor(s).reviewMinChars // R2: S-06 review rules
+          if (text.trim().length < min) errs.text = `A few more words please (${Math.max(0, min - text.trim().length)} to go)`
           setErrors(errs)
           if (Object.keys(errs).length) return
           s.postReview({ listingId: listing.id, bookingId: booking.id, stars, aspects, text: text.trim(), photos, authorName: booking.customerName, customerId: booking.customerId })
@@ -171,7 +172,7 @@ export function ReviewFromLink({ token }: { token: string }) {
             </div>
           ))}
         </fieldset>
-        <Field label="Your review" htmlFor="rv-text" error={errors.text} hint={`${text.trim().length} characters · at least 20`}>
+        <Field label="Your review" htmlFor="rv-text" error={errors.text} hint={`${text.trim().length} characters · at least ${rulesFor(s).reviewMinChars}`}>
           <TextArea id="rv-text" rows={5} value={text} onChange={(e) => setText(e.target.value)} aria-invalid={!!errors.text} placeholder="What went well? Would you use them again?" />
         </Field>
         <div>

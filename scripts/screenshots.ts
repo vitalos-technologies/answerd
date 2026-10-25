@@ -38,7 +38,7 @@ async function routed(browser: Browser, s: ScreenDef) {
   for (const vp of sizes) {
     const ctx = await browser.newContext({ viewport: vp, deviceScaleFactor: 1 })
     const page = await ctx.newPage()
-    await prepare(page, personaFor(s), s.surface === "admin" && s.id !== "A-01")
+    await prepare(page, personaFor(s), (s.surface === "admin" && s.id !== "A-01") || s.surface === "super")
     await page.goto(BASE + withClean(s.example))
     await shoot(page, vp.width === 390 && s.surface === "web" ? `${s.id}-390` : s.id)
     await ctx.close()

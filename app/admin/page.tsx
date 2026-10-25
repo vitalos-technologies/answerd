@@ -7,11 +7,13 @@ import { EmptyState } from "@/components/answerd/Feedback"
 import { useStore } from "@/lib/store"
 import { gbp } from "@/lib/format"
 import { fmtDate, fmtTime } from "@/lib/time"
+import { rulesFor } from "@/lib/selectors"
 
 /** A-02: KPIs computed from the store, each linking to its screen. */
 export default function AdminOverview() {
   const s = useStore()
   const k = overviewKpis(s)
+  const rules = rulesFor(s)
   const capPct = Math.round((k.placesSpend / Math.max(1, k.placesCap)) * 100)
   return (
     <AdminPage id="A-02" title="Overview" description={`Marketplace at ${fmtDate(s.clock)}, ${fmtTime(s.clock)}. Every number comes from live data and opens its screen.`}>
@@ -28,8 +30,8 @@ export default function AdminOverview() {
         <h2 className="mb-2 mt-6 t-caption uppercase tracking-wide text-muted-ink">AI desk and revenue</h2>
         <div className="grid grid-cols-3 gap-3 xl:grid-cols-6">
           <Kpi label="Desks live" value={k.desksLive} href="/admin/businesses?desk=live" sub={s.settings.killSwitch ? "Kill switch on: all paused" : "Answering calls and texts"} tone={s.settings.killSwitch ? "bad" : "plain"} />
-          <Kpi label="Trials" value={k.trials} href="/admin/billing" sub="14-day desk trials running" />
-          <Kpi label="Paying desks" value={k.payingDesks} href="/admin/billing" sub="£49/month ex VAT" />
+          <Kpi label="Trials" value={k.trials} href="/admin/billing" sub={`${rules.trialDays}-day desk trials running`} />
+          <Kpi label="Paying desks" value={k.payingDesks} href="/admin/billing" sub={`${gbp(rules.deskPricePence)}/month ex VAT`} />
           <Kpi label="MRR" value={gbp(k.mrr)} href="/admin/billing" sub="Active paid plans, ex VAT" />
           <Kpi label="Places spend today" value={gbp(k.placesSpend)} href="/admin/places" sub={`${capPct}% of the ${gbp(k.placesCap)} daily cap`} tone={capPct >= 100 ? "bad" : capPct >= 80 ? "warn" : "plain"} />
           <Kpi label="Desk QA to rate" value={k.queues.deskQa} href="/admin/desk-qa" sub="Unrated desk calls" />

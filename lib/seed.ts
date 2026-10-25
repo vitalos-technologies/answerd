@@ -4,6 +4,7 @@ import { DISTRICTS } from "./geo"
 import { Rng } from "./prng"
 import { DEMO_START, LAUNCH_DATE, addDays, addMinutes, london } from "./time"
 import { initials, slugify } from "./format"
+import { DEFAULT_PLATFORM, DEFAULT_RULES } from "./selectors"
 import type {
   Availability,
   Booking,
@@ -39,6 +40,9 @@ import type {
   PriceType,
   Photo,
   DeskRun,
+  DataRequest,
+  Integration,
+  SignInEvent,
   BookingDraft,
   SupportTicket,
   Category,
@@ -83,9 +87,12 @@ export interface DemoData {
   session: Session
   draft: BookingDraft | null
   deskRuns: DeskRun[]
+  // R2 super admin
+  signIns: SignInEvent[]
+  dataRequests: DataRequest[]
 }
 
-export const SEED_VERSION = 2
+export const SEED_VERSION = 3
 
 const L = london
 const NOW = DEMO_START
@@ -108,8 +115,9 @@ function buildUsers(rng: Rng): User[] {
     { id: "u-tayo", phone: mobile(123), email: "tayo@example.com", firstName: "Tayo", lastName: "Adeyemi", authProviders: ["phone"], marketingConsent: false, createdAt: "2026-09-02T18:20:00.000Z" },
     { id: "u-sam", phone: mobile(456), email: "sam@swiftplumbing.example", firstName: "Sam", lastName: "Okafor", authProviders: ["phone", "google"], marketingConsent: false, createdAt: "2026-08-31T08:10:00.000Z" },
     { id: "u-jo", phone: mobile(457), firstName: "Jo", lastName: "Reid", authProviders: ["phone"], marketingConsent: false, createdAt: "2026-09-11T09:00:00.000Z" },
-    { id: "u-ife", phone: mobile(901), email: "ife@vitalos.co.uk", firstName: "Ife", lastName: "Bello", authProviders: ["google"], marketingConsent: false, createdAt: "2026-07-31T09:00:00.000Z", staffRole: "admin" },
-    { id: "u-dan", phone: mobile(902), email: "dan@vitalos.co.uk", firstName: "Dan", lastName: "Price", authProviders: ["google"], marketingConsent: false, createdAt: "2026-07-31T09:00:00.000Z", staffRole: "support" },
+    { id: "u-ife", phone: mobile(901), email: "ife@vitalos.co.uk", firstName: "Ife", lastName: "Bello", authProviders: ["google"], marketingConsent: false, createdAt: "2026-07-31T09:00:00.000Z", staffRole: "admin", twoFactor: ["authenticator"] },
+    { id: "u-dan", phone: mobile(902), email: "dan@vitalos.co.uk", firstName: "Dan", lastName: "Price", authProviders: ["google"], marketingConsent: false, createdAt: "2026-07-31T09:00:00.000Z", staffRole: "support", twoFactor: ["authenticator"] },
+    { id: "u-temitope", phone: mobile(900), email: "temitope@vitalos.co.uk", firstName: "Temitope", lastName: "Agbola", authProviders: ["google"], marketingConsent: false, createdAt: "2026-07-01T09:00:00.000Z", staffRole: "super_admin", twoFactor: ["security_key", "authenticator"] },
   ]
   // Customers who book and review
   for (let i = 0; i < 40; i++) {
@@ -932,6 +940,12 @@ export function createSeed(): DemoData {
     homeCategoryOrder: ["plumbers", "electricians", "cleaners", "mobile-mechanics", "barbers", "locksmiths", "gardeners", "couriers"],
     homeBanner: "",
     seoIntroTemplate: "Find trusted {category} in {area}. Compare reviews, see who responds instantly, then call, message or book in two taps.",
+    // R2 super admin: v1 of the rules reproduces the launch behaviour exactly
+    ruleVersions: [{ id: "rv-1", version: 1, rules: { ...DEFAULT_RULES }, reason: "Launch pricing and rules", effectiveAt: LAUNCH_DATE, by: "u-temitope", at: "2026-08-25T10:00:00.000Z" }],
+    platform: { ...DEFAULT_PLATFORM },
+    accessReviewAt: "2026-10-02T10:00:00.000Z",
+    budgets: { telephony: 15000, sms: 5000, ai: 20000, places: 60000, hosting: 25000 },
+    integrations: INTEGRATIONS,
   }
 
   const audit: AuditEvent[] = [
@@ -1001,8 +1015,37 @@ export function createSeed(): DemoData {
     session,
     draft: null,
     deskRuns: [],
+    signIns: SIGN_INS,
+    dataRequests: DATA_REQUESTS,
   }
 }
+
+// ---------------------------------------------------------------- R2 super admin
+
+const INTEGRATIONS: Integration[] = [
+  { id: "int-stripe", name: "Stripe", purpose: "Subscriptions, checkout and the billing portal", status: "ok", owner: "Temitope Agbola", lastRotatedAt: "2026-09-28T10:00:00.000Z" },
+  { id: "int-telephony", name: "Telephony (Twilio Voice)", purpose: "Answerd numbers, call forwarding, desk voice and SMS", status: "degraded", owner: "Ife Bello", lastError: "Status callback timed out for 3 calls; retried and delivered", lastErrorAt: "2026-10-25T21:14:00.000Z", lastRotatedAt: "2026-08-30T09:00:00.000Z" },
+  { id: "int-places", name: "Google Maps and Places", purpose: "Maps, geocoding and gap-fill results", status: "ok", owner: "Ife Bello", lastError: "OVER_QUERY_LIMIT on Text Search; served from cache", lastErrorAt: "2026-10-22T18:02:00.000Z", lastRotatedAt: "2026-10-01T09:00:00.000Z" },
+  { id: "int-askbridge", name: "Askbridge", purpose: "Ask Answerd and Chat with Answerd", status: "ok", owner: "Temitope Agbola", lastRotatedAt: "2026-09-15T09:00:00.000Z" },
+  { id: "int-workforce", name: "Workforce", purpose: "AI desk receptionist agents, one tenant per business", status: "ok", owner: "Temitope Agbola", lastRotatedAt: "2026-09-15T09:00:00.000Z" },
+  { id: "int-email", name: "Email", purpose: "Receipts, digests and sign-in links", status: "ok", owner: "Dan Price", lastRotatedAt: "2026-07-20T09:00:00.000Z" },
+  { id: "int-push", name: "Push (APNs and FCM)", purpose: "App notifications for customers and businesses", status: "ok", owner: "Dan Price", lastError: "12 tokens expired; removed", lastErrorAt: "2026-10-24T07:00:00.000Z", lastRotatedAt: "2026-06-30T09:00:00.000Z" },
+]
+
+const SIGN_INS: SignInEvent[] = [
+  { id: "si-1", userId: "u-ife", email: "ife@vitalos.co.uk", at: "2026-10-26T08:42:00.000Z", method: "Google + authenticator", ok: true },
+  { id: "si-2", userId: null, email: "admin.answerd@gmail.com", at: "2026-10-25T02:13:00.000Z", method: "Google + authenticator", ok: false, detail: "Not a vitalos.co.uk account" },
+  { id: "si-3", userId: "u-dan", email: "dan@vitalos.co.uk", at: "2026-10-25T17:05:00.000Z", method: "Google + authenticator", ok: true },
+  { id: "si-4", userId: "u-dan", email: "dan@vitalos.co.uk", at: "2026-10-25T17:03:00.000Z", method: "Google + authenticator", ok: false, detail: "Wrong authenticator code" },
+  { id: "si-5", userId: "u-temitope", email: "temitope@vitalos.co.uk", at: "2026-10-23T16:30:00.000Z", method: "Google + security key", ok: true },
+  { id: "si-6", userId: "u-ife", email: "ife@vitalos.co.uk", at: "2026-10-23T08:51:00.000Z", method: "Google + authenticator", ok: true },
+]
+
+const DATA_REQUESTS: DataRequest[] = [
+  { id: "dr-1", userId: "u-c12", kind: "export", status: "pending", requestedAt: "2026-10-24T11:20:00.000Z" },
+  { id: "dr-2", userId: "u-c17", kind: "delete", status: "pending", requestedAt: "2026-10-25T19:45:00.000Z" },
+  { id: "dr-3", userId: "u-c3", kind: "export", status: "approved", requestedAt: "2026-10-09T15:00:00.000Z", decidedAt: "2026-10-12T10:00:00.000Z", decidedBy: "u-temitope", reason: "Identity confirmed by email" },
+]
 
 /** Personas shown in the hub switcher */
 export const PERSONAS: { id: Exclude<import("./types").PersonaId, "custom">; name: string; role: string; userId: string | null; description: string }[] = [
@@ -1012,4 +1055,5 @@ export const PERSONAS: { id: Exclude<import("./types").PersonaId, "custom">; nam
   { id: "jo", name: "Jo Reid", role: "Staff · Swift Plumbing", userId: "u-jo", description: "Staff-only account: Today, Inbox and Diary, own jobs only." },
   { id: "ife", name: "Ife Bello", role: "Answerd admin", userId: "u-ife", description: "Full admin console access." },
   { id: "dan", name: "Dan Price", role: "Support agent", userId: "u-dan", description: "Read-only admin, can moderate reviews." },
+  { id: "temitope", name: "Temitope A.", role: "Super admin · Vitalos", userId: "u-temitope", description: "Everything Admin can do, plus revenue, costs, roles, pricing rules, switches and integrations." },
 ]

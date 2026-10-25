@@ -9,7 +9,8 @@ import { Button, ButtonLink } from "@/components/answerd/Button"
 import { DataGate } from "@/components/app/helpers"
 import { SmsConfirmSheet } from "@/components/biz/account/SmsConfirmSheet"
 import { featuredRows } from "@/components/biz/account/FeaturedAvailability"
-import { gateStatus, GATE_ENQUIRIES } from "@/lib/selectors"
+import { gateButtonLabel, gateStatus, platformOn, rulesFor } from "@/lib/selectors"
+import type { DemoData } from "@/lib/seed"
 import { gbp } from "@/lib/format"
 import { addDays, fmtDate, fmtDateYear } from "@/lib/time"
 import { toast } from "@/lib/toast"
@@ -23,6 +24,12 @@ export const PLAN_INFO: Record<PaidPlan, { name: string; icon: typeof Bot; price
 }
 
 export const vatOf = (pence: number) => Math.round(pence * 0.2)
+
+/** R2: plan prices come from the S-06 rules, not PLAN_INFO. */
+export function planPrice(s: Pick<DemoData, "settings" | "clock">, plan: PaidPlan) {
+  const r = rulesFor(s as DemoData)
+  return plan === "desk" ? r.deskPricePence : r.featuredPricePence
+}
 
 /** The label every mock hosted page carries. */
 export function PrototypeLabel({ children = "Prototype checkout, no card needed" }: { children?: React.ReactNode }) {
@@ -55,7 +62,7 @@ export function Checkout({ businessId, plan }: { businessId: string; plan: PaidP
               <PlanIcon plan={p} />
               <span className="min-w-0 flex-1">
                 <span className="block t-subhead">{PLAN_INFO[p].name}</span>
-                <span className="block t-label font-normal text-slate tnum">{gbp(PLAN_INFO[p].pricePence)}/month ex VAT</span>
+                <span className="block t-label font-normal text-slate tnum">{gbp(planPrice(s, p))}/month ex VAT</span>
               </span>
             </Link>
           ))}
@@ -65,12 +72,13 @@ export function Checkout({ businessId, plan }: { businessId: string; plan: PaidP
   }
 
   const info = PLAN_INFO[plan]
-  const vat = vatOf(info.pricePence)
-  const total = info.pricePence + vat
+  const price = planPrice(s, plan)
+  const vat = vatOf(price)
+  const total = price + vat
   const sub = s.subscriptions.find((x) => x.businessId === businessId && x.plan === plan)
   const active = sub?.status === "active" || sub?.status === "past_due"
   const noSlot = plan === "featured" && !featuredRows(s, businessId).some((r) => r.free > 0 && !r.mine)
-  const blocked = !g.met ? "gate" : active ? "active" : noSlot ? "slot" : null
+  const blocked = !g.met ? "gate" : active ? "active" : !platformOn(s, "payments") ? "payments" : noSlot ? "slot" : null
 
   const confirm = () => {
     setBusy(true)
@@ -101,7 +109,7 @@ export function Checkout({ businessId, plan }: { businessId: string; plan: PaidP
           <dl className="mt-5 divide-y divide-line border-y border-line t-body">
             <div className="flex justify-between gap-4 py-3">
               <dt className="text-slate">{info.name}, monthly (ex VAT)</dt>
-              <dd className="text-navy tnum">{gbp(info.pricePence)}</dd>
+              <dd className="text-navy tnum">{gbp(price)}</dd>
             </div>
             <div className="flex justify-between gap-4 py-3">
               <dt className="text-slate">VAT at 20%</dt>
@@ -129,8 +137,14 @@ export function Checkout({ businessId, plan }: { businessId: string; plan: PaidP
             </div>
           </div>
           {blocked === "gate" && (
-            <Banner tone="info" className="mt-4" icon={<Lock className="size-5" aria-hidden />} title={`Available after ${GATE_ENQUIRIES} enquiries`}>
-              You&apos;ve had {Math.min(g.count, GATE_ENQUIRIES)} of {GATE_ENQUIRIES} enquiries from Answerd. You won&apos;t pay anything before you&apos;ve had {GATE_ENQUIRIES}.
+            <Banner tone="info" className="mt-4" icon={<Lock className="size-5" aria-hidden />} title={gateButtonLabel(g, "")}>
+              You&apos;ve had {Math.min(g.count, g.target)} of {g.target} enquiries from Answerd.{" "}
+              {g.enquiriesOk ? `Paid plans open on ${fmtDate(g.gateDate)}.` : `You won't pay anything before you've had ${g.target}.`}
+            </Banner>
+          )}
+          {blocked === "payments" && (
+            <Banner tone="warning" className="mt-4" title="Payments are paused">
+              Answerd has paused new payments for a short while. Nothing is charged; try again later.
             </Banner>
           )}
           {blocked === "active" && (

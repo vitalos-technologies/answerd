@@ -30,6 +30,10 @@ import type {
   BookingDraft,
   QnA,
   Settings,
+  PlatformSwitches,
+  PricingRules,
+  SignInEvent,
+  StaffRole,
 } from "./types"
 import { uid } from "./prng"
 import { addDays, addHours, addMinutes, fmtDate, fmtDateTime, fmtRelDay, fmtTime, ms, dayKey, MS_HOUR, MS_DAY, DEMO_START } from "./time"
@@ -45,9 +49,11 @@ import {
   nextSlots,
   serviceById,
   servicesFor,
+  rulesFor,
+  platformFor,
 } from "./selectors"
 import { buildScript, deskReply as computeDeskReply, ownerUserIds, stepsToTranscript, type ScriptId, type ScriptOptions, type ScriptPlan, type ScriptStep } from "./deskScripts"
-import { initials, slugify, gbp, priceWithVat } from "./format"
+import { initials, slugify, gbp, priceWithVat, plural } from "./format"
 import { DISTRICTS, lookupPostcode } from "./geo"
 import { toast } from "./toast"
 import { findCompany, matchDirector } from "./companiesHouse"
@@ -188,7 +194,7 @@ export interface Actions {
   transferOwnership: (businessId: string, memberId: string) => void
   deleteBusiness: (businessId: string) => void
   // admin
-  adminSignIn: () => void
+  adminSignIn: (method?: SignInEvent["method"]) => void
   adminDecide: (queue: "claim" | "credential" | "review" | "report" | "listing" | "customer" | "desk_qa" | "gate" | "featured", id: string, decision: string, reason: string, extra?: Record<string, unknown>) => void
   adminAudit: (action: string, targetType: string, targetId: string, reason: string) => void
   mergeListings: (survivorId: string, otherId: string, fields: Partial<Listing>, reason: string) => void
@@ -211,7 +217,7 @@ export interface Actions {
   adminTaxonomy: (op: "add" | "rename" | "merge" | "map", input: { id?: string; name?: string; parentId?: string | null; intoId?: string; sicCodes?: string[]; osmTags?: string[]; placesTypes?: string[] }, reason: string) => void
   adminFeatured: (slotId: string, op: "assign" | "waitlist_add" | "waitlist_remove", businessId: string, reason: string) => void
   adminRefund: (invoiceId: string, reason: string) => void
-  adminStaff: (op: "invite" | "remove" | "role", input: { userId?: string; firstName?: string; lastName?: string; email?: string; role?: "admin" | "support" }, reason: string) => void
+  adminStaff: (op: "invite" | "remove" | "role", input: { userId?: string; firstName?: string; lastName?: string; email?: string; role?: StaffRole }, reason: string) => void
   adminDeleteCustomer: (userId: string, reason: string) => void
   // P6
   setListingPublished: (businessId: string, published: boolean) => void
@@ -219,6 +225,18 @@ export interface Actions {
   setThreadNotes: (threadId: string, notes: string) => void
   ensureThread: (listingId: string, customer: { customerId: string | null; name: string; phone?: string }) => string
   assignBooking: (bookingId: string, userId: string | null) => void
+  // R2 super admin (S-01 to S-10)
+  setRules: (patch: Partial<PricingRules>, reason: string, effectiveAt?: string) => void
+  setPlatformSwitch: (patch: Partial<PlatformSwitches>, reason: string) => void
+  setRolePerms: (role: "admin" | "support", perms: string[], reason: string) => void
+  recordAccessReview: (reason: string) => void
+  setBudget: (line: string, pence: number, reason: string) => void
+  rotateSecret: (integrationId: string, reason: string) => void
+  startImpersonation: (kind: "customer" | "business", targetId: string, minutes: number, reason: string) => boolean
+  endImpersonation: () => void
+  decideDataRequest: (id: string, approve: boolean, reason: string) => void
+  recordSignInAttempt: (input: Omit<SignInEvent, "id" | "at">) => void
+  exportAudit: (what: string, rows: number) => void
 }
 
 export type Store = Data & Actions
@@ -257,6 +275,7 @@ function enquiry(d: D, listingId: string, kind: "call" | "message" | "booking" |
 }
 
 function gateReached(d: D, businessId: string) {
+  const r = rulesFor(d as DemoData)
   notify(d, {
     userId: "",
     userIds: ownerUserIds(d as DemoData, businessId),
@@ -264,7 +283,7 @@ function gateReached(d: D, businessId: string) {
     mode: "business",
     businessId,
     title: "Monetise gate reached",
-    body: "Answerd sent you 10 enquiries. Keep your desk for £49/month.",
+    body: `Answerd sent you ${r.gateEnquiries} enquiries. Keep your desk for ${gbp(r.deskPricePence)}/month.`,
     href: "/app/biz/billing",
     channels: ["push", "email"],
   })
@@ -499,7 +518,7 @@ function applyStep(d: D, run: Draft<DeskRunState>, index: number) {
       createdBy: "desk",
       policy: "Free to cancel until 24 hours before",
       priceText: deskPriceText(serviceById(d as DemoData, b.serviceId)),
-      requestExpiresAt: requested ? addHours(d.clock, 2) : undefined,
+      requestExpiresAt: requested ? addHours(d.clock, rulesFor(d as DemoData).requestExpiryHours) : undefined,
       createdAt: d.clock,
     })
     event(d, id, requested ? "requested" : "confirmed", "desk")
@@ -631,6 +650,32 @@ function startRun(d: D, scriptId: ScriptId, listingId: string, opts: ScriptOptio
   return d.runs.at(-1)!
 }
 
+// ------------------------------------------------------------------ R2 super admin helpers
+
+/** Default permissions per role (S-05 matrix); Settings.rolePerms overrides them. */
+export const ADMIN_DEFAULT_PERMS = ["claims", "credentials", "reviews", "reports", "listings", "merge", "customers", "desk_qa", "imports", "taxonomy", "places", "billing", "gate", "featured", "content", "users", "settings", "support_view"]
+export const SUPPORT_DEFAULT_PERMS = ["reviews", "support_view"]
+
+function isSuper(d: D) {
+  const imp = d.session.impersonation
+  const id = imp?.byUserId ?? d.session.userId
+  return d.users.find((u) => u.id === id)?.staffRole === "super_admin"
+}
+
+function endImpersonation(d: D, action: string, reason: string) {
+  const imp = d.session.impersonation
+  if (!imp) return
+  if (imp.kind === "business") d.session.supportViewBusinessId = null
+  else {
+    d.session.personaId = imp.restore.personaId
+    d.session.userId = imp.restore.userId
+    d.session.mode = imp.restore.mode
+    d.session.currentBusinessId = imp.restore.currentBusinessId
+  }
+  d.session.impersonation = null
+  d.audit.unshift({ id: uid("au"), actorId: imp.byUserId, action, targetType: imp.kind === "business" ? "business" : "customer", targetId: imp.targetId, reason, at: d.clock })
+}
+
 // ------------------------------------------------------------------ store
 
 const timers = new Map<string, ReturnType<typeof setTimeout>[]>()
@@ -662,7 +707,8 @@ export const useStore = create<Store>()(
               d.session.onboarded = true
               if (!d.session.location) d.session.location = { postcode: "SE25 4AA", label: "South Norwood", lat: 51.3978, lng: -0.0742 }
             }
-            d.session.adminSignedIn = personaId === "ife" || personaId === "dan" ? d.session.adminSignedIn : false
+            d.session.adminSignedIn = personaId === "ife" || personaId === "dan" || personaId === "temitope" ? d.session.adminSignedIn : false
+            d.session.impersonation = null
             d.session.askCount = 0
           }),
         signInByPhone: (phone) => {
@@ -921,7 +967,7 @@ export const useStore = create<Store>()(
               createdBy: input.createdBy ?? "customer",
               policy,
               priceText: svc ? priceWithVat(svc) : "",
-              requestExpiresAt: status === "requested" ? addHours(d.clock, 2) : undefined,
+              requestExpiresAt: status === "requested" ? addHours(d.clock, rulesFor(d as DemoData).requestExpiryHours) : undefined,
               createdAt: d.clock,
             })
             event(d, bookingId, status === "requested" ? "requested" : "confirmed", input.createdBy === "desk" ? "desk" : input.createdBy === "owner" ? "owner" : "customer")
@@ -929,7 +975,7 @@ export const useStore = create<Store>()(
             const when = `${fmtDate(input.startAt).split(" ")[0]} ${fmtTime(input.startAt)}`
             if (biz) {
               if (status === "requested") {
-                notify(d, { userId: "", userIds: ownerUserIds(d as DemoData, biz.id), event: "booking_request", mode: "business", businessId: biz.id, title: "New booking request", body: `New booking request: ${(svc?.name ?? "job").toLowerCase()}, ${when}. Reply within 2 hours.`, href: `/app/biz/requests/${bookingId}`, channels: ["push", "sms"] })
+                notify(d, { userId: "", userIds: ownerUserIds(d as DemoData, biz.id), event: "booking_request", mode: "business", businessId: biz.id, title: "New booking request", body: `New booking request: ${(svc?.name ?? "job").toLowerCase()}, ${when}. Reply within ${plural(rulesFor(d as DemoData).requestExpiryHours, "hour")}.`, href: `/app/biz/requests/${bookingId}`, channels: ["push", "sms"] })
               } else if (input.createdBy !== "owner") {
                 notify(d, { userId: "", userIds: ownerUserIds(d as DemoData, biz.id, true), event: "new_booking", mode: "business", businessId: biz.id, title: "New booking", body: `${customerName} booked ${(svc?.name ?? "a job").toLowerCase()}, ${when}.`, href: `/app/biz/jobs/${bookingId}` })
               }
@@ -1399,13 +1445,14 @@ export const useStore = create<Store>()(
             if (!c) return
             c.status = "trial"
             c.trialUsed = true
-            c.trialEndsAt = addDays(d.clock, 14)
+            const rules = rulesFor(d as DemoData)
+            c.trialEndsAt = addDays(d.clock, rules.trialDays)
             c.setupStep = 1
             if (!c.number) c.number = `020 7946 0${String(720 + d.deskConfigs.indexOf(c)).padStart(3, "0")}`
             const sub = d.subscriptions.find((x) => x.businessId === businessId && x.plan === "desk")
             if (sub) Object.assign(sub, { status: "trialing", currentPeriodEnd: c.trialEndsAt })
-            else d.subscriptions.push({ id: uid("sub"), businessId, plan: "desk", status: "trialing", stripeId: `sub_test_${businessId.slice(4, 14)}`, currentPeriodEnd: c.trialEndsAt, pricePence: 4900 })
-            notify(d, { userId: "", userIds: ownerUserIds(d as DemoData, businessId), event: "trial_started", mode: "business", businessId, title: "AI desk trial started", body: "Your 14-day AI desk trial has started. Set it up in a few minutes.", href: "/app/biz/desk/setup", channels: ["push", "email"] })
+            else d.subscriptions.push({ id: uid("sub"), businessId, plan: "desk", status: "trialing", stripeId: `sub_test_${businessId.slice(4, 14)}`, currentPeriodEnd: c.trialEndsAt, pricePence: rules.deskPricePence })
+            notify(d, { userId: "", userIds: ownerUserIds(d as DemoData, businessId), event: "trial_started", mode: "business", businessId, title: "AI desk trial started", body: `Your ${rules.trialDays}-day AI desk trial has started. Set it up in a few minutes.`, href: "/app/biz/desk/setup", channels: ["push", "email"] })
           }),
         setDeskStatus: (businessId, status) =>
           mut((d) => {
@@ -1488,7 +1535,8 @@ export const useStore = create<Store>()(
         // ---------------------------------------------------------- billing and team
         startSubscription: (businessId, plan) =>
           mut((d) => {
-            const price = plan === "desk" ? 4900 : 2900
+            const rules = rulesFor(d as DemoData)
+            const price = plan === "desk" ? rules.deskPricePence : rules.featuredPricePence
             const sub = d.subscriptions.find((x) => x.businessId === businessId && x.plan === plan)
             if (sub) Object.assign(sub, { status: "active", currentPeriodEnd: addDays(d.clock, 30), pricePence: price })
             else d.subscriptions.push({ id: uid("sub"), businessId, plan, status: "active", stripeId: `sub_test_${uid("x").slice(-8)}`, currentPeriodEnd: addDays(d.clock, 30), pricePence: price })
@@ -1502,7 +1550,7 @@ export const useStore = create<Store>()(
             }
             if (plan === "featured") {
               const l = d.listings.find((x) => x.businessId === businessId)
-              const slot = d.featuredSlots.find((f) => !f.businessId && l?.categoryIds.includes(f.categoryId))
+              const slot = d.featuredSlots.find((f) => !f.businessId && f.position <= rules.featuredSlotsPerArea && l?.categoryIds.includes(f.categoryId))
               if (slot) {
                 slot.businessId = businessId
                 slot.startsAt = d.clock
@@ -1560,7 +1608,13 @@ export const useStore = create<Store>()(
           }),
 
         // ---------------------------------------------------------- admin
-        adminSignIn: () => mut((d) => void (d.session.adminSignedIn = true)),
+        adminSignIn: (method) =>
+          mut((d) => {
+            d.session.adminSignedIn = true
+            // R2: every console sign-in is recorded for S-05 (last sign-in) and S-10 (security log)
+            const u = currentUser(d)
+            if (u?.staffRole) d.signIns.unshift({ id: uid("si"), userId: u.id, email: u.email ?? "", at: d.clock, method: method ?? "Prototype hub", ok: true })
+          }),
         adminAudit: (action, targetType, targetId, reason) => mut((d) => void d.audit.unshift({ id: uid("au"), actorId: d.session.userId ?? "", action, targetType, targetId, reason, at: d.clock })),
         adminDecide: (queue, id, decision, reason, extra = {}) =>
           mut((d) => {
@@ -1706,7 +1760,7 @@ export const useStore = create<Store>()(
             if (!biz) return
             const g = gateStatus(d as DemoData, businessId)
             if (g.met) return
-            if (g.count < 10) for (let i = g.count; i < 10; i++) d.enquiries.push({ id: uid("e"), listingId: biz.listingId, kind: "message", at: d.clock, layer: "claimed" })
+            if (g.count < g.target) for (let i = g.count; i < g.target; i++) d.enquiries.push({ id: uid("e"), listingId: biz.listingId, kind: "message", at: d.clock, layer: "claimed" })
             if (!g.daysOk) d.settings.gateOverrides.push({ businessId, reason: "Prototype: monetise gate triggered from the hub", at: d.clock })
             gateReached(d, businessId)
           }),
@@ -1810,6 +1864,10 @@ export const useStore = create<Store>()(
           }),
         adminStaff: (op, input, reason) =>
           mut((d) => {
+            // R2: only a super admin can grant super admin, or change or remove one
+            const actorIsSuper = currentUser(d)?.staffRole === "super_admin"
+            const target = d.users.find((x) => x.id === input.userId)
+            if (!actorIsSuper && (input.role === "super_admin" || target?.staffRole === "super_admin")) return
             let targetId = input.userId ?? ""
             if (op === "invite" && input.email) {
               const id = uid("u")
@@ -1866,6 +1924,111 @@ export const useStore = create<Store>()(
             const l = d.listings.find((x) => x.id === b.listingId)
             if (userId && userId !== d.session.userId) notify(d, { userId, event: "job_assigned", mode: "business", businessId: l?.businessId, title: "New job for you", body: `${serviceById(d as DemoData, b.serviceId)?.name ?? "A job"} for ${b.customerName}, ${fmtDate(b.startAt)}, ${fmtTime(b.startAt)}`, href: `/app/biz/jobs/${b.id}` })
           }),
+        // R2 super admin (S-01 to S-10). Super-only writes refuse anyone else; every write is audited.
+        setRules: (patch, reason, effectiveAt) =>
+          mut((d) => {
+            if (!isSuper(d)) return
+            const base = rulesFor(d as DemoData)
+            const versions = d.settings.ruleVersions ?? []
+            const version = versions.reduce((a, v) => Math.max(a, v.version), 0) + 1
+            const at = effectiveAt && ms(effectiveAt) > ms(d.clock) ? effectiveAt : d.clock
+            // A future change builds on the latest version, so scheduled changes stack in order
+            const latest = [...versions].sort((a, b) => ms(a.effectiveAt) - ms(b.effectiveAt) || a.version - b.version).at(-1)
+            const from = ms(at) > ms(d.clock) && latest ? { ...base, ...latest.rules } : base
+            d.settings.ruleVersions = [...versions, { id: uid("rv"), version, rules: { ...from, ...patch }, reason, effectiveAt: at, by: d.session.userId ?? "", at: d.clock }]
+            d.audit.unshift({ id: uid("au"), actorId: d.session.userId ?? "", action: "rules.update", targetType: "rules", targetId: `v${version}: ${Object.keys(patch).join(",")}`, reason, at: d.clock })
+          }),
+        setPlatformSwitch: (patch, reason) =>
+          mut((d) => {
+            if (!isSuper(d)) return
+            const cur = platformFor(d as DemoData)
+            d.settings.platform = { signups: cur.signups, claims: cur.claims, payments: cur.payments, ask: cur.ask, maintenance: cur.maintenance, maintenanceMessage: cur.maintenanceMessage, ...patch }
+            for (const [k, v] of Object.entries(patch)) {
+              const action = k === "maintenanceMessage" ? "switch.maintenance_message" : `switch.${k}_${v ? "on" : "off"}`
+              d.audit.unshift({ id: uid("au"), actorId: d.session.userId ?? "", action, targetType: "switch", targetId: k, reason, at: d.clock })
+            }
+          }),
+        setRolePerms: (role, perms, reason) =>
+          mut((d) => {
+            if (!isSuper(d)) return
+            const cur = d.settings.rolePerms ?? { admin: [...ADMIN_DEFAULT_PERMS], support: [...SUPPORT_DEFAULT_PERMS] }
+            d.settings.rolePerms = { ...cur, [role]: perms }
+            d.audit.unshift({ id: uid("au"), actorId: d.session.userId ?? "", action: "permissions.update", targetType: "role", targetId: role, reason, at: d.clock })
+          }),
+        recordAccessReview: (reason) =>
+          mut((d) => {
+            if (!isSuper(d)) return
+            d.settings.accessReviewAt = d.clock
+            d.audit.unshift({ id: uid("au"), actorId: d.session.userId ?? "", action: "access_review.complete", targetType: "team", targetId: "all-staff", reason, at: d.clock })
+          }),
+        setBudget: (line, pence, reason) =>
+          mut((d) => {
+            if (!isSuper(d)) return
+            d.settings.budgets = { ...(d.settings.budgets ?? {}), [line]: pence }
+            d.audit.unshift({ id: uid("au"), actorId: d.session.userId ?? "", action: "budget.update", targetType: "budget", targetId: line, reason, at: d.clock })
+          }),
+        rotateSecret: (integrationId, reason) =>
+          mut((d) => {
+            if (!isSuper(d)) return
+            const i = d.settings.integrations?.find((x) => x.id === integrationId)
+            if (!i) return
+            i.lastRotatedAt = d.clock
+            d.audit.unshift({ id: uid("au"), actorId: d.session.userId ?? "", action: "integration.rotate_secret", targetType: "integration", targetId: integrationId, reason, at: d.clock })
+          }),
+        startImpersonation: (kind, targetId, minutes, reason) => {
+          let ok = false
+          mut((d) => {
+            if (!isSuper(d) || !d.session.userId) return
+            if (d.session.impersonation) endImpersonation(d, "impersonate.end", "Started another view")
+            const restore = { personaId: d.session.personaId, userId: d.session.userId, mode: d.session.mode, currentBusinessId: d.session.currentBusinessId }
+            const by = d.session.userId
+            let label = ""
+            if (kind === "business") {
+              const b = d.businesses.find((x) => x.id === targetId)
+              if (!b) return
+              label = d.listings.find((l) => l.id === b.listingId)?.name ?? b.tradingName
+              d.session.supportViewBusinessId = b.id
+            } else {
+              const u = d.users.find((x) => x.id === targetId && !x.staffRole && !x.deleted)
+              if (!u) return
+              label = `${u.firstName} ${u.lastName.slice(0, 1)}.`
+              d.session.userId = u.id
+              d.session.personaId = PERSONAS.find((p) => p.userId === u.id)?.id ?? "custom"
+              d.session.mode = "customer"
+              d.session.currentBusinessId = null
+            }
+            d.session.impersonation = { kind, targetId, label, reason, byUserId: by, startedAt: d.clock, until: addMinutes(d.clock, minutes), restore }
+            d.audit.unshift({ id: uid("au"), actorId: by, action: `impersonate.start_${kind}`, targetType: kind === "business" ? "business" : "customer", targetId, reason: `${reason} (read only, ${minutes} min)`, at: d.clock })
+            ok = true
+          })
+          return ok
+        },
+        endImpersonation: () => mut((d) => endImpersonation(d, "impersonate.end", "Ended by the super admin")),
+        decideDataRequest: (id, approve, reason) =>
+          mut((d) => {
+            if (!isSuper(d)) return
+            const r = d.dataRequests.find((x) => x.id === id)
+            if (!r || r.status !== "pending") return
+            r.status = approve ? "approved" : "rejected"
+            r.decidedAt = d.clock
+            r.decidedBy = d.session.userId ?? ""
+            r.reason = reason
+            const u = d.users.find((x) => x.id === r.userId)
+            if (approve && r.kind === "delete" && u) {
+              u.deleted = true
+              for (const b of d.bookings) {
+                if (b.customerId !== r.userId || !["requested", "confirmed"].includes(b.status) || ms(b.startAt) < ms(d.clock)) continue
+                b.status = "cancelled"
+                b.cancelledBy = "customer"
+                b.cancelReason = "Customer account deleted"
+                event(d, b.id, "cancelled", "system", "Customer account deleted")
+              }
+            }
+            if (u) notify(d, { userId: u.id, event: "data_request", mode: "customer", title: r.kind === "export" ? "Your data export" : "Your deletion request", body: approve ? (r.kind === "export" ? "Your data export is ready. We've emailed you a download link that lasts 7 days." : "We've deleted your Answerd account and personal data.") : `We couldn't complete your request: ${reason}`, href: "/app/notifications", channels: ["email"] })
+            d.audit.unshift({ id: uid("au"), actorId: d.session.userId ?? "", action: `data_request.${r.kind}_${approve ? "approve" : "reject"}`, targetType: "data_request", targetId: id, reason, at: d.clock })
+          }),
+        recordSignInAttempt: (input) => mut((d) => void d.signIns.unshift({ id: uid("si"), at: d.clock, ...input })),
+        exportAudit: (what, rows) => mut((d) => void d.audit.unshift({ id: uid("au"), actorId: d.session.userId ?? "", action: "export.csv", targetType: "export", targetId: what, reason: `${rows} rows exported`, at: d.clock })),
       }
     },
     {
@@ -1890,6 +2053,9 @@ export const useStore = create<Store>()(
 /** Clock-driven automation: reminders, expiries, quote follow-ups, trial ends, referral joins, auto-approvals. */
 function tick(d: D) {
   const now = ms(d.clock)
+  // R2: S-09 impersonation is time-limited on the demo clock
+  const imp = d.session.impersonation
+  if (imp && ms(imp.until) <= now) endImpersonation(d, "impersonate.expired", "Time limit reached")
   // 24-hour reminders
   for (const b of d.bookings) {
     // Sent once, about 24 hours before; jobs booked for the same day don't get a reminder
@@ -1906,7 +2072,7 @@ function tick(d: D) {
     // Expire requests unanswered after 2 hours
     if (b.status === "requested" && b.requestExpiresAt && ms(b.requestExpiresAt) <= now) {
       b.status = "declined"
-      b.declineReason = "Request expired: no reply within 2 hours"
+      b.declineReason = `Request expired: no reply within ${plural(rulesFor(d as DemoData).requestExpiryHours, "hour")}`
       b.requestExpiresAt = undefined
       event(d, b.id, "expired", "system")
       const lname = listingName(d, b.listingId)

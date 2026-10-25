@@ -29,7 +29,7 @@ const NOTES: Record<string, string> = {
   "B-16": "As well as A-07 approval, credentials uploaded during the demo are auto-verified on the hub's +1 day so the badge can be shown without the admin console.",
   "B-28": "Conversion is calls and messages that led to a booking. Bookings come from Booking records; calls and messages from Enquiry records.",
   "B-29": "The printable card opens at /print/review-card (A6 print styling).",
-  "B-36": "Upgrade and Get Featured open the web checkout at /dashboard/billing/checkout (W-18).",
+  "B-36": "Upgrade and Get Featured open the web checkout at /dashboard/billing/checkout (W-18). The gated button names the missing half of the gate: \"Available after 10 enquiries\" (also when both halves are missing), \"Available from Fri 30 Oct\" when only the date is missing, and \"Keep your desk for £49/month\" once open (same on B-37 and W-18). Numbers and prices come from S-06.",
   "D-04": "Follows the business's B-17 booking mode: Request to book creates a request that expires in 2 hours.",
   "W-11": "Guests sign in through W-12 first (with next=), which handles the new-account name step.",
   "W-27": "A review token is the ID of a completed booking and is valid for 30 days after the job.",
@@ -37,7 +37,13 @@ const NOTES: Record<string, string> = {
   "A-07": "List with a detail pane; the Expiring in 30 days view uses the data table.",
   "A-12": "List with a detail pane showing the transcript.",
   "A-14": "A cell click filters A-03 (per the build prompt) rather than seeding the area.",
-  "A-21": "Invited admin users appear in the list, but only the hub personas Ife and Dan can sign in through A-01.",
+  "A-21": "Invited admin users appear in the list, but only the hub personas Temitope, Ife and Dan can sign in through A-01. Only a super admin can change a super admin.",
+  "S-01": "Live figures are counted from store records. App installs, unit costs (S-03) and the price test (S-02) aren't in the demo data, so they are modelled or simulated from the seed and labelled as such.",
+  "S-05": "The permissions matrix edits what Admin and Support may do (useCan reads it); super-admin-only areas are fixed.",
+  "S-06": "Rules are versioned in Settings.ruleVersions with a reason and an effective date. The version in force on the demo clock drives the monetise gate, request expiry, trial length, plan prices (B-36, B-37, W-10, W-18 and checkout), Featured slots and review rules.",
+  "S-07": "Switches are checked in one place (platformFor in lib/selectors.ts). Gap-fill is the A-23 flag; the desk kill switch stays in A-23.",
+  "S-09": "Business views reuse the support view (read-only banner); customer views open the app as the customer with every control disabled. Both end on the demo clock or on returning to the console, and are audited.",
+  "S-10": "Admin console sign-ins are recorded in the store (A-01 and the hub persona switch); the rest comes from the audit log.",
   "A-23": "The desk kill switch accepts any 6-digit code except 000000, like every other code in the prototype.",
 }
 

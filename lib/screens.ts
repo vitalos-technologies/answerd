@@ -251,6 +251,8 @@ export const BUILT = new Set<string>([
   ...Array.from({ length: 7 }, (_, i) => `W-${i + 13}`),
   // P9
   ...Array.from({ length: 23 }, (_, i) => `A-${String(i + 1).padStart(2, "0")}`),
+  // R2: super admin tier (design review, 25 Oct)
+  ...Array.from({ length: 10 }, (_, i) => `S-${String(i + 1).padStart(2, "0")}`),
 ])
 
 /** Built, but deferred for the MVP: the website is app first, so businesses run these in the app (design review, 25 Oct). */

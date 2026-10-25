@@ -4,7 +4,7 @@ import Link from "next/link"
 import { AdminPage, Kpi, Pill, ReasonButton } from "@/components/admin/kit"
 import { DataTable, SortHeader, type ColumnDef } from "@/components/admin/DataTable"
 import { useStore } from "@/lib/store"
-import { GATE_DAYS, GATE_ENQUIRIES, gateStatus } from "@/lib/selectors"
+import { gateStatus, rulesFor } from "@/lib/selectors"
 import { fmtDateYear, ms, MS_DAY } from "@/lib/time"
 import { toast } from "@/lib/toast"
 
@@ -21,6 +21,8 @@ interface Row {
 /** A-18: launch date, day-60 date, per-business enquiry counters and manual overrides with reason. */
 export default function MonetiseGate() {
   const s = useStore()
+  // R2: thresholds come from S-06
+  const { gateEnquiries: GATE_ENQUIRIES, gateDays: GATE_DAYS } = rulesFor(s)
   const g0 = gateStatus(s, s.businesses[0]?.id)
   const daysSince = Math.floor((ms(s.clock) - ms(s.settings.launchDate)) / MS_DAY)
   const rows: Row[] = s.businesses.map((b) => {
@@ -51,7 +53,7 @@ export default function MonetiseGate() {
       header: "",
       cell: ({ row }) =>
         row.original.override ? (
-          <ReasonButton perm="gate" label="Remove override" title={`Remove the override for ${row.original.name}?`} description="The business goes back to the normal rule: 10 enquiries and day 60." onConfirm={(r) => { useStore.getState().adminDecide("gate", row.original.id, "remove_override", r); toast("Override removed") }} />
+          <ReasonButton perm="gate" label="Remove override" title={`Remove the override for ${row.original.name}?`} description={`The business goes back to the normal rule: ${GATE_ENQUIRIES} enquiries and day ${GATE_DAYS}.`} onConfirm={(r) => { useStore.getState().adminDecide("gate", row.original.id, "remove_override", r); toast("Override removed") }} />
         ) : (
           <ReasonButton perm="gate" label="Override" title={`Open the gate for ${row.original.name}?`} description="They see paid prompts now, whatever their enquiry count or the date." presets={["Owner asked to upgrade early", "Pilot partner"]} onConfirm={(r) => { useStore.getState().adminDecide("gate", row.original.id, "override", r); toast("Gate opened for this business") }} />
         ),
@@ -62,7 +64,7 @@ export default function MonetiseGate() {
       <div className="mb-4 grid grid-cols-4 gap-3">
         <Kpi label="Launch date" value={fmtDateYear(s.settings.launchDate)} sub={`${daysSince} days ago`} />
         <Kpi label={`Day ${GATE_DAYS}`} value={fmtDateYear(g0.gateDate)} sub={g0.daysOk ? "Passed" : `In ${Math.ceil((ms(g0.gateDate) - ms(s.clock)) / MS_DAY)} days`} />
-        <Kpi label="Businesses at 10+" value={rows.filter((r) => r.count >= GATE_ENQUIRIES).length} sub={`of ${rows.length}`} />
+        <Kpi label={`Businesses at ${GATE_ENQUIRIES}+`} value={rows.filter((r) => r.count >= GATE_ENQUIRIES).length} sub={`of ${rows.length}`} />
         <Kpi label="Overrides" value={s.settings.gateOverrides.length} sub="Set by admins, with reasons" />
       </div>
       <DataTable label="Gate progress" data={rows} columns={columns} getRowId={(r) => r.id} initialSort={[{ id: "count", desc: true }]} facets={[{ column: "state", label: "Gate", options: [{ value: "met", label: "Met" }, { value: "override", label: "Override" }, { value: "not_met", label: "Not yet" }] }]} searchPlaceholder="Search business" emptyTitle="No businesses yet" emptyBody="Businesses appear once a listing is claimed." />
