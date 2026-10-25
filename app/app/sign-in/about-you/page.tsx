@@ -7,6 +7,7 @@ import { CheckRow, Field, TextInput } from "@/components/answerd/Fields"
 import { safeNext, withSuspense } from "@/components/app/helpers"
 import { useStore } from "@/lib/store"
 import { toast } from "@/lib/toast"
+import { PausedNotice, useSwitch } from "@/components/admin/super/live"
 
 /** C-08: first name required; email optional for receipts; marketing consent unticked. */
 function AboutYou() {
@@ -20,6 +21,16 @@ function AboutYou() {
   const [email, setEmail] = React.useState("")
   const [marketing, setMarketing] = React.useState(false)
   const [errors, setErrors] = React.useState<{ first?: string; email?: string }>({})
+  // R2 (S-07): new accounts can be paused platform-wide
+  const signups = useSwitch("signups")
+
+  if (!signups) {
+    return (
+      <AppScreen id="C-08" bg="white" header={<TopBar title="About you" back tone="clear" />}>
+        <PausedNotice title="We're not taking new sign-ups right now" body="New accounts are paused for a short while. You can still search, browse and call businesses without an account." action={{ href: "/app", label: "Keep browsing" }} />
+      </AppScreen>
+    )
+  }
 
   return (
     <AppScreen id="C-08" bg="white" header={<TopBar title="About you" back tone="clear" />}>

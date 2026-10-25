@@ -10,6 +10,7 @@ import { normaliseUkMobile } from "@/lib/format"
 import { useStore } from "@/lib/store"
 import { fmtTime, ms } from "@/lib/time"
 import { cn } from "@/lib/utils"
+import { SignupsPausedBanner } from "@/components/admin/super/live"
 
 /** C-06: UK mobile in any common format. */
 function PhonePage() {
@@ -38,6 +39,7 @@ function PhonePage() {
       >
         <h1 className="t-title">What&apos;s your mobile number?</h1>
         <p className="mt-1 t-body text-slate">We&apos;ll text you a 6-digit code. Standard rates may apply.</p>
+        <SignupsPausedBanner className="mt-4" />
         {lockedUntil && (
           <Banner tone="warning" className="mt-4" title="Too many attempts">
             For your security this number is locked until {fmtTime(lockedUntil)}. Try again then, or use another number.

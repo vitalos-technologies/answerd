@@ -8,7 +8,7 @@ import { DataTable, SortHeader, type ColumnDef } from "@/components/admin/DataTa
 import { businessRows } from "@/components/admin/data"
 import { withSuspense } from "@/components/app/helpers"
 import { useStore } from "@/lib/store"
-import { GATE_ENQUIRIES } from "@/lib/selectors"
+import { rulesFor } from "@/lib/selectors"
 
 type Row = ReturnType<typeof businessRows>[number]
 
@@ -52,6 +52,7 @@ const columns: ColumnDef<Row>[] = [
     meta: { label: "Gate progress" },
     header: ({ column }) => <SortHeader label="Gate progress" column={column} />,
     cell: ({ row }) => {
+      const GATE_ENQUIRIES = rulesFor(useStore.getState()).gateEnquiries
       const n = Math.min(row.original.gateCount, GATE_ENQUIRIES)
       return (
         <span className="flex items-center gap-2">

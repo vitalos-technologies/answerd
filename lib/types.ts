@@ -5,7 +5,7 @@ export type ISO = string
 
 export type Layer = "claimed" | "seeded" | "places"
 export type Mode = "customer" | "business"
-export type PersonaId = "guest" | "tayo" | "sam" | "jo" | "ife" | "dan" | "custom"
+export type PersonaId = "guest" | "tayo" | "sam" | "jo" | "ife" | "dan" | "temitope" | "custom"
 
 export interface User {
   id: ID
@@ -16,9 +16,10 @@ export interface User {
   authProviders: ("phone" | "apple" | "google" | "email")[]
   marketingConsent: boolean
   createdAt: ISO
-  staffRole?: "admin" | "support"
+  staffRole?: StaffRole
   suspended?: boolean
   deleted?: boolean
+  twoFactor?: ("authenticator" | "security_key")[] // R2: staff second factors (S-05)
 }
 
 export interface SavedPlace {
@@ -580,6 +581,13 @@ export interface Settings {
   // P9
   killSwitchPaused?: ID[] // desks paused by the kill switch, restored when it is turned off
   faqs?: { id: ID; q: string; a: string }[]
+  // R2 super admin (S-05 to S-08); absent means the defaults in lib/selectors.ts
+  ruleVersions?: RuleVersion[]
+  platform?: PlatformSwitches
+  rolePerms?: { admin: string[]; support: string[] }
+  accessReviewAt?: ISO
+  budgets?: Record<string, number>
+  integrations?: Integration[]
 }
 
 export interface BookingDraft {
@@ -613,6 +621,8 @@ export interface Session {
   recentAreas: string[]
   guestRecentSearches: string[]
   pendingPhone?: string
+  // R2: S-09 impersonation (time-limited on the demo clock, audited)
+  impersonation?: Impersonation | null
 }
 
 export interface DeskRun {
@@ -624,4 +634,88 @@ export interface DeskRun {
   done: boolean
   callId?: ID
   threadId?: ID
+}
+
+// ------------------------------------------------------------------ R2 super admin
+
+export type StaffRole = "super_admin" | "admin" | "support"
+
+/** S-06: the commercial rules the whole app reads (selectors.rulesFor). */
+export interface PricingRules {
+  deskPricePence: number
+  featuredPricePence: number
+  trialDays: number
+  gateEnquiries: number
+  gateDays: number
+  featuredSlotsPerArea: number
+  requestExpiryHours: number
+  reviewMinChars: number
+  reviewCallMinSec: number
+}
+
+/** One version of the rules: effective from effectiveAt on the demo clock. */
+export interface RuleVersion {
+  id: ID
+  version: number
+  rules: PricingRules
+  reason: string
+  effectiveAt: ISO
+  by: ID
+  at: ISO
+}
+
+/** S-07: platform kill switches beyond the desk. */
+export interface PlatformSwitches {
+  signups: boolean
+  claims: boolean
+  payments: boolean
+  ask: boolean
+  maintenance: boolean
+  maintenanceMessage: string
+}
+
+/** S-08: third-party integration health. Secrets are never stored or shown. */
+export interface Integration {
+  id: ID
+  name: string
+  purpose: string
+  status: "ok" | "degraded" | "down"
+  owner: string
+  lastError?: string
+  lastErrorAt?: ISO
+  lastRotatedAt: ISO
+}
+
+export interface Impersonation {
+  kind: "customer" | "business"
+  targetId: ID
+  label: string
+  reason: string
+  byUserId: ID
+  startedAt: ISO
+  until: ISO
+  restore: { personaId: PersonaId; userId: ID | null; mode: Mode; currentBusinessId: ID | null }
+}
+
+/** S-10: admin console sign-ins, successful or not. */
+export interface SignInEvent {
+  id: ID
+  userId: ID | null
+  email: string
+  at: ISO
+  method: "Google + authenticator" | "Google + security key" | "Prototype hub"
+  ok: boolean
+  detail?: string
+}
+
+/** S-09: UK GDPR subject access (export) and erasure (deletion) requests. */
+export interface DataRequest {
+  id: ID
+  userId: ID
+  kind: "export" | "delete"
+  status: "pending" | "approved" | "rejected"
+  requestedAt: ISO
+  decidedAt?: ISO
+  decidedBy?: ID
+  reason?: string
 }

@@ -12,7 +12,7 @@ import { SegmentedControl } from "@/components/answerd/Status"
 import { ToggleRow } from "@/components/answerd/Fields"
 import { PersonAvatar } from "@/components/answerd/Media"
 import { fmtDateLong, fmtTime } from "@/lib/time"
-import { gateStatus, membershipsFor, nextSlots, servicesFor, listingById } from "@/lib/selectors"
+import { gateStatus, membershipsFor, nextSlots, servicesFor, listingById, rulesFor } from "@/lib/selectors"
 import { cn } from "@/lib/utils"
 import { toast } from "@/lib/toast"
 import type { StateOverride } from "@/lib/store"
@@ -132,7 +132,7 @@ export default function HubPage() {
                   type="button"
                   onClick={() => {
                     s.signIn(p.id)
-                    if (p.id === "ife" || p.id === "dan") s.adminSignIn()
+                    if (p.id === "ife" || p.id === "dan" || p.id === "temitope") s.adminSignIn()
                     toast(`Signed in as ${p.name}`)
                   }}
                   aria-pressed={active}
@@ -261,7 +261,7 @@ export default function HubPage() {
             </Button>
           </div>
           <p className="mt-2 t-caption text-muted-ink tnum">
-            Swift Plumbing gate: {gate.count} of 10 enquiries · day 60 is {fmtDateLong(gate.gateDate)} · {gate.met ? "met" : "not met"}
+            Swift Plumbing gate: {gate.count} of {gate.target} enquiries · day {rulesFor(s).gateDays} is {fmtDateLong(gate.gateDate)} · {gate.met ? "met" : "not met"}
           </p>
         </Section>
 

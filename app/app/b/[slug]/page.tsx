@@ -34,6 +34,7 @@ import { fmtMiles, milesBetween, lookupPostcode } from "@/lib/geo"
 import { fmtClock, fmtDate, fmtDayMonth, parts } from "@/lib/time"
 import { toast } from "@/lib/toast"
 import { cn } from "@/lib/utils"
+import { rulesFor } from "@/lib/selectors"
 
 const DAY = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"]
 
@@ -178,7 +179,7 @@ export default function ListingPage({ params }: { params: Promise<{ slug: string
         </div>
         {(() => {
           // A tracked call over 60 s also allows a review (spec: Review a business)
-          const call = s.calls.find((c) => c.listingId === listing.id && c.customerId === userId && userId && c.durationSec > 60 && !s.reviews.some((r) => r.callId === c.id))
+          const call = s.calls.find((c) => c.listingId === listing.id && c.customerId === userId && userId && c.durationSec > rulesFor(s).reviewCallMinSec && !s.reviews.some((r) => r.callId === c.id))
           return call ? (
             <Link href={`/app/b/${slug}/review?call=${call.id}`} className="mt-3 flex items-center gap-2 rounded-xl bg-blue-tint px-3 py-2.5 t-label text-blue hover:underline">
               <Star className="size-4 fill-blue" aria-hidden /> You called {listing.name}. How did it go? Leave a review

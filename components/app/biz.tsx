@@ -8,7 +8,7 @@ import { ButtonLink } from "@/components/answerd/Button"
 import { useStore } from "@/lib/store"
 import type { DemoData } from "@/lib/seed"
 import type { Business, Listing } from "@/lib/types"
-import { availabilityFor, areaFor, deskFor, roleIn, servicesFor } from "@/lib/selectors"
+import { availabilityFor, areaFor, deskFor, roleIn, rulesFor, servicesFor } from "@/lib/selectors"
 
 type S = Pick<DemoData, keyof DemoData>
 
@@ -46,7 +46,7 @@ export function setupSteps(s: S, biz: Business, listing: Listing): SetupStep[] {
     { key: "photos", label: "Photos", done: biz.photos.length > 0, href: "/app/biz/profile/photos", sub: biz.photos.length ? `${biz.photos.length} photo${biz.photos.length > 1 ? "s" : ""}` : "Show your work" },
     { key: "credentials", label: "Credentials", done: creds.length > 0, href: "/app/biz/profile/credentials", sub: creds.length ? `${creds.filter((c) => c.status === "verified").length} verified, ${creds.filter((c) => c.status === "pending").length} pending` : "Gas Safe, NICEIC, insurance, DBS" },
     { key: "booking", label: "Booking settings", done: true, href: "/app/biz/profile/booking", sub: `${biz.bookingMode === "instant" ? "Instant booking" : "Request to book"} · free to cancel until ${biz.cancellationPolicy === "48h" ? "48" : "24"} hours` },
-    { key: "desk", label: "Try the AI desk", done: !!desk?.trialUsed, href: "/app/biz/desk/intro", sub: "Optional: 14-day free trial", optional: true },
+    { key: "desk", label: "Try the AI desk", done: !!desk?.trialUsed, href: "/app/biz/desk/intro", sub: `Optional: ${rulesFor(s).trialDays}-day free trial`, optional: true },
   ]
 }
 

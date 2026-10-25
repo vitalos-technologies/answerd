@@ -5,6 +5,8 @@ import { DataGate } from "@/components/app/helpers"
 import { EmptyState } from "@/components/answerd/Feedback"
 import { useStore } from "@/lib/store"
 import { fmtDate } from "@/lib/time"
+import { gbp } from "@/lib/format"
+import { rulesFor } from "@/lib/selectors"
 import { toast } from "@/lib/toast"
 import type { FeaturedSlot } from "@/lib/types"
 
@@ -25,7 +27,7 @@ function Assign({ slot, label = "Assign", op = "assign" }: { slot: FeaturedSlot;
       variant={op === "assign" ? "tint" : "ghost"}
       disabled={!options.length}
       title={op === "assign" ? `Assign slot ${slot.position}` : "Add to the waitlist"}
-      description={op === "assign" ? "The business shows first in this category and area. Featured is £29/month including VAT, billed in Stripe." : "They get the next free slot."}
+      description={op === "assign" ? `The business shows first in this category and area. Featured is ${gbp(rulesFor(useStore.getState()).featuredPricePence)}/month ex VAT, billed in Stripe.` : "They get the next free slot."}
       confirmLabel={op === "assign" ? "Assign slot" : "Add"}
       presets={op === "assign" ? ["Next on the waitlist", "Sold by sales team"] : ["Asked for a slot"]}
       validate={() => (!chosen ? "Choose a business." : null)}
@@ -56,8 +58,10 @@ export default function FeaturedSlots() {
   const [area, setArea] = React.useState(areas[0] ?? "")
   const cats = [...new Set(s.featuredSlots.filter((f) => f.areaCode === area).map((f) => f.categoryId))]
   const nameOf = (bid?: string) => s.listings.find((l) => l.businessId === bid)?.name ?? "—"
+  // R2: S-06 sets how many slots each category and area sells (default 3)
+  const open = rulesFor(s).featuredSlotsPerArea
   return (
-    <AdminPage id="A-19" title="Featured slots" perm="featured" description={`Three paid slots per category and area. ${s.settings.featuredOn ? "Featured is on." : "Featured is switched off in Settings, so slots don't show to customers."}`}>
+    <AdminPage id="A-19" title="Featured slots" perm="featured" description={`${open === 3 ? "Three" : open === 2 ? "Two" : "One"} paid slot${open === 1 ? "" : "s"} per category and area (set in Pricing and rules). ${s.settings.featuredOn ? "Featured is on." : "Featured is switched off in Settings, so slots don't show to customers."}`}>
       <div className="mb-3 flex items-center gap-2">
         <label className="flex items-center gap-2">
           <span className="t-label text-navy">Area</span>
@@ -92,10 +96,12 @@ export default function FeaturedSlots() {
                     <th scope="row" className="px-3 py-3 text-left font-medium text-navy">{s.categories.find((c) => c.id === cid)?.plural ?? cid}</th>
                     {slots.map((f) => (
                       <td key={f.id} className="px-3 py-2">
-                        {f.businessId ? (
+                        {f.position > open && !f.businessId ? (
+                          <Pill>Closed by pricing rules</Pill>
+                        ) : f.businessId ? (
                           <div className="space-y-1">
                             <p className="font-medium text-navy">{nameOf(f.businessId)}</p>
-                            <p className="t-caption text-muted-ink">Since {f.startsAt ? fmtDate(f.startsAt) : "—"}</p>
+                            <p className="t-caption text-muted-ink">Since {f.startsAt ? fmtDate(f.startsAt) : "—"}{f.position > open ? " · hidden: over the slot limit" : ""}</p>
                             <ReasonButton perm="featured" label="Release" title={`Release slot ${f.position}?`} description="The business stops showing as Featured here." presets={["Subscription cancelled", "Owner request"]} onConfirm={(r) => { useStore.getState().adminDecide("featured", f.id, "release", r); toast("Slot released") }} />
                           </div>
                         ) : (

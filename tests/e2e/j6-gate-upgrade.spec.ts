@@ -6,7 +6,8 @@ test("J6 monetise gate, upgrade to the AI desk on the web, plan active in the ap
   const errors = watchErrors(page)
   await start(page, "sam")
 
-  // Before the gate, paid plans are locked
+  // Before the gate, paid plans are locked. Swift has 9 of 10 enquiries and day 60 (Fri 30 Oct) is still ahead:
+  // with both halves missing the button names the enquiries
   await page.goto("/dashboard/billing")
   await expect(page.getByRole("button", { name: /Available after 10 enquiries/ }).first()).toBeDisabled()
 
@@ -14,7 +15,8 @@ test("J6 monetise gate, upgrade to the AI desk on the web, plan active in the ap
   await page.getByRole("button", { name: /Trigger monetise gate/ }).click()
 
   await page.goto("/dashboard/billing")
-  await page.getByRole("link", { name: /Upgrade/ }).first().click()
+  // Design review (25 Oct): once the gate is open the desk button reads "Keep your desk for £49/month"
+  await page.getByRole("link", { name: /Keep your desk for £49\/month/ }).first().click()
   await expect(page).toHaveURL(/\/dashboard\/billing\/checkout\?plan=desk/)
   await expect(page.getByText("Prototype checkout, no card needed")).toBeVisible()
   await expect(page.locator("main")).toContainText("£58.80")

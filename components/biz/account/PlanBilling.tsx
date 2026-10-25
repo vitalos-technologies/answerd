@@ -6,7 +6,7 @@ import { Button, ButtonLink } from "@/components/answerd/Button"
 import { Banner, EmptyState } from "@/components/answerd/Feedback"
 import { DataGate } from "@/components/app/helpers"
 import { useStore } from "@/lib/store"
-import { deskFor, gateStatus, GATE_ENQUIRIES } from "@/lib/selectors"
+import { deskFor, gateButtonLabel, gateStatus, platformOn, rulesFor } from "@/lib/selectors"
 import { gbp } from "@/lib/format"
 import { fmtDate, fmtDateYear } from "@/lib/time"
 import { toast } from "@/lib/toast"
@@ -20,6 +20,7 @@ export const CHECKOUT_HREF = (plan: "desk" | "featured") => `/dashboard/billing/
 export function GateProgress({ businessId, className }: { businessId: string; className?: string }) {
   const s = useStore()
   const g = gateStatus(s, businessId)
+  const GATE_ENQUIRIES = g.target // R2: from the S-06 rules
   const shown = Math.min(g.count, GATE_ENQUIRIES)
   return (
     <div className={cn("card p-4", className)}>
@@ -42,9 +43,15 @@ export function GateProgress({ businessId, className }: { businessId: string; cl
 }
 
 const PLANS = [
-  { plan: "desk" as const, icon: Bot, name: "AI desk", price: 4900, cta: "Upgrade", lines: ["Answers calls and texts you miss", "Books jobs into your diary", "Responds instantly badge"] },
-  { plan: "featured" as const, icon: Star, name: "Featured", price: 2900, cta: "Get Featured", lines: ["Top 3 in your category and area", "Featured badge on results"] },
+  { plan: "desk" as const, icon: Bot, name: "AI desk", cta: "Upgrade", lines: ["Answers calls and texts you miss", "Books jobs into your diary", "Responds instantly badge"] },
+  { plan: "featured" as const, icon: Star, name: "Featured", cta: "Get Featured", lines: ["Top 3 in your category and area", "Featured badge on results"] },
 ]
+
+/** R2: the met-gate call to action carries the price from S-06 ("Keep your desk for £49/month"). */
+export function planCta(plan: "desk" | "featured", pricePence: number, hasDesk: boolean) {
+  if (plan === "featured") return `Get Featured for ${gbp(pricePence)}/month`
+  return hasDesk ? `Keep your desk for ${gbp(pricePence)}/month` : `Upgrade for ${gbp(pricePence)}/month`
+}
 
 /**
  * B-36 plan and billing: current plan, monetise-gate progress, plans with Upgrade / Get Featured (gated),
@@ -53,6 +60,8 @@ const PLANS = [
 export function PlanBilling({ businessId, checkoutHref = CHECKOUT_HREF, manageHref = "/dashboard/billing", portalHref = "/dashboard/billing/portal", readOnly, wide, manageLabel = "Manage on web" }: { businessId: string; checkoutHref?: (plan: "desk" | "featured") => string; manageHref?: string; portalHref?: string; readOnly?: boolean; /** Desktop layout (W-18): plan cards and sections side by side from 768 px. */ wide?: boolean; manageLabel?: string }) {
   const s = useStore()
   const g = gateStatus(s, businessId)
+  const rules = rulesFor(s)
+  const payments = platformOn(s, "payments")
   const desk = deskFor(s, businessId)
   const subs = s.subscriptions.filter((x) => x.businessId === businessId)
   const deskSub = subs.find((x) => x.plan === "desk")
@@ -105,6 +114,8 @@ export function PlanBilling({ businessId, checkoutHref = CHECKOUT_HREF, manageHr
         {PLANS.map((p) => {
           const sub = p.plan === "desk" ? deskSub : featSub
           const active = sub?.status === "active" || sub?.status === "past_due"
+          const price = p.plan === "desk" ? rules.deskPricePence : rules.featuredPricePence
+          const hasDesk = !!desk && desk.status !== "off"
           return (
             <div key={p.plan} className="card p-4">
               <div className="flex items-start gap-3">
@@ -114,7 +125,7 @@ export function PlanBilling({ businessId, checkoutHref = CHECKOUT_HREF, manageHr
                 <div className="min-w-0 flex-1">
                   <p className="t-subhead">{p.name}</p>
                   <p className="t-label text-navy tnum">
-                    {gbp(p.price)}/month <span className="font-normal text-muted-ink">ex VAT ({gbp(Math.round(p.price * 1.2))} inc VAT)</span>
+                    {gbp(price)}/month <span className="font-normal text-muted-ink">ex VAT ({gbp(Math.round(price * 1.2))} inc VAT)</span>
                   </p>
                   <ul className="mt-1 list-disc pl-4 t-label font-normal text-slate">
                     {p.lines.map((l) => (
@@ -129,18 +140,27 @@ export function PlanBilling({ businessId, checkoutHref = CHECKOUT_HREF, manageHr
                     <Button variant="secondary" block onClick={() => setCancel(p.plan)}>
                       Cancel {p.name}
                     </Button>
+                  ) : g.met && !payments ? (
+                    <Button block disabled aria-describedby={`gate-${p.plan}`}>
+                      <Lock /> Payments paused
+                    </Button>
                   ) : g.met ? (
                     <ButtonLink href={checkoutHref(p.plan)} block>
-                      {p.cta} <ExternalLink />
+                      {planCta(p.plan, price, hasDesk)} <ExternalLink />
                     </ButtonLink>
                   ) : (
                     <Button block disabled aria-describedby={`gate-${p.plan}`}>
-                      <Lock /> Available after 10 enquiries
+                      <Lock /> {gateButtonLabel(g, p.cta)}
                     </Button>
                   )}
                   {!active && !g.met && (
                     <p id={`gate-${p.plan}`} className="mt-1.5 text-center t-caption text-muted-ink">
                       {p.plan === "desk" && deskSub?.status === "trialing" ? "Your free trial carries on until then." : "Checkout opens on the web once you reach the gate."}
+                    </p>
+                  )}
+                  {!active && g.met && !payments && (
+                    <p id={`gate-${p.plan}`} className="mt-1.5 text-center t-caption text-muted-ink">
+                      Answerd has paused new payments for a short while. Nothing is charged; try again later.
                     </p>
                   )}
                 </div>
@@ -183,7 +203,7 @@ export function PlanBilling({ businessId, checkoutHref = CHECKOUT_HREF, manageHr
         <h2 id="inv-h" className="mb-2 t-heading">
           Invoices
         </h2>
-        <DataGate isEmpty={!invoices.length} rows={2} empty={<div className="card"><EmptyState title="No invoices yet" body="You won't pay anything before you've had 10 enquiries from Answerd." /></div>}>
+        <DataGate isEmpty={!invoices.length} rows={2} empty={<div className="card"><EmptyState title="No invoices yet" body={`You won't pay anything before you've had ${g.target} enquiries from Answerd.`} /></div>}>
           <ul className="card divide-y divide-line">
             {invoices.map((inv) => (
               <li key={inv.id}>

@@ -9,6 +9,8 @@ import { OfflineBanner } from "@/components/answerd/Feedback"
 import { ScreenMeta } from "./ScreenMeta"
 import { cn } from "@/lib/utils"
 import { isStaffOnly, roleIn } from "@/lib/selectors"
+import { fmtTime } from "@/lib/time"
+import { CustomerViewBar } from "@/components/admin/super/CustomerViewBar"
 
 export function TopBar({
   title,
@@ -57,14 +59,15 @@ export function BizHeader({ right, title }: { right?: React.ReactNode; title?: s
   const biz = useCurrentBusiness()
   const listings = useStore((s) => s.listings)
   const supportView = useStore((s) => s.session.supportViewBusinessId)
+  const imp = useStore((s) => s.session.impersonation) // R2: S-09 business view, time-limited
   const name = title ?? listings.find((l) => l.id === biz?.listingId)?.name ?? "Your business"
   return (
     <div className="shrink-0 bg-navy text-white">
       {supportView && (
         <p className="flex items-center justify-center gap-2 bg-amber px-4 py-1 text-center t-caption text-navy">
-          Viewing as support (audited) · read only
+          Viewing as support (audited) · read only{imp?.kind === "business" ? ` · ends ${fmtTime(imp.until)}` : ""}
           {/* P9: back to the admin console, which ends the support view */}
-          <Link href="/admin/businesses" className="inline-flex min-h-6 items-center font-semibold underline underline-offset-2">
+          <Link href={imp?.kind === "business" ? "/admin/super/impersonate" : "/admin/businesses"} className="inline-flex min-h-6 items-center font-semibold underline underline-offset-2">
             Exit
           </Link>
         </p>
@@ -158,15 +161,37 @@ export function AppScreen({
   bg?: "sky" | "white"
 }) {
   const offline = useStore((s) => s.offline)
+  // R2: S-09 read-only "view as customer": a bar on top and every control disabled
+  const viewAs = useStore((s) => s.session.impersonation?.kind === "customer")
   return (
     <div className={cn("t-app absolute inset-0 flex flex-col", bg === "white" ? "bg-white" : "bg-sky", className)}>
       <ScreenMeta id={id} />
+      {viewAs && <CustomerViewBar />}
       {biz && (biz === true ? <BizHeader /> : biz)}
       {offline && <OfflineBanner />}
       {header}
       {/* With no tab bar, the last thing on screen keeps clear of the home indicator (pb-home) */}
-      <main className={cn("relative min-h-0 flex-1 overflow-y-auto overscroll-contain", !tabs && !footer && "pb-home", bodyClassName)}>{children}</main>
-      {footer && (tabs ? footer : <div className="shrink-0 bg-white pb-home">{footer}</div>)}
+      <main className={cn("relative min-h-0 flex-1 overflow-y-auto overscroll-contain", !tabs && !footer && "pb-home", bodyClassName)}>
+        {viewAs ? (
+          <fieldset disabled className="contents">
+            {children}
+          </fieldset>
+        ) : (
+          children
+        )}
+      </main>
+      {footer &&
+        (() => {
+          // R2: S-09 "view as customer" disables the footer controls too
+          const f = viewAs ? (
+            <fieldset disabled className="contents">
+              {footer}
+            </fieldset>
+          ) : (
+            footer
+          )
+          return tabs ? f : <div className="shrink-0 bg-white pb-home">{f}</div>
+        })()}
       {tabs === "customer" && <CustomerTabs />}
       {tabs === "business" && <BusinessTabs />}
     </div>

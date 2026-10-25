@@ -7,10 +7,12 @@ import { DataGate } from "@/components/app/helpers"
 import { useStore } from "@/lib/store"
 import { AREAS } from "@/lib/geo"
 import { categoryById } from "@/lib/categories"
-import { businessById, gateStatus, listingById } from "@/lib/selectors"
+import { businessById, gateButtonLabel, gateStatus, listingById, platformOn, rulesFor } from "@/lib/selectors"
+import { gbp } from "@/lib/format"
+import { fmtDate } from "@/lib/time"
 import { toast } from "@/lib/toast"
 import { cn } from "@/lib/utils"
-import { CHECKOUT_HREF } from "./PlanBilling"
+import { CHECKOUT_HREF, planCta } from "./PlanBilling"
 import { SmsConfirmSheet } from "./SmsConfirmSheet"
 
 /** Featured availability for the business's categories and areas, from FeaturedSlot records. */
@@ -19,9 +21,10 @@ export function featuredRows(s: ReturnType<typeof useStore.getState>, businessId
   const listing = listingById(s, biz?.listingId)
   if (!listing) return []
   const areas = AREAS.filter((a) => !a.parent && a.districts.includes(listing.postcodeDistrict))
+  const open = rulesFor(s).featuredSlotsPerArea // R2: slots per category and area, from S-06
   return listing.categoryIds.flatMap((cat) =>
     (areas.length ? areas : [{ slug: listing.area, name: listing.area }]).map((a) => {
-      const slots = s.featuredSlots.filter((f) => f.categoryId === cat && f.areaCode === a.slug)
+      const slots = s.featuredSlots.filter((f) => f.categoryId === cat && f.areaCode === a.slug && f.position <= open)
       const catName = categoryById(cat, s.categories)?.name ?? cat
       return { key: `${cat}-${a.slug}`, label: `${catName} · ${a.name}`, total: slots.length, free: slots.filter((f) => !f.businessId).length, mine: slots.find((f) => f.businessId === businessId)?.position }
     }),
@@ -32,6 +35,8 @@ export function featuredRows(s: ReturnType<typeof useStore.getState>, businessId
 export function FeaturedAvailability({ businessId, checkoutHref = CHECKOUT_HREF, readOnly }: { businessId: string; checkoutHref?: (plan: "desk" | "featured") => string; readOnly?: boolean }) {
   const s = useStore()
   const g = gateStatus(s, businessId)
+  const price = rulesFor(s).featuredPricePence
+  const payments = platformOn(s, "payments")
   const rows = featuredRows(s, businessId)
   const featSub = s.subscriptions.find((x) => x.businessId === businessId && x.plan === "featured" && x.status === "active")
   const anyFree = rows.some((r) => r.free > 0)
@@ -68,7 +73,7 @@ export function FeaturedAvailability({ businessId, checkoutHref = CHECKOUT_HREF,
           <li>The Featured badge on results and the map</li>
         </ul>
         <p className="mt-2 t-label text-navy tnum">
-          £29/month <span className="font-normal text-muted-ink">ex VAT (£34.80 inc VAT). Cancel any time.</span>
+          {gbp(price)}/month <span className="font-normal text-muted-ink">ex VAT ({gbp(Math.round(price * 1.2))} inc VAT). Cancel any time.</span>
         </p>
       </div>
 
@@ -80,13 +85,20 @@ export function FeaturedAvailability({ businessId, checkoutHref = CHECKOUT_HREF,
         ) : !g.met ? (
           <div>
             <Button block disabled>
-              <Lock /> Available after 10 enquiries
+              <Lock /> {gateButtonLabel(g, "Get Featured")}
             </Button>
-            <p className="mt-1.5 text-center t-caption text-muted-ink">You won&apos;t pay anything before you&apos;ve had 10 enquiries from Answerd.</p>
+            <p className="mt-1.5 text-center t-caption text-muted-ink">{g.enquiriesOk ? `You've had ${g.count} enquiries from Answerd. Paid plans open on ${fmtDate(g.gateDate)}.` : `You won't pay anything before you've had ${g.target} enquiries from Answerd.`}</p>
+          </div>
+        ) : !payments ? (
+          <div>
+            <Button block disabled>
+              <Lock /> Payments paused
+            </Button>
+            <p className="mt-1.5 text-center t-caption text-muted-ink">Answerd has paused new payments for a short while. Try again later.</p>
           </div>
         ) : anyFree ? (
           <ButtonLink href={checkoutHref("featured")} block>
-            Get Featured <ExternalLink />
+            {planCta("featured", price, false)} <ExternalLink />
           </ButtonLink>
         ) : (
           <p className="text-center t-label font-normal text-muted-ink">No Featured slots free in your areas right now.</p>
