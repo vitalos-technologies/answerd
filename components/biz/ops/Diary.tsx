@@ -234,8 +234,8 @@ function DayGrid({ listingId, businessId, staffUserId, day, canAdd }: { listingI
       })}
       {nowMin !== null && nowMin >= START_H * 60 && nowMin <= END_H * 60 && (
         <div className="pointer-events-none absolute left-12 right-0 z-20 flex items-center" style={{ top: y(nowMin) - 4 }} role="img" aria-label={`Now, ${fmtTime(s.clock)}`}>
-          <span className="size-2.5 rounded-full bg-red" />
-          <span className="h-0.5 flex-1 bg-red" />
+          <span className="size-2.5 rounded-full bg-blue" />
+          <span className="h-0.5 flex-1 bg-blue" />
         </div>
       )}
       {!jobs.length && !blocks.length && <p className="pointer-events-none absolute inset-x-14 top-2 z-[1] text-center t-caption text-muted-ink">Nothing booked. Tap a time to add a job or block time.</p>}
@@ -290,7 +290,7 @@ function WeekGrid({ listingId, businessId, staffUserId, weekStart, canAdd, onPic
                 const top = y(Math.max(minutesOfDay(b.startAt), START_H * 60))
                 return <JobBlock key={b.id} b={b} compact style={{ top: top + 1, height: Math.max(36, y(Math.min(minutesOfDay(b.endAt) || 24 * 60, END_H * 60)) - top - 2), left: 2, right: 2 }} />
               })}
-              {nowMin !== null && nowMin >= START_H * 60 && nowMin <= END_H * 60 && <span className="pointer-events-none absolute inset-x-0 z-20 h-0.5 bg-red" style={{ top: y(nowMin) }} aria-hidden />}
+              {nowMin !== null && nowMin >= START_H * 60 && nowMin <= END_H * 60 && <span className="pointer-events-none absolute inset-x-0 z-20 h-0.5 bg-blue" style={{ top: y(nowMin) }} aria-hidden />}
             </div>
           )
         })}

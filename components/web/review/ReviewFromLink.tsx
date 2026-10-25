@@ -142,7 +142,7 @@ export function ReviewFromLink({ token }: { token: string }) {
         }}
       >
         <div className="flex items-center gap-3">
-          <ListingAvatar initials={listing.initials} hue={listing.hue} size={52} />
+          <ListingAvatar listing={listing} size={52} />
           <div className="min-w-0">
             <p className="truncate t-subhead">{listing.name}</p>
             <p className="t-caption text-muted-ink">

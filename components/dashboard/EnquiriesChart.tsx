@@ -6,7 +6,7 @@ import { useStore } from "@/lib/store"
 import { SegmentedControl } from "@/components/answerd/Status"
 import { EmptyState } from "@/components/answerd/Feedback"
 import { DataGate } from "@/components/app/helpers"
-import { SERIES, weeklyStats, type StatsRange } from "@/components/biz/ops/StatsPanel"
+import { EnquiriesTable, SERIES, weeklyStats, type StatsRange } from "@/components/biz/ops/StatsPanel"
 import { fmtDayMonth } from "@/lib/time"
 import { cn } from "@/lib/utils"
 
@@ -30,6 +30,7 @@ function ChartTip({ active, payload, label }: { active?: boolean; payload?: { da
 export function EnquiriesChart({ listingId, statsHref, className }: { listingId: string; statsHref?: string; className?: string }) {
   const s = useStore()
   const [range, setRange] = React.useState<StatsRange>("4w")
+  const [table, setTable] = React.useState(false)
   const st = weeklyStats(s, listingId, range)
   const total = st.calls + st.messages + st.booked
   return (
@@ -55,26 +56,39 @@ export function EnquiriesChart({ listingId, statsHref, className }: { listingId:
         />
       </div>
       <DataGate isEmpty={!total} rows={2} empty={<EmptyState title="No enquiries yet" body="Calls, messages and bookings from Answerd show here by week." />}>
-        <ul className="mt-3 flex flex-wrap gap-x-4 gap-y-1" aria-label="Key">
-          {SERIES.map((x) => (
-            <li key={x.key} className="flex items-center gap-1.5 t-caption text-slate">
-              <span className="size-2.5 rounded-sm" style={{ background: x.color }} aria-hidden /> {x.label}
-            </li>
-          ))}
-        </ul>
-        <div className="mt-2" role="img" aria-label={`Stacked bar chart of enquiries per week from ${fmtDayMonth(st.from)}: ${st.calls} calls, ${st.messages} messages and ${st.booked} bookings.`}>
-          <ResponsiveContainer width="100%" height={220}>
-            <BarChart data={st.rows} margin={{ top: 8, right: 4, left: -24, bottom: 0 }} barCategoryGap="24%">
-              <CartesianGrid vertical={false} stroke="#E2E8F0" />
-              <XAxis dataKey="label" tickLine={false} axisLine={{ stroke: "#E2E8F0" }} tick={{ fill: "#64748B", fontSize: 11 }} interval="preserveStartEnd" minTickGap={8} />
-              <YAxis allowDecimals={false} tickLine={false} axisLine={false} tick={{ fill: "#64748B", fontSize: 11 }} width={40} />
-              <Tooltip content={<ChartTip />} cursor={{ fill: "rgba(37,99,255,0.06)" }} />
-              {SERIES.map((x, i) => (
-                <Bar key={x.key} dataKey={x.key} name={x.label} stackId="a" fill={x.color} stroke="#FFFFFF" strokeWidth={1} radius={i === SERIES.length - 1 ? [4, 4, 0, 0] : [0, 0, 0, 0]} isAnimationActive={false} />
+        <div className="mt-3 flex flex-wrap items-center justify-between gap-x-4 gap-y-1">
+          {table ? (
+            <span />
+          ) : (
+            <ul className="flex flex-wrap gap-x-4 gap-y-1" aria-label="Key">
+              {SERIES.map((x) => (
+                <li key={x.key} className="flex items-center gap-1.5 t-caption text-slate">
+                  <span className="size-2.5 rounded-sm" style={{ background: x.color }} aria-hidden /> {x.label}
+                </li>
               ))}
-            </BarChart>
-          </ResponsiveContainer>
+            </ul>
+          )}
+          <button type="button" onClick={() => setTable((t) => !t)} className="inline-flex min-h-11 items-center t-label text-blue hover:underline" aria-pressed={table}>
+            {table ? "Show chart" : "Show as table"}
+          </button>
         </div>
+        {table ? (
+          <EnquiriesTable rows={st.rows} caption="Enquiries per week" />
+        ) : (
+          <div className="mt-2" role="img" aria-label={`Stacked bar chart of enquiries per week from ${fmtDayMonth(st.from)}: ${st.calls} calls, ${st.messages} messages and ${st.booked} bookings.`}>
+            <ResponsiveContainer width="100%" height={220}>
+              <BarChart data={st.rows} margin={{ top: 8, right: 4, left: -24, bottom: 0 }} barCategoryGap="24%">
+                <CartesianGrid vertical={false} stroke="#E2E8F0" />
+                <XAxis dataKey="label" tickLine={false} axisLine={{ stroke: "#E2E8F0" }} tick={{ fill: "#64748B", fontSize: 11 }} interval="preserveStartEnd" minTickGap={8} />
+                <YAxis allowDecimals={false} tickLine={false} axisLine={false} tick={{ fill: "#64748B", fontSize: 11 }} width={40} />
+                <Tooltip content={<ChartTip />} cursor={{ fill: "rgba(37,99,255,0.06)" }} />
+                {SERIES.map((x, i) => (
+                  <Bar key={x.key} dataKey={x.key} name={x.label} stackId="a" fill={x.color} stroke="#FFFFFF" strokeWidth={1} radius={i === SERIES.length - 1 ? [4, 4, 0, 0] : [0, 0, 0, 0]} isAnimationActive={false} />
+                ))}
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
+        )}
         {statsHref && (
           <Link href={statsHref} className="mt-2 inline-flex min-h-11 items-center t-label text-blue hover:underline">
             See all stats

@@ -1,4 +1,5 @@
-import { BadgeCheck, Bot, Clock, ShieldCheck, Sparkle, Star } from "lucide-react"
+import { BadgeCheck, Clock, ShieldCheck, Sparkle, Star } from "lucide-react"
+import { DeskIcon } from "@/components/brand/DeskIcon"
 import type { BadgeKind } from "@/lib/types"
 import { cn } from "@/lib/utils"
 
@@ -17,8 +18,12 @@ const LABEL: Record<BadgeKind, string> = {
   desk: "Desk",
 }
 
-export function Badge({ kind, className }: { kind: BadgeKind; className?: string }) {
-  const base = "inline-flex h-6 shrink-0 items-center gap-1 rounded-full px-2.5 t-caption whitespace-nowrap"
+/** size "sm" (20 high, 11 px) is for compact result cards. */
+export function Badge({ kind, className, size = "md" }: { kind: BadgeKind; className?: string; size?: "md" | "sm" }) {
+  const base =
+    size === "sm"
+      ? "inline-flex h-5 shrink-0 items-center gap-1 rounded-full px-2 text-[11px] font-medium leading-4 whitespace-nowrap [&_svg]:size-3"
+      : "inline-flex h-6 shrink-0 items-center gap-1 rounded-full px-2.5 t-caption whitespace-nowrap"
   switch (kind) {
     case "responds_instantly":
       return (
@@ -71,7 +76,7 @@ export function Badge({ kind, className }: { kind: BadgeKind; className?: string
     case "desk":
       return (
         <span className={cn(base, "h-5 bg-teal-tint px-2 text-teal-ink", className)}>
-          <Bot className="size-3" aria-hidden />
+          <DeskIcon className="size-3" aria-hidden />
           {LABEL[kind]}
         </span>
       )

@@ -215,6 +215,31 @@
   scrollbar-width: none;
   &::-webkit-scrollbar { display: none; }
 }
+/* Home-indicator clearance under sticky bars and bottom CTAs: 34 px inside the prototype's phone
+   frame (500 px and up), the device's own safe area when the app fills a phone screen. */
+@utility pb-home {
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+  @media (width >= 500px) {
+    [data-phone-frame] & {
+      padding-bottom: 34px;
+    }
+  }
+}
+
+/* No desktop scrollbars inside the phone frame (every screen, and date strips); scrolling still works */
+[data-phone-frame],
+[data-phone-frame] * {
+  scrollbar-width: none;
+}
+[data-phone-frame] *::-webkit-scrollbar {
+  display: none;
+}
+
+/* Prototype chrome: the collapsed Hub button sits top-right on the dashboard and admin shells,
+   so their sticky top bars keep their own controls clear of it (gone with ?clean=1) */
+body:has([data-hub-corner]) header.sticky {
+  padding-right: 72px;
+}
 
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after {

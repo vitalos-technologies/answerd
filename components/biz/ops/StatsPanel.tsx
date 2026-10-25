@@ -12,13 +12,42 @@ import { mondayOf } from "./Diary"
 
 export type StatsRange = "4w" | "12w" | "all"
 
-// Validated categorical palette (blue, orange, aqua): passes CVD and normal-vision checks on white.
-// Aqua is under 3:1 against white, so the chart always has a legend and a table view.
+// Brand series (design review): calls blue, messages teal, bookings navy; amber only for highlights.
+// Teal is under 3:1 against white, so every chart has a key and a table view.
 export const SERIES = [
   { key: "calls", label: "Calls", color: "#2563FF" },
-  { key: "messages", label: "Messages", color: "#EB6834" },
-  { key: "bookings", label: "Bookings", color: "#1BAF7A" },
+  { key: "messages", label: "Messages", color: "#14B8A6" },
+  { key: "bookings", label: "Bookings", color: "#0F2D5B" },
 ] as const
+
+/** The weekly chart as a table (B-28 and W-13 "Show as table"). */
+export function EnquiriesTable({ rows, caption = "Enquiries by week" }: { rows: { week: string; label: string; calls: number; messages: number; bookings: number }[]; caption?: string }) {
+  return (
+    <table className="mt-2 w-full t-caption">
+      <caption className="sr-only">{caption}</caption>
+      <thead>
+        <tr className="text-left text-muted-ink">
+          <th className="py-1.5 font-medium">Week of</th>
+          {SERIES.map((x) => (
+            <th key={x.key} className="py-1.5 text-right font-medium">
+              {x.label}
+            </th>
+          ))}
+        </tr>
+      </thead>
+      <tbody className="divide-y divide-line text-navy tnum">
+        {rows.map((r) => (
+          <tr key={r.week}>
+            <td className="py-1.5">{r.label}</td>
+            <td className="py-1.5 text-right">{r.calls}</td>
+            <td className="py-1.5 text-right">{r.messages}</td>
+            <td className="py-1.5 text-right">{r.bookings}</td>
+          </tr>
+        ))}
+      </tbody>
+    </table>
+  )
+}
 
 interface WeekRow {
   week: string
@@ -152,29 +181,7 @@ export function StatsPanel({ listingId, className, height = 220 }: { listingId: 
             </button>
           </div>
           {table ? (
-            <table className="mt-2 w-full t-caption">
-              <caption className="sr-only">Enquiries by week</caption>
-              <thead>
-                <tr className="text-left text-muted-ink">
-                  <th className="py-1.5 font-medium">Week of</th>
-                  {SERIES.map((x) => (
-                    <th key={x.key} className="py-1.5 text-right font-medium">
-                      {x.label}
-                    </th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-line text-navy tnum">
-                {st.rows.map((r) => (
-                  <tr key={r.week}>
-                    <td className="py-1.5">{r.label}</td>
-                    <td className="py-1.5 text-right">{r.calls}</td>
-                    <td className="py-1.5 text-right">{r.messages}</td>
-                    <td className="py-1.5 text-right">{r.bookings}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+            <EnquiriesTable rows={st.rows} />
           ) : (
             <ul className="mt-2 flex flex-wrap gap-x-4 gap-y-1" aria-label="Key">
               {SERIES.map((x) => (

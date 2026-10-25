@@ -8,7 +8,7 @@ import { AppScreen } from "@/components/shells/AppScreen"
 import { ActionBar } from "@/components/answerd/ActionBar"
 import { BadgeRow } from "@/components/answerd/Badges"
 import { Rating, Stars } from "@/components/answerd/Rating"
-import { ListingAvatar, PhotoTile } from "@/components/answerd/Media"
+import { ListingAvatar, ListingCover, PhotoTile } from "@/components/answerd/Media"
 import { MockMap } from "@/components/answerd/MockMap"
 import { Banner } from "@/components/answerd/Feedback"
 import { Button, IconButton } from "@/components/answerd/Button"
@@ -109,7 +109,8 @@ export default function ListingPage({ params }: { params: Promise<{ slug: string
   const area = areaFor(s, biz.id)
   const base = area ? lookupPostcode(area.basePostcode) : null
   const avail = availabilityFor(s, biz.id)
-  const cover = biz.photos.find((p) => p.id === biz.coverPhotoId) ?? biz.photos[0]
+  // The owner's cover photo if set; otherwise ListingCover draws a 120 px band with the category's icon
+  const cover = biz.photos.find((p) => p.id === biz.coverPhotoId)
   const today = parts(s.clock).dow
 
   return (
@@ -126,7 +127,7 @@ export default function ListingPage({ params }: { params: Promise<{ slug: string
       }
     >
       <div className="relative">
-        {cover ? <PhotoTile hue={cover.hue} icon={cover.icon} rounded="rounded-none" className="h-44 w-full" label={cover.caption} /> : <div className="h-44 bg-blue-tint" />}
+        <ListingCover listing={listing} photo={cover} />
         <div className="absolute inset-x-0 top-0 flex items-center gap-2 p-3">
           <IconButton label="Back" tone="white" onClick={() => (window.history.length > 1 ? router.back() : router.push("/app"))}>
             <ArrowLeft />
@@ -156,7 +157,7 @@ export default function ListingPage({ params }: { params: Promise<{ slug: string
 
       <div className="relative bg-white px-4 pb-5">
         <div className="-mt-8 mb-2 inline-flex rounded-2xl border-4 border-white bg-white shadow-card">
-          <ListingAvatar initials={listing.initials} hue={listing.hue} size={64} />
+          <ListingAvatar listing={listing} size={64} />
         </div>
         <h1 className="t-title">{listing.name}</h1>
         <p className="t-label font-normal text-slate">
@@ -373,7 +374,7 @@ function Unclaimed({ listingSlug, share, setShare, dist }: { listingSlug: string
     >
       <div className="bg-white px-4 pb-5 pt-4">
         <div className="flex items-start gap-3">
-          <ListingAvatar initials={listing.initials} hue={listing.hue} size={64} />
+          <ListingAvatar listing={listing} size={64} />
           <div className="min-w-0">
             <h1 className="t-title">{listing.name}</h1>
             <p className="t-label font-normal text-slate">

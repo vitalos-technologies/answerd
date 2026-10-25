@@ -2,7 +2,8 @@
 import * as React from "react"
 import { use } from "react"
 import { useRouter } from "next/navigation"
-import { Bot, Mic, PhoneOff, PhoneOutgoing, User, Volume2, X } from "lucide-react"
+import { Mic, PhoneOff, PhoneOutgoing, User, Volume2, X } from "lucide-react"
+import { DeskIcon } from "@/components/brand/DeskIcon"
 import { AppScreen } from "@/components/shells/AppScreen"
 import { RouteSheet } from "@/components/app/RouteSheet"
 import { Button } from "@/components/answerd/Button"
@@ -50,7 +51,7 @@ export default function CallSheet({ params }: { params: Promise<{ slug: string }
     return (
       <AppScreen id="C-20" bg="white" className="bg-navy">
         <div className="flex h-full flex-col items-center bg-navy px-6 pb-10 pt-12 text-white">
-          <ListingAvatar initials={listing.initials} hue={listing.hue} size={88} className="rounded-full" />
+          <ListingAvatar listing={listing} size={88} className="rounded-full" />
           <p className="mt-5 text-[26px] font-semibold">{listing.name}</p>
           <p className="mt-1 t-label font-normal text-white/80 tnum" aria-live="polite">
             Calling via Answerd · {fmtDuration(sec)}
@@ -77,7 +78,7 @@ export default function CallSheet({ params }: { params: Promise<{ slug: string }
             </Button>
             {desk && (
               <Button block variant="secondary" onClick={() => finish("desk")}>
-                <Bot /> Answerd desk answered
+                <DeskIcon /> Answerd desk answered
               </Button>
             )}
             <Button block variant="secondary" onClick={() => finish("missed")}>
@@ -96,7 +97,7 @@ export default function CallSheet({ params }: { params: Promise<{ slug: string }
     <AppScreen id="C-20">
       <RouteSheet title={`Call ${listing.name}`} onClose={close} backdrop={<div className="h-full bg-sky" />}>
         <div className="flex items-center gap-3 rounded-2xl bg-sky p-3">
-          <ListingAvatar initials={listing.initials} hue={listing.hue} size={48} />
+          <ListingAvatar listing={listing} size={48} />
           <div>
             <p className="t-subhead">{listing.name}</p>
             <p className="t-caption text-muted-ink tnum">via {tracked}</p>
@@ -105,7 +106,7 @@ export default function CallSheet({ params }: { params: Promise<{ slug: string }
         <p className="mt-4 t-body text-slate">You&apos;ll call via an Answerd number so they know you found them here.</p>
         {desk && (
           <p className="mt-3 flex items-start gap-2 rounded-xl bg-teal-tint p-3 t-label font-normal text-navy">
-            <Bot className="mt-0.5 size-4 shrink-0 text-teal-ink" aria-hidden /> If they&apos;re busy, their Answerd desk will pick up.
+            <DeskIcon className="mt-0.5 size-4 shrink-0 text-teal-ink" aria-hidden /> If they&apos;re busy, their Answerd desk will pick up.
           </p>
         )}
         <div className="mt-5 space-y-2">

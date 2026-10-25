@@ -2,7 +2,8 @@
 import * as React from "react"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
-import { BarChart3, Bot, CalendarDays, CreditCard, Inbox, LayoutDashboard, Settings, Star, Store, Users, ChevronDown, ExternalLink } from "lucide-react"
+import { BarChart3, CalendarDays, CreditCard, Inbox, LayoutDashboard, Settings, Star, Store, Users, ChevronDown, ExternalLink } from "lucide-react"
+import { DeskIcon } from "@/components/brand/DeskIcon"
 import { Logo } from "@/components/brand/Logo"
 import { useStore, useCurrentBusiness, useCurrentUser } from "@/lib/store"
 import { membershipsFor, roleIn } from "@/lib/selectors"
@@ -17,7 +18,7 @@ const NAV = [
   { href: "/dashboard/inbox", label: "Inbox", icon: Inbox },
   { href: "/dashboard/diary", label: "Diary", icon: CalendarDays },
   { href: "/dashboard/profile", label: "Profile", icon: Store },
-  { href: "/dashboard/desk", label: "AI desk", icon: Bot },
+  { href: "/dashboard/desk", label: "AI desk", icon: DeskIcon },
   { href: "/dashboard/reviews", label: "Reviews", icon: Star },
   { href: "/dashboard/stats", label: "Stats", icon: BarChart3 },
   { href: "/dashboard/billing", label: "Billing", icon: CreditCard },

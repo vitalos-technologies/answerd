@@ -25,7 +25,8 @@ export const useChatWidget = create<{ open: boolean; initial: string | null; key
 export const WEB_ASK_LINKS = {
   call: (slug: string) => `/b/${slug}?call=1`,
   message: (slug: string, text: string) => `/b/${slug}?message=1${text ? `&text=${encodeURIComponent(text)}` : ""}`,
-  book: (slug: string) => `/b/${slug}/book`,
+  // App first: Book on the web opens "Continue in the app" on the listing
+  book: (slug: string) => `/b/${slug}?book=1`,
   listing: (slug: string) => `/b/${slug}`,
 }
 

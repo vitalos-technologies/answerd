@@ -89,7 +89,7 @@ function BookingInner({ slug }: { slug: string }) {
         <aside className="lg:sticky lg:top-28 lg:self-start">
           <div className="card p-5">
             <div className="flex items-center gap-3">
-              <ListingAvatar initials={listing.initials} hue={listing.hue} size={44} />
+              <ListingAvatar listing={listing} size={44} />
               <div className="min-w-0">
                 <p className="truncate t-subhead">{listing.name}</p>
                 <p className="t-caption text-muted-ink">{biz?.bookingMode === "instant" ? "Instant booking" : "Request to book · they confirm within 2 hours"}</p>
@@ -229,7 +229,7 @@ function DetailsStep({ slug, onContinue }: { slug: string; onContinue: () => voi
             {alternatives.map((l) => (
               <li key={l.id}>
                 <Link href={`/b/${l.slug}`} className="flex items-center gap-2 rounded-xl bg-white p-2 hover:bg-sky">
-                  <ListingAvatar initials={l.initials} hue={l.hue} size={32} />
+                  <ListingAvatar listing={l} size={32} />
                   <span className="flex-1 t-label text-navy">{l.name}</span>
                   <ChevronRight className="size-4 text-muted-ink" aria-hidden />
                 </Link>

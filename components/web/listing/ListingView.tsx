@@ -6,7 +6,7 @@ import { BadgeCheck, CalendarPlus, ChevronLeft, ChevronRight, Clock, Flag, Globe
 import { ScreenMeta } from "@/components/shells/ScreenMeta"
 import { BadgeRow, Badge } from "@/components/answerd/Badges"
 import { Rating, Stars } from "@/components/answerd/Rating"
-import { ListingAvatar, PhotoTile } from "@/components/answerd/Media"
+import { ListingAvatar, ListingCover, PhotoTile } from "@/components/answerd/Media"
 import { MockMap } from "@/components/answerd/MockMap"
 import { Banner, EmptyState } from "@/components/answerd/Feedback"
 import { Button, ButtonLink } from "@/components/answerd/Button"
@@ -22,7 +22,7 @@ import type { Listing } from "@/lib/types"
 import { Breadcrumbs, Container } from "../ui"
 import { SITE_HOST } from "../data"
 import { CallDialog, ReportDialog } from "./dialogs"
-import { MessagePanel } from "./MessagePanel"
+import { ContinueInAppDialog, type ContinueAction } from "./ContinueInApp"
 
 const DAY = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"]
 
@@ -44,19 +44,20 @@ function Section({ id, title, children, action }: { id: string; title: string; c
   )
 }
 
-/** Reads ?call=1, ?message=1 and ?text= without pulling the whole page out of server rendering. */
-function QueryOpeners({ onCall, onMessage }: { onCall: () => void; onMessage: (text?: string) => void }) {
+/** Reads ?call=1, ?message=1 and ?book=1 (links from result cards and Ask Answerd) without pulling the whole page out of server rendering. */
+function QueryOpeners({ onCall, onApp }: { onCall: () => void; onApp: (action: ContinueAction) => void }) {
   const sp = useSearchParams()
   const hydrated = useStore((s) => s.hydrated)
   const call = sp.get("call")
   const message = sp.get("message")
-  const text = sp.get("text") ?? undefined
+  const book = sp.get("book")
   React.useEffect(() => {
     if (!hydrated) return
     if (call === "1") onCall()
-    if (message === "1") onMessage(text)
+    if (message === "1") onApp("message")
+    if (book === "1") onApp("book")
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [hydrated, call, message, text])
+  }, [hydrated, call, message, book])
   return null
 }
 
@@ -77,7 +78,8 @@ export function ListingView({ slug }: { slug: string }) {
   const router = useRouter()
   const listing = listingBySlug(s, slug)
   const [dialog, setDialog] = React.useState<null | "call" | "report" | "photos">(null)
-  const [msg, setMsg] = React.useState<{ text?: string } | null>(null)
+  // App first: Message and Book continue in the app; there's no web messaging or web booking from here
+  const [appSheet, setAppSheet] = React.useState<ContinueAction | null>(null)
   const [photoIdx, setPhotoIdx] = React.useState(0)
   const [reviewsShown, setReviewsShown] = React.useState(5)
   const [starFilter, setStarFilter] = React.useState<number | null>(null)
@@ -102,16 +104,13 @@ export function ListingView({ slug }: { slug: string }) {
 
   const userId = s.session.userId
   const here = `/b/${listing.slug}`
-  const openMessage = (text?: string) => {
-    if (!useStore.getState().session.userId) {
-      router.push(signInFor(`${here}?message=1${text ? `&text=${encodeURIComponent(text)}` : ""}`))
-      return
-    }
-    setMsg({ text })
+  const claimedListing = listing.layer === "claimed"
+  const openApp = (action: ContinueAction) => {
+    if (claimedListing) setAppSheet(action)
   }
   const openers = (
     <React.Suspense fallback={null}>
-      <QueryOpeners onCall={() => setDialog("call")} onMessage={openMessage} />
+      <QueryOpeners onCall={() => setDialog("call")} onApp={openApp} />
     </React.Suspense>
   )
   const cat = s.categories.find((c) => c.id === listing.categoryIds[0])
@@ -134,7 +133,7 @@ export function ListingView({ slug }: { slug: string }) {
             <div className="min-w-0 space-y-6">
               <div className="card p-5 md:p-6">
                 <div className="flex items-start gap-4">
-                  <ListingAvatar initials={listing.initials} hue={listing.hue} size={72} />
+                  <ListingAvatar listing={listing} size={72} />
                   <div className="min-w-0">
                     <h1 className="t-title break-words">{listing.name}</h1>
                     <p className="t-label font-normal text-slate">
@@ -226,7 +225,8 @@ export function ListingView({ slug }: { slug: string }) {
   const base = area ? lookupPostcode(area.basePostcode) : null
   const avail = availabilityFor(s, biz?.id)
   const photos = biz?.photos ?? []
-  const cover = photos.find((p) => p.id === biz?.coverPhotoId) ?? photos[0]
+  // The owner's cover photo if set; otherwise a 120 px band with the category's own icon
+  const cover = photos.find((p) => p.id === biz?.coverPhotoId)
   const today = parts(s.clock).dow
   const canBook = bookable && !status.holiday
 
@@ -246,7 +246,7 @@ export function ListingView({ slug }: { slug: string }) {
   const contact = (
     <div className="card p-5">
       <div className="flex items-center gap-3">
-        <ListingAvatar initials={listing.initials} hue={listing.hue} size={44} />
+        <ListingAvatar listing={listing} size={44} />
         <div className="min-w-0">
           <p className="truncate t-subhead">{listing.name}</p>
           <Rating value={rating.rating} count={rating.count} />
@@ -266,19 +266,20 @@ export function ListingView({ slug }: { slug: string }) {
       </p>
       <div className="mt-4 grid gap-2">
         {canBook && (
-          <ButtonLink href={userId ? `${here}/book` : signInFor(`${here}/book`)}>
+          <Button onClick={() => openApp("book")} aria-label={`Book ${listing.name}`} aria-haspopup="dialog">
             <CalendarPlus /> Book
-          </ButtonLink>
+          </Button>
         )}
         <div className="grid grid-cols-2 gap-2">
           <Button variant="secondary" onClick={() => setDialog("call")} aria-label={`Call ${listing.name}`}>
             <Phone /> Call
           </Button>
-          <Button variant="secondary" onClick={() => openMessage()} aria-label={`Message ${listing.name}`}>
+          <Button variant="secondary" onClick={() => openApp("message")} aria-label={`Message ${listing.name}`} aria-haspopup="dialog">
             <MessageCircle /> Message
           </Button>
         </div>
       </div>
+      <p className="mt-2 t-caption text-muted-ink">Message and Book continue in the Answerd app. Calls work from here.</p>
       {!canBook && bookable && status.holiday && <p className="mt-2 t-caption text-muted-ink">Booking is paused: {status.label}. You can still message them.</p>}
       {biz && <p className="mt-3 t-caption text-muted-ink">{biz.bookingMode === "instant" ? "Instant booking: you're confirmed straight away." : "Request to book: they confirm within 2 hours."} You pay the business directly.</p>}
       <Link href={`/app/b/${listing.slug}`} className="mt-3 flex min-h-11 items-center gap-2 t-label text-blue hover:underline">
@@ -292,13 +293,13 @@ export function ListingView({ slug }: { slug: string }) {
       <ScreenMeta id="W-06" />
       {openers}
       <div className="relative">
-        {cover ? <PhotoTile hue={cover.hue} icon={cover.icon} rounded="rounded-none" className="h-40 w-full md:h-56" label={cover.caption} /> : <div className="h-40 bg-blue-tint md:h-56" />}
+        <ListingCover listing={listing} photo={cover} className="h-40 md:h-56" />
       </div>
       <Container className="pb-24 lg:pb-12">
         <div className="relative -mt-10 card p-5 md:p-6">
           <Breadcrumbs items={crumbs} />
           <div className="mt-3 flex flex-col gap-4 md:flex-row md:items-start">
-            <ListingAvatar initials={listing.initials} hue={listing.hue} size={72} className="border-4 border-white shadow-card" />
+            <ListingAvatar listing={listing} size={72} className="border-4 border-white shadow-card" />
             <div className="min-w-0 flex-1">
               <h1 className="t-title break-words">{listing.name}</h1>
               <p className="t-label font-normal text-slate">
@@ -525,18 +526,18 @@ export function ListingView({ slug }: { slug: string }) {
           <Button variant="secondary" className="flex-1 px-3" onClick={() => setDialog("call")} aria-label={`Call ${listing.name}`}>
             <Phone /> Call
           </Button>
-          <Button variant="secondary" className="flex-1 px-3" onClick={() => openMessage()} aria-label={`Message ${listing.name}`}>
+          <Button variant="secondary" className="flex-1 px-3" onClick={() => openApp("message")} aria-label={`Message ${listing.name}`} aria-haspopup="dialog">
             <MessageCircle /> Message
           </Button>
           {canBook && (
-            <ButtonLink href={userId ? `${here}/book` : signInFor(`${here}/book`)} className="flex-1 px-3">
+            <Button className="flex-1 px-3" onClick={() => openApp("book")} aria-label={`Book ${listing.name}`} aria-haspopup="dialog">
               <CalendarPlus /> Book
-            </ButtonLink>
+            </Button>
           )}
         </div>
       </div>
 
-      <CallDialog listing={listing} open={dialog === "call"} onOpenChange={(v) => setDialog(v ? "call" : null)} onMessage={() => openMessage()} />
+      <CallDialog listing={listing} open={dialog === "call"} onOpenChange={(v) => setDialog(v ? "call" : null)} onMessage={() => openApp("message")} />
       <ReportDialog listing={listing} open={dialog === "report"} onOpenChange={(v) => setDialog(v ? "report" : null)} />
       <Dialog open={dialog === "photos"} onOpenChange={(v) => setDialog(v ? "photos" : null)}>
         <DialogContent className="max-w-[calc(100%-2rem)] rounded-3xl border-0 bg-white p-4 shadow-overlay sm:max-w-3xl">
@@ -554,7 +555,7 @@ export function ListingView({ slug }: { slug: string }) {
           </div>
         </DialogContent>
       </Dialog>
-      {msg && <MessagePanel listing={listing} open onOpenChange={(v) => !v && setMsg(null)} initialText={msg.text} />}
+      <ContinueInAppDialog listing={listing} action={appSheet ?? "message"} open={!!appSheet} onOpenChange={(v) => !v && setAppSheet(null)} onCall={() => setDialog("call")} />
     </>
   )
 }

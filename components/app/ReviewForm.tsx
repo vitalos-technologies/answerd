@@ -70,7 +70,7 @@ export function ReviewForm({ listing, bookingId, callId, doneHref }: { listing: 
         }}
       >
         <div className="flex items-center gap-3">
-          <ListingAvatar initials={listing.initials} hue={listing.hue} size={48} />
+          <ListingAvatar listing={listing} size={48} />
           <p className="t-subhead">{listing.name}</p>
         </div>
         <div>
