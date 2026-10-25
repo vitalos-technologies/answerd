@@ -4,7 +4,6 @@ import { CalendarCheck, Mic, PhoneIncoming, ShieldAlert } from "lucide-react"
 import { Button, ButtonLink } from "@/components/answerd/Button"
 import { BizScreen } from "@/components/app/biz"
 import { SampleCallPlayer } from "@/components/biz/desk/SampleCallPlayer"
-import { PoweredByAskBridge } from "@/components/biz/desk/common"
 import { useStore } from "@/lib/store"
 import { buildScript } from "@/lib/deskScripts"
 import { deskFor, listingById, servicesFor } from "@/lib/selectors"
@@ -78,7 +77,6 @@ export default function DeskIntro() {
             <p className="t-label text-navy">£49/month after your free trial. You won&apos;t pay anything before you&apos;ve had 10 enquiries from Answerd.</p>
             <p className="mt-1 t-caption text-muted-ink">£49 ex VAT (£58.80 inc VAT). Cancel any time.</p>
           </div>
-          <PoweredByAskBridge />
         </div>
       )}
     </BizScreen>

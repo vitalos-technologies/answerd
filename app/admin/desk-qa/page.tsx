@@ -41,7 +41,7 @@ export default function DeskQa() {
       id="A-12"
       title="Desk QA"
       perm="desk_qa"
-      description="A random sample of AI desk calls. Anything not rated Good goes to the prompt-fix backlog for the AskBridge team."
+      description="A random sample of AI desk calls. Anything not rated Good goes to the prompt-fix backlog for the desk team."
       actions={
         <Button variant="secondary" size="md" onClick={() => { setSeed((x) => x + 1); setPicked(null) }}>
           <Shuffle aria-hidden /> New sample

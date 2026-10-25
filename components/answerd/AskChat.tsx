@@ -137,7 +137,7 @@ export function AskChat({ links, onGuestLimit, initial, className, compact }: { 
             <SendHorizontal className="size-5" />
           </button>
         </form>
-        <p className="mt-1.5 text-center text-[11px] leading-4 text-muted-ink">Powered by AskBridge · Answerd&apos;s assistant, not a business{claude ? " · Claude understanding on" : ""}</p>
+        <p className="mt-1.5 text-center text-[11px] leading-4 text-muted-ink">Powered by Askbridge · Answerd&apos;s assistant, not a business{claude ? " · Claude understanding on" : ""}</p>
       </div>
     </div>
   )

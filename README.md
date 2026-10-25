@@ -116,7 +116,8 @@ The prototype gives every surface the shape and behaviour the MVP needs, using o
 | Public website and `/dashboard` | **Next.js web** at answerd.vitalos.co.uk: SEO pages for every category and area, listings, booking and claiming, plus the business dashboard. |
 | `/admin` | Internal admin console on the same web stack, Google sign-in restricted to vitalos.co.uk. |
 | The zustand store and the demo clock | **Workforce backend**: tenants, listings (claimed, seeded from Companies House and OpenStreetMap, Places gap-fill), bookings, threads, calls, quotes, reviews, notifications, billing (Stripe) and the audit log. |
-| `lib/deskScripts.ts` and `lib/askAnswerd.ts` | **AI powered by AskBridge**: the voice and SMS desk (missed-call forwarding, tracked numbers, transcripts, handoffs, safety rules) and the Ask Answerd assistant. |
+| `lib/deskScripts.ts` | **AI front desk on Workforce**: the voice and SMS desk (missed-call forwarding, tracked numbers, transcripts, handoffs, safety rules) on the telephony and voice stack. |
+| `lib/askAnswerd.ts` | **Ask Answerd, powered by Askbridge** (Vitalos's website assistant), in the app and as Chat with Answerd on the web. |
 | Mock calls, SMS, audio, maps and checkout | Real telephony, SMS, push, map tiles and Stripe Checkout and Customer Portal. |
 
 The prototype's rules carry over as product requirements:

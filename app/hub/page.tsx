@@ -1,11 +1,11 @@
 "use client"
 import * as React from "react"
 import Link from "next/link"
-import { CheckCircle2, Circle, Clock, FastForward, Layers, PlayCircle, RotateCcw, Hash, Eye, CalendarPlus, Gauge, ArrowRight, Smartphone, Globe, LayoutDashboard, Shield, UserCheck } from "lucide-react"
+import { Crown, CheckCircle2, Circle, Clock, FastForward, Layers, PlayCircle, RotateCcw, Hash, Eye, CalendarPlus, Gauge, ArrowRight, Smartphone, Globe, LayoutDashboard, Shield, UserCheck } from "lucide-react"
 import { Logo } from "@/components/brand/Logo"
 import { useStore } from "@/lib/store"
 import { PERSONAS } from "@/lib/seed"
-import { SCREENS, SURFACES, BUILT, type Surface } from "@/lib/screens"
+import { SCREENS, SURFACES, BUILT, DEFERRED, type Surface } from "@/lib/screens"
 import { DESK_EMERGENCIES, DESK_SCRIPTS } from "@/lib/deskScripts"
 import { Button } from "@/components/answerd/Button"
 import { SegmentedControl } from "@/components/answerd/Status"
@@ -74,7 +74,7 @@ function RunLog() {
   )
 }
 
-const SURFACE_ICON: Record<Surface, typeof Smartphone> = { customer: Smartphone, business: Smartphone, web: Globe, admin: Shield, desk: PlayCircle, ask: Layers }
+const SURFACE_ICON: Record<Surface, typeof Smartphone> = { customer: Smartphone, business: Smartphone, web: Globe, admin: Shield, super: Crown, desk: PlayCircle, ask: Layers }
 
 export default function HubPage() {
   const s = useStore()
@@ -304,6 +304,7 @@ export default function HubPage() {
                       <span className="min-w-0 flex-1">
                         <span className="block font-mono t-caption text-blue">{x.id}</span>
                         <span className="block t-label text-navy">{x.title}</span>
+                        {DEFERRED.has(x.id) && <span className="mt-1 inline-block rounded-full bg-amber-tint px-2 py-0.5 t-caption text-amber-ink">Deferred: app first</span>}
                         <span className="block truncate t-caption font-normal text-muted-ink">{x.route}</span>
                       </span>
                       <ArrowRight className="mt-0.5 size-4 shrink-0 text-muted-ink opacity-0 transition-opacity group-hover:opacity-100" aria-hidden />

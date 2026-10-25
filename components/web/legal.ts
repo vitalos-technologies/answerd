@@ -29,7 +29,7 @@ export const LEGAL_DOCS: LegalDoc[] = [
     sections: [
       { heading: "What we collect", body: `Account details, bookings, messages, tracked calls and reviews. ${P}` },
       { heading: "Why we use it", body: `To run the marketplace, connect you with businesses and keep Answerd safe. ${P}` },
-      { heading: "Who we share it with", body: `The businesses you contact, our processors (including AskBridge for the AI features) and no one else for marketing. ${P}` },
+      { heading: "Who we share it with", body: `The businesses you contact, our processors (including Askbridge for the chat assistant and Workforce for the AI desk) and no one else for marketing. ${P}` },
       { heading: "How long we keep it", body: P },
       { heading: "Your rights", body: `Access, correction, deletion, objection and portability. Download or delete your data from Privacy and data in the app. ${P}` },
       { heading: "Contact and complaints", body: `Contact our data protection lead or the Information Commissioner's Office. ${P}` },
@@ -75,7 +75,7 @@ export const LEGAL_DOCS: LegalDoc[] = [
     sections: [
       { heading: "When calls are recorded", body: `Calls answered by the Answerd desk are recorded. The desk says so at the start of every call and says it is an AI. ${P}` },
       { heading: "Why", body: `So the business can see what was agreed, for quality checks and to resolve disputes. ${P}` },
-      { heading: "Transcripts and summaries", body: `Each call gets a transcript and a short summary for the business, powered by AskBridge. ${P}` },
+      { heading: "Transcripts and summaries", body: `Each call gets a transcript and a short summary for the business. ${P}` },
       { heading: "Retention and access", body: `How long recordings are kept and how to ask for a copy or deletion. ${P}` },
     ],
   },

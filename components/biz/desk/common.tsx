@@ -4,10 +4,6 @@ import { DeskAvatar, PersonAvatar } from "@/components/answerd/Media"
 import { cn } from "@/lib/utils"
 
 /** Every desk screen carries this caption. */
-export function PoweredByAskBridge({ className, tone = "default" }: { className?: string; tone?: "default" | "navy" }) {
-  return <p className={cn("text-center t-caption", tone === "navy" ? "text-white/70" : "text-muted-ink", className)}>Powered by AskBridge</p>
-}
-
 /** Where desk components link to. App routes by default; the web dashboard (W-17) passes its own. */
 export interface DeskLinks {
   call: (callId: string) => string

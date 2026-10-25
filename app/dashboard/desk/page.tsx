@@ -5,7 +5,6 @@ import { DeskOverview, DeskStatusPill } from "@/components/biz/desk/DeskOverview
 import { DeskSetup } from "@/components/biz/desk/DeskSetup"
 import { KnowledgeEditor } from "@/components/biz/desk/KnowledgeEditor"
 import { HandoffRulesEditor } from "@/components/biz/desk/HandoffRulesEditor"
-import { PoweredByAskBridge } from "@/components/biz/desk/common"
 import { DashPage, LinkTabs } from "@/components/dashboard/kit"
 import { DeskIntroPanel, TestCallTab } from "@/components/dashboard/DeskTabs"
 import { DESK_TABS, dashDeskLinks, deskHref, type DeskTab } from "@/components/dashboard/links"
@@ -59,7 +58,6 @@ function DeskPage() {
             )}
             {tab === "test" && <TestCallTab listing={listing} />}
           </div>
-          <PoweredByAskBridge className="mt-8" />
         </div>
       )}
     </DashPage>

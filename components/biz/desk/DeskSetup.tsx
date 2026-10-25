@@ -15,7 +15,7 @@ import type { DeskConfig } from "@/lib/types"
 import { cn } from "@/lib/utils"
 import { CallScreen } from "./CallScreen"
 import { HandoffRulesEditor } from "./HandoffRulesEditor"
-import { APP_DESK_LINKS, PoweredByAskBridge, ProgressBar, type DeskLinks } from "./common"
+import { APP_DESK_LINKS, ProgressBar, type DeskLinks } from "./common"
 
 export const SETUP_STEPS = ["Your number", "Greeting and voice", "What the desk may do", "Handoff rules", "Test call", "Go live"] as const
 
@@ -107,7 +107,6 @@ export function DeskSetup({ businessId, onDone, links = APP_DESK_LINKS }: { busi
         <ButtonLink href={desk.trialUsed ? links.billing : links.intro} size="md" className="mt-3">
           {desk.trialUsed ? "Plan and billing" : "See the AI desk"}
         </ButtonLink>
-        <PoweredByAskBridge className="mt-4" />
       </div>
     )
   }
@@ -323,7 +322,6 @@ export function DeskSetup({ businessId, onDone, links = APP_DESK_LINKS }: { busi
           </div>
         </div>
       )}
-      <PoweredByAskBridge />
     </div>
   )
 }

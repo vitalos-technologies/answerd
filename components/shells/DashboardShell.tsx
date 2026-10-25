@@ -59,7 +59,6 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
             </Link>
           ))}
         </nav>
-        <div className="border-t border-line p-4 t-caption text-muted-ink">Powered by AskBridge</div>
       </aside>
       <div className="flex min-w-0 flex-1 flex-col">
         <header className="sticky top-0 z-30 flex h-16 items-center gap-3 border-b border-line bg-white px-6">

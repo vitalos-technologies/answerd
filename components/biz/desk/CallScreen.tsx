@@ -11,7 +11,7 @@ import { DESK_EMERGENCIES, DESK_SCRIPTS, type EmergencyKind, type ScriptId } fro
 import { fmtDateTime, fmtDuration } from "@/lib/time"
 import type { Listing } from "@/lib/types"
 import { cn } from "@/lib/utils"
-import { APP_DESK_LINKS, PoweredByAskBridge, TranscriptView, type DeskLinks } from "./common"
+import { APP_DESK_LINKS, TranscriptView, type DeskLinks } from "./common"
 
 interface Effect {
   key: string
@@ -122,7 +122,6 @@ export function CallScreen({ listing, onEnd, defaultScript = "D-01", links = APP
         <Button block onClick={start}>
           <PhoneCall /> {meta.channel === "call" ? "Start test call" : "Start test conversation"}
         </Button>
-        <PoweredByAskBridge />
       </div>
     )
   }
@@ -161,7 +160,6 @@ export function CallScreen({ listing, onEnd, defaultScript = "D-01", links = APP
             <span className="t-caption">{run.done ? "Done" : "End"}</span>
           </button>
         </div>
-        <PoweredByAskBridge tone="navy" className="pb-2" />
       </div>
 
       <div className="card p-3">

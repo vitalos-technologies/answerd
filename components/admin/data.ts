@@ -188,5 +188,5 @@ export function placesSkus(calls: number, spendPence: number) {
 export const DEFAULT_FAQS = [
   { id: "faq-1", q: "Is Answerd free for customers?", a: "Yes. Searching, calling, messaging and booking are free." },
   { id: "faq-2", q: "Is listing my business free?", a: "Yes. Listing is free. Nothing is charged before day 60 and 10 Answerd enquiries." },
-  { id: "faq-3", q: "What is the AI desk?", a: "An assistant, powered by AskBridge, that answers your calls and texts, books jobs and hands off to you when it matters." },
+  { id: "faq-3", q: "What is the AI desk?", a: "An AI assistant, running on Workforce, that answers your calls and texts, books jobs and hands off to you when it matters." },
 ]

@@ -569,7 +569,7 @@ export interface PlacesDay {
 export interface Settings {
   featuredOn: boolean
   gapFillOn: boolean
-  voiceProvider: "AskBridge Voice" | "AskBridge Voice (beta)"
+  voiceProvider: "Twilio Voice" | "Vonage Voice"
   killSwitch: boolean
   placesCapPence: number
   gateOverrides: { businessId: ID; reason: string; at: ISO }[]

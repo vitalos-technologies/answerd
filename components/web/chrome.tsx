@@ -80,7 +80,7 @@ function ChatWidget() {
             <Mark size={32} />
             <div className="min-w-0 flex-1">
               <p className="t-subhead">Chat with Answerd</p>
-              <p className="t-caption text-muted-ink">Powered by AskBridge</p>
+              <p className="t-caption text-muted-ink">Powered by Askbridge</p>
             </div>
             <button type="button" onClick={close} aria-label="Close chat" className="inline-flex size-11 items-center justify-center rounded-full text-navy hover:bg-sky">
               <X className="size-5" />

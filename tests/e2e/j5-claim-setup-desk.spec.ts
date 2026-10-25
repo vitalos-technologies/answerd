@@ -86,7 +86,7 @@ test("J5 claim by phone code, complete setup, start the desk trial and run a tes
 
   // Desk trial and setup (B-30, B-31), test call inside step 5
   await page.goto("/app/biz/desk/intro")
-  await expect(F).toContainText("Powered by AskBridge")
+  await expect(F).not.toContainText("Askbridge")
   await F.getByRole("button", { name: "Start 14-day free trial" }).click()
   await expect(page).toHaveURL(/\/app\/biz\/desk\/setup$/)
   await F.getByRole("button", { name: "I've set it up" }).click()

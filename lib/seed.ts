@@ -85,7 +85,7 @@ export interface DemoData {
   deskRuns: DeskRun[]
 }
 
-export const SEED_VERSION = 1
+export const SEED_VERSION = 2
 
 const L = london
 const NOW = DEMO_START
@@ -924,7 +924,7 @@ export function createSeed(): DemoData {
   const settings: Settings = {
     featuredOn: true,
     gapFillOn: true,
-    voiceProvider: "AskBridge Voice",
+    voiceProvider: "Twilio Voice",
     killSwitch: false,
     placesCapPence: 2000,
     gateOverrides: [],

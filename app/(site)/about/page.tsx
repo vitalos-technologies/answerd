@@ -8,7 +8,7 @@ import { SITE } from "@/components/web/data"
 
 export const metadata: Metadata = {
   title: "About Answerd",
-  description: "Answerd is a Vitalos product, powered by AskBridge. Local businesses. Happier customers. A stronger community.",
+  description: "Answerd is a Vitalos product. Local businesses. Happier customers. A stronger community.",
   alternates: { canonical: "/about" },
 }
 
@@ -35,8 +35,8 @@ export default function Page() {
         </div>
         <div className="card p-6">
           <Bot className="size-6 text-blue" aria-hidden />
-          <h2 className="mt-4 t-subhead">Powered by AskBridge</h2>
-          <p className="mt-1 t-body text-slate">The Answerd desk and Ask Answerd are powered by AskBridge. They always say they&apos;re an AI, and a person can take over in one tap.</p>
+          <h2 className="mt-4 t-subhead">Chat powered by Askbridge</h2>
+          <p className="mt-1 t-body text-slate">Ask Answerd and Chat with Answerd are powered by Askbridge, Vitalos&apos;s website assistant. The Answerd desk runs on Workforce. Both always say they&apos;re an AI, and a person can take over in one tap.</p>
         </div>
         <div className="card p-6">
           <HeartHandshake className="size-6 text-blue" aria-hidden />
@@ -71,7 +71,7 @@ export default function Page() {
             </PillLink>
           </div>
         </div>
-        <p className="mt-6 text-center t-caption text-muted-ink">Answerd is a Vitalos product · Powered by AskBridge</p>
+        <p className="mt-6 text-center t-caption text-muted-ink">Answerd is a Vitalos product · Powered by Askbridge</p>
       </Container>
     </>
   )

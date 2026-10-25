@@ -126,7 +126,7 @@ export function categoryFaqs(cat: Category, area?: Area): Faq[] {
     },
     {
       q: "What does “Responds instantly” mean?",
-      a: "The business has an Answerd front desk, powered by AskBridge. If they can't pick up, the desk answers calls and messages straight away, says it's an AI, and can offer times or hand you to the owner.",
+      a: "The business has an Answerd front desk. If they can't pick up, the desk answers calls and messages straight away, says it's an AI, and can offer times or hand you to the owner.",
     },
     {
       q: "Are the businesses checked?",

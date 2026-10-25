@@ -6,11 +6,11 @@ Answerd is the UK marketplace where every local service business picks up: custo
 
 ## Product summary
 
-Answerd has four surfaces and one promise. The **customer app** (iOS and Android) finds, contacts, books and reviews any local service. **Business mode**, inside the same app, lets an owner claim a listing, run an inbox and diary, and switch on the **AI front desk**, powered by AskBridge, that answers calls and texts. The **web** carries SEO listing pages, the claim flow and a desktop dashboard. The **admin console** runs moderation, data imports and support. Product rules from the [marketplace brief](https://claude.ai/artifact/VPHe3HjXAzaVhYB9rZZph6) apply throughout: free listing, three-layer supply, nothing charged before day 60 and 10 enquiries.
+Answerd has four surfaces and one promise. The **customer app** (iOS and Android) finds, contacts, books and reviews any local service. **Business mode**, inside the same app, lets an owner claim a listing, run an inbox and diary, and switch on the **AI front desk**, a Workforce Receptionist agent that answers calls and texts. The **web** carries SEO listing pages, the claim flow and a desktop dashboard. The **admin console** runs moderation, data imports and support. Product rules from the [marketplace brief](https://claude.ai/artifact/VPHe3HjXAzaVhYB9rZZph6) apply throughout: free listing, three-layer supply, nothing charged before day 60 and 10 enquiries.
 
 Every screen has an ID (C customer, B business, D desk, Q Ask Answerd, W web, A admin). The prototype prompts build screens by ID, and the coverage check at the end counts them.
 
-Answerd lives at **answerd.vitalos.co.uk**, a Vitalos subdomain like Workforce, and its AI (the front desk and Ask Answerd) is **powered by AskBridge**. The footer, About page, desk screens and Ask Answerd all carry "Powered by AskBridge".
+Answerd lives at **answerd.vitalos.co.uk**, a Vitalos subdomain like Workforce. Its chat assistant (Ask Answerd in the app, Chat with Answerd on the web) is **powered by Askbridge**, Vitalos's website assistant; the AI front desk runs on Workforce. "Powered by Askbridge" appears on Ask Answerd, Chat with Answerd and the web footer, and nowhere on desk screens.
 
 **One app, two modes.** There is a single Answerd app in the App Store and Google Play, for customers and businesses alike. Business mode is a mode of that app, the way Airbnb has "Switch to hosting" inside one app, not a second download.
 
@@ -137,7 +137,7 @@ Session rules: app sessions last 90 days with silent refresh; web dashboard 30 d
 
 &#91;embedded content: sitemap · one app in two modes, web, admin, one backend\]
 
-Customers and business owners use the same app; the web carries search pages and the desktop dashboard; admin is for Vitalos staff; all four read and write one store on the Workforce backend, with the AI powered by AskBridge.
+Customers and business owners use the same app; the web carries search pages and the desktop dashboard; admin is for Vitalos staff; all four read and write one store on the Workforce backend, with Ask Answerd powered by Askbridge.
 
 ## Sign-in and claim flows
 
@@ -250,7 +250,7 @@ Sign-in is asked for only at the moment it is needed and always returns the pers
 
 ## AI front desk and Ask Answerd
 
-Two AI agents, both powered by AskBridge, both always labelled, both captioned "Powered by AskBridge". The **desk** speaks for one business and knows only that business's profile, diary and Q&A. **Ask Answerd** speaks for the marketplace, helps a customer choose, and never books on a business's behalf without the customer tapping Book.
+Two AI agents, both always labelled. The desk runs on Workforce; Ask Answerd runs on Askbridge, Vitalos's website assistant, and is captioned "Powered by Askbridge". The **desk** speaks for one business and knows only that business's profile, diary and Q&A. **Ask Answerd** speaks for the marketplace, helps a customer choose, and never books on a business's behalf without the customer tapping Book.
 
 **Desk conversations (D)** — these are behaviours, not screens; in the prototype each one is a scripted simulation the owner can play from B-33 and the customer sees in C-22.
 
@@ -306,7 +306,7 @@ Desk hard rules: never invents a price outside the business's listed ranges; nev
 | W-18 | Dashboard: Billing | Plan cards, monetise-gate progress, Stripe Checkout for AI desk and Featured, Stripe customer portal for card and invoices, cancel | Checkout → Stripe hosted page → back with success toast | Payment failed banner |
 | W-19 | Dashboard: Team and settings | B-38 to B-40 | — | — |
 | W-20 | Help centre | Search, articles for customers and businesses, contact form | — | — |
-| W-21 | About | Answerd by Vitalos, powered by AskBridge, mission line "Local businesses. Happier customers. A stronger community.", contact | — | — |
+| W-21 | About | Answerd by Vitalos, chat powered by Askbridge, mission line "Local businesses. Happier customers. A stronger community.", contact | — | — |
 | W-22 | Legal | Terms, privacy notice, cookie policy, review policy, acceptable use, desk call-recording notice | — | — |
 | W-23 | Cookie banner | Accept all, Reject non-essential (equal weight), Manage | Choice saved | Defaults to essential only |
 | W-24 | Not found and errors | 404 with search, 500 with retry | — | — |
@@ -361,7 +361,7 @@ Every notification is transactional, about something the recipient started or ow
 | Missed call answered by desk | Business | Yes | — | — | "Your desk took a call from Sam: leaking tap, SE25. Booked Tue 9am." | B-21 |
 | Handoff to you | Business | Yes | Yes | — | "Sam needs you: wants to talk about price. Call back within the hour." | B-20 |
 | Booking request | Business | Yes | Yes | — | "New booking request: boiler service, Thu 2pm. Reply within 2 hours." | B-22 |
-| Booking confirmed | Customer | Yes | Yes | Yes (receipt + calendar file) | "You're booked with Swift Plumbing, Thu 30 Oct, 2pm" | C-30 |
+| Booking confirmed | Customer | Yes | Yes | Yes (receipt + calendar file) | "You're booked with Swift Plumbing, Thu 29 Oct, 2pm" | C-30 |
 | Booking declined or expired | Customer | Yes | Yes | — | "Swift Plumbing can't make it. Here are 3 others free that day." | C-30 |
 | New time proposed | Customer | Yes | — | — | "Swift Plumbing suggested Fri 10am instead" | C-22 |
 | Reminder 24 h before | Customer and business | Yes | Customer only | — | "Tomorrow 2pm: Swift Plumbing at 12 Elm Rd" | C-30 / B-24 |

@@ -21,7 +21,7 @@ const STEPS = [
 const TRUST = [
   { icon: BadgeCheck, title: "Verified owners", body: "A business is only “claimed” once the owner proves it's theirs: a code to the listed number, a Companies House director check, or a document we check by hand." },
   { icon: ShieldCheck, title: "Checked credentials", body: "Gas Safe, NICEIC, NAPIT, insurance and DBS badges appear only after we've checked them. When one expires the badge comes off automatically." },
-  { icon: Eye, title: "AI that's always labelled", body: "The Answerd desk and Ask Answerd are powered by AskBridge. They say they're an AI, every message they send is labelled, and a person can take over at any time." },
+  { icon: Eye, title: "AI that's always labelled", body: "The Answerd desk and Ask Answerd say they're an AI, every message they send is labelled, and a person can take over at any time." },
   { icon: MessageCircle, title: "Your number stays private", body: "Calls go through an Answerd number, so businesses know you found them here and you never have to share more than you want to." },
 ]
 

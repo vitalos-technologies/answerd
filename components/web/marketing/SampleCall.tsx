@@ -86,7 +86,7 @@ export function SampleCall({ slug = "swift-plumbing-heating", className }: { slu
         })}
         <div ref={endRef} />
       </div>
-      <p className="border-t border-white/10 px-5 py-3 t-caption text-white/70">The desk says it&apos;s an AI and that the call is recorded. Powered by AskBridge.</p>
+      <p className="border-t border-white/10 px-5 py-3 t-caption text-white/70">The desk says it&apos;s an AI and that the call is recorded.</p>
     </div>
   )
 }

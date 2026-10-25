@@ -46,13 +46,13 @@ function VoiceRow() {
   return (
     <div className="flex min-h-16 items-center gap-4 py-3">
       <label htmlFor="voice" className="min-w-0 flex-1">
-        <span className="block t-label text-navy">Desk voice provider</span>
-        <span className="block t-caption text-muted-ink">The speech engine behind the AI desk.</span>
+        <span className="block t-label text-navy">Desk voice</span>
+        <span className="block t-caption text-muted-ink">The telephony voice stack the AI desk speaks through.</span>
       </label>
       <div className="w-60 shrink-0">
         <select id="voice" value={value} disabled={!can("settings")} onChange={(e) => setNext(e.target.value as Settings["voiceProvider"])} className={adminInput}>
-          <option>AskBridge Voice</option>
-          <option>AskBridge Voice (beta)</option>
+          <option>Twilio Voice</option>
+          <option>Vonage Voice</option>
         </select>
       </div>
       <ReasonDialog

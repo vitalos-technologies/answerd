@@ -12,7 +12,7 @@ import { dayKey, fmtAgo, fmtDate, ms, MS_DAY } from "@/lib/time"
 import { toast } from "@/lib/toast"
 import type { DeskStatus } from "@/lib/types"
 import { cn } from "@/lib/utils"
-import { APP_DESK_LINKS, PoweredByAskBridge, type DeskLinks } from "./common"
+import { APP_DESK_LINKS, type DeskLinks } from "./common"
 
 const STATUS: Record<DeskStatus, { label: string; cls: string; dot: string }> = {
   live: { label: "Live", cls: "bg-teal-tint text-teal-ink", dot: "bg-teal animate-pulse-dot" },
@@ -231,7 +231,6 @@ export function DeskOverview({ businessId, links = APP_DESK_LINKS, showLinks = t
           ))}
         </ul>
       )}
-      <PoweredByAskBridge />
 
       <BottomSheet
         open={!!sheet}

@@ -19,7 +19,7 @@ Eleven prompts, run in order in one Claude Code session in an empty repo. Each b
 ## P0 · Foundation
 
 ```markdown
-You are building the Answerd clickable prototype. Answerd is a Vitalos product: a UK local-services marketplace where customers find, call, message, book, refer and review local businesses (plumbers, cleaners, mechanics, couriers, barbers, any service), and businesses list free and can switch on an AI front desk that answers their calls and texts. Tagline: "Every business picks up." It lives at answerd.vitalos.co.uk (a Vitalos subdomain) and its AI, the front desk and Ask Answerd, is powered by AskBridge: show "Powered by AskBridge" in the web footer, the About page, the desk screens (B-30 to B-35) and under Ask Answerd (C-38, W-25).
+You are building the Answerd clickable prototype. Answerd is a Vitalos product: a UK local-services marketplace where customers find, call, message, book, refer and review local businesses (plumbers, cleaners, mechanics, couriers, barbers, any service), and businesses list free and can switch on an AI front desk that answers their calls and texts. Tagline: "Every business picks up." It lives at answerd.vitalos.co.uk (a Vitalos subdomain). Its chat assistant, Ask Answerd, is powered by Askbridge (Vitalos's website assistant): show "Powered by Askbridge" in the web footer, the About page and under Ask Answerd (C-38, W-25). The AI front desk runs on Workforce and carries no Askbridge caption.
 
 There is ONE mobile app for customers and businesses. Business mode is a mode of the same app (like Airbnb's "Switch to hosting"), never a second app: same sign-in, a mode switch in Account and More, the last mode remembered, staff-only accounts always open in business mode, and tapping a business notification switches to business mode first.
 
@@ -56,17 +56,17 @@ MockMap: no map provider in the prototype. Draw a stylised SVG map (sky ground, 
 - PhoneFrame: every /app route renders inside a 390 x 844 device frame (corner radius 48, status bar showing 9:41, home indicator) centred on a sky backdrop. At 1100 px wide and above, a side panel to the right shows the screen ID and title, the active persona and a jump list of that surface's screens. Below 500 px wide the frame disappears and the app fills the viewport.
 - CustomerTabs: Home, Search, Bookings, Messages, Account with count badges.
 - BusinessTabs: Today, Inbox, Diary, Desk, More, with a navy header strip showing the business name and a "Business" pill. Staff persona sees only Today, Inbox and Diary.
-- WebHeader: logo, Find a business, List your business, How it works, Sign in; compacts on scroll and shows the SearchBar. WebFooter: category and city links, legal links, "Answerd is a Vitalos product · Powered by AskBridge".
+- WebHeader: logo, Find a business, List your business, How it works, Sign in; compacts on scroll and shows the SearchBar. WebFooter: category and city links, legal links, "Answerd is a Vitalos product · Powered by Askbridge".
 - DashboardShell: white 240 px sidebar (Overview, Inbox, Diary, Profile, AI desk, Reviews, Stats, Billing, Team, Settings), top bar with business switcher and avatar.
 - AdminShell: navy sidebar, white canvas, dense tables, a role pill (Admin or Support).
 
 ## Mock data (lib/seed.ts)
-Deterministic: use a seeded PRNG, never Math.random. Demo clock starts Mon 27 Oct 2026 09:00 Europe/London and can be advanced. Launch date 1 Sep 2026.
+Deterministic: use a seeded PRNG, never Math.random. Demo clock starts Mon 26 Oct 2026 09:00 Europe/London and can be advanced. Launch date 1 Sep 2026.
 Phone numbers only from Ofcom drama ranges: mobiles 07700 900000 to 07700 900999, London 020 7946 0000 to 020 7946 0999.
 - Categories: the spec's tree (Home trades, Cleaning and domestic, Auto and delivery, Personal and beauty, Everything else) with about 30 leaf categories, each with a Lucide icon.
 - 60 listings: 40 around South Norwood and Croydon (SE25, SE19, CR0), 10 in Birmingham, 10 in Manchester. Layers: 18 claimed (6 with desk live), 26 seeded, 16 Places gap-fill. Named listings: Swift Plumbing & Heating (SE25, owner Sam Okafor, Gas Safe and Insured, desk live, 4.9 from 132 reviews, request to book); Sparkle Clean Co (cleaning, desk live, instant booking); Kwame's Mobile Mechanics (auto, request to book); Fade Lab Barbers (beauty, instant booking in fixed 30-minute slots); Fauward Couriers (delivery, claimed and verified, Vitalos's own courier network); Brightwire Electrical (NICEIC, desk paused); Norwood Locksmiths (unclaimed, seeded, 6 tracked calls this month).
 - For every claimed listing: services with prices, availability, service area, credentials, photos (use neutral placeholder images or gradients with icons, no real people). 300 short, realistic British reviews spread across listings, some with owner replies. 8 threads, 6 calls with transcripts and summaries, 10 bookings covering every status, 2 quotes, notifications for every persona.
-- Personas: Guest; Tayo A. (customer in SE25, 3 past bookings, 1 upcoming with Swift Plumbing on Thu 30 Oct at 2pm); Sam Okafor (owner of Swift Plumbing and also a customer); Jo Reid (staff at Swift Plumbing); Ife Bello (Answerd admin); Dan Price (support agent). Swift Plumbing has had 9 Answerd enquiries, one short of the monetise gate.
+- Personas: Guest; Tayo A. (customer in SE25, 3 past bookings, 1 upcoming with Swift Plumbing on Thu 29 Oct at 2pm); Sam Okafor (owner of Swift Plumbing and also a customer); Jo Reid (staff at Swift Plumbing); Ife Bello (Answerd admin); Dan Price (support agent). Swift Plumbing has had 9 Answerd enquiries, one short of the monetise gate.
 
 ## Store (lib/store.ts)
 Typed collections for every entity in the spec's Data model, plus session (personaId, mode customer or business, currentBusinessId), clock, offline flag, showScreenIds flag and stateOverride (none, loading, empty, error) for previewing states.
@@ -94,7 +94,7 @@ Behaviours without routes: D-01 to D-10 run from the hub Simulate panel and B-33
 ## Definition of done (applies to every prompt)
 - Every button, link, tab and row does something real: navigates, changes store state, or opens a sheet. No "#" links, no alert(), no dead ends.
 - Every list or data screen has loading, empty and error states, reachable from the hub's Preview states control.
-- Copy is British English and comes from the spec wherever the spec gives it. Prices show £ and say whether VAT is included. Dates read "Thu 30 Oct", times "2pm" or "2:30pm".
+- Copy is British English and comes from the spec wherever the spec gives it. Prices show £ and say whether VAT is included. Dates read "Thu 29 Oct", times "2pm" or "2:30pm".
 - App screens work at 390 wide; web pages at 1440, 1024 and 390; admin at 1280. Focus is visible; icon buttons have aria-labels; targets are at least 44 x 44.
 - pnpm build and pnpm lint pass. Mark the IDs you built as built in the hub. Commit with a message listing the IDs.
 
@@ -112,7 +112,7 @@ Specifics
 - C-03: Use my location shows a mock OS permission dialog (Allow once, Allow while using the app, Don't allow). Allow sets the location to SE25, South Norwood. Don't allow reveals the postcode field inline.
 - C-05 is a bottom-sheet route that accepts ?next= and returns there after sign-in. Anywhere a guest taps Message, Book, Save, Recommend or Review, send them to C-05 with next set to where they were going.
 - C-06 accepts UK mobiles in any common format. C-07: any 6 digits are correct except 000000, which is wrong; 5 wrong codes lock that number for 15 minutes on the demo clock; resend timer counts down from 30 s. Apple and Google buttons show a mock OS sheet ("Sign in to Answerd with Apple") then continue. New users go to C-08; existing personas skip it.
-- C-09 greets by time of day on the demo clock ("Morning, Tayo"; guests see "Find local help"), 8 category tiles plus All, a "Responds instantly near you" carousel of desk-live listings within 5 miles, Tayo's upcoming Thu 30 Oct booking card, recent searches, and the Ask Answerd card (opens C-38, a placeholder until P3).
+- C-09 greets by time of day on the demo clock ("Morning, Tayo"; guests see "Find local help"), 8 category tiles plus All, a "Responds instantly near you" carousel of desk-live listings within 5 miles, Tayo's upcoming Thu 29 Oct booking card, recent searches, and the Ask Answerd card (opens C-38, a placeholder until P3).
 - C-11 suggests as you type from categories, listing names and phrases like "plumber near SE25"; recent searches persist and can be cleared.
 - C-12 uses store.search: Featured (labelled) first, then desk-enabled and verified, other claimed, seeded, Places. Places cards carry "Powered by Google". Filter chips toggle and update the count. Fewer than 3 results shows the widen-radius banner; none shows the empty state with "Ask Answerd instead".
 - C-13 uses MockMap with the same result set; a pin scrolls the bottom carousel to its card and a card highlights its pin; "Search this area" re-runs the search for the visible box.
@@ -141,12 +141,12 @@ Specifics
 - C-21 per the spec. "Yes, booked it" opens a short form (service, date, time) that creates a confirmed booking with createdBy customer.
 - C-22: bubbles per the ChatBubble variants. For desk-live listings, if the owner hasn't replied 2 s after a customer message, the desk replies with a typing indicator ("Answerd desk is replying...") using lib/deskScripts.ts keyed on intent words (price, availability, area, emergency), quoting the business's real price ranges and offering SlotCards from its real availability. A SlotCard opens C-27 prefilled. QuoteCards show Accept and Decline (respondToQuote). When the business is offline, show its reply-time line.
 - C-23 creates a thread whose first message is the enquiry (photos as placeholders) and opens C-22.
-- C-24 to C-27 is one booking flow with a draft in the store. Times come from the listing's availability, lead time, buffer, max jobs per day and existing bookings. Swift Plumbing is request to book; Sparkle Clean and Fade Lab are instant. Seed one contested slot (Fade Lab, Thu 30 Oct 3pm): confirming it shows the "slot just taken" sheet with the next 3 slots. A postcode outside the service area on C-26 shows the error and 3 listings that do cover it.
+- C-24 to C-27 is one booking flow with a draft in the store. Times come from the listing's availability, lead time, buffer, max jobs per day and existing bookings. Swift Plumbing is request to book; Sparkle Clean and Fade Lab are instant. Seed one contested slot (Fade Lab, Thu 29 Oct 3pm): confirming it shows the "slot just taken" sheet with the next 3 slots. A postcode outside the service area on C-26 shows the error and 3 listings that do cover it.
 - C-28 says "You're booked" (instant) or "Request sent" (request), with Add to calendar (downloads an .ics), Message business and Done. The first booking ever triggers C-04.
 - C-33 lists threads newest first with unread dots and an "Answerd desk" tag when the last reply came from the desk.
 
 Acceptance
-1. As Tayo, Book Swift Plumbing "Boiler service" Thu 30 Oct 10am: C-28 says Request sent; the store holds a requested booking and a notification for Sam.
+1. As Tayo, Book Swift Plumbing "Boiler service" Thu 29 Oct 10am: C-28 says Request sent; the store holds a requested booking and a notification for Sam.
 2. As Tayo, message Sparkle Clean "How much for a 3-bed end of tenancy clean?": the desk replies within 2 s with the listed price range and two SlotCards; tap one, confirm, booked instantly.
 3. As Guest, call Norwood Locksmiths (unclaimed) and choose No answer: C-21 offers Try similar, and Message is not offered.
 4. Book the contested Fade Lab slot: the sheet appears and the booking completes on an alternative time.
@@ -163,7 +163,7 @@ Specifics
 - C-31 records a change request (BookingEvent change_requested) that the business answers in P5. C-32 shows the business's cancellation policy and warns inside the window.
 - C-34 needs stars and at least 20 characters; aspects optional. postReview updates the listing's rating and count immediately and notifies the owner; then C-35 offers Recommend.
 - C-36 shows Tayo's code TAYO-7K2 and link; after the hub's +1 day, "Ade joined" appears.
-- C-38 Ask Answerd: header with the mark, title "Ask Answerd", caption "Powered by AskBridge", opening line "Need a local service? I'll help you find the right business." and four suggestion chips. Build lib/askAnswerd.ts as a scripted agent: map free text to a category with a keyword table of at least 60 phrases (boiler, leak, tap, fuse, rewire, deep clean, end of tenancy, oven clean, MOT, battery flat, puncture, skin fade, nails, parcel, man and van and so on); pick up a postcode if given; ask at most two follow-ups (postcode if unknown; "Is water leaking right now?" for plumbing); then show up to 3 ResultCards from store.search, each with a one-line reason built from real fields ("Gas Safe, replies in a minute, free tomorrow 9am") and Call, Message, Book buttons that open the normal flows. Message pre-fills C-23 with what the customer already said. Emergency phrases (smell gas, gas leak, sparks, flooding, carbon monoxide) return the safety card from D-09 and Q-05 ("Call the National Gas Emergency Service on 0800 111 999" for gas, "Call 999" when life is at risk) with no booking buttons. Guests get 5 messages, then C-05. Optional: if the server environment variable ANTHROPIC_API_KEY is set, run the understanding step through a Next.js route handler that calls Claude and returns the same shape; otherwise stay scripted. Never expose a key to the browser.
+- C-38 Ask Answerd: header with the mark, title "Ask Answerd", caption "Powered by Askbridge", opening line "Need a local service? I'll help you find the right business." and four suggestion chips. Build lib/askAnswerd.ts as a scripted agent: map free text to a category with a keyword table of at least 60 phrases (boiler, leak, tap, fuse, rewire, deep clean, end of tenancy, oven clean, MOT, battery flat, puncture, skin fade, nails, parcel, man and van and so on); pick up a postcode if given; ask at most two follow-ups (postcode if unknown; "Is water leaking right now?" for plumbing); then show up to 3 ResultCards from store.search, each with a one-line reason built from real fields ("Gas Safe, replies in a minute, free tomorrow 9am") and Call, Message, Book buttons that open the normal flows. Message pre-fills C-23 with what the customer already said. Emergency phrases (smell gas, gas leak, sparks, flooding, carbon monoxide) return the safety card from D-09 and Q-05 ("Call the National Gas Emergency Service on 0800 111 999" for gas, "Call 999" when life is at risk) with no booking buttons. Guests get 5 messages, then C-05. Optional: if the server environment variable ANTHROPIC_API_KEY is set, run the understanding step through a Next.js route handler that calls Claude and returns the same shape; otherwise stay scripted. Never expose a key to the browser.
 - C-39 Account: "Switch to business mode" for personas with a business membership, "List or claim your business" for everyone else. C-40 to C-43 write to the store; Download my data shows a toast. C-47 needs DELETE typed plus an SMS code, is blocked if a booking is today, and returns to C-02 as Guest.
 - C-45 is one report sheet reused for listings, reviews and users; it creates a Report that appears in admin (P9).
 - C-46 lists the persona's notifications; tapping marks read and opens the screen; business-tagged notifications switch to business mode first.
@@ -231,7 +231,7 @@ Mark the IDs built in the hub. pnpm build and lint pass. Commit.
 ## P6 · AI desk, billing, team, settings, desk simulations
 
 ```markdown
-Build B-30 to B-41 and the desk behaviours D-01 to D-10 from docs/answerd-spec.md. Every desk screen carries the caption "Powered by AskBridge".
+Build B-30 to B-41 and the desk behaviours D-01 to D-10 from docs/answerd-spec.md. The desk runs on Workforce; desk screens carry no Askbridge caption.
 
 Desk scripts (lib/deskScripts.ts)
 Write each of D-01 to D-10 as a timed script: a list of turns (caller or customer line, desk line) plus side effects (create thread, log a call with transcript and summary, create a booking with createdBy desk, set a thread to needs_owner, send notifications). Desk lines follow the spec: the greeting says it is the business's Answerd assistant and that the call is recorded; it never quotes a price outside the business's listed ranges; it never confirms a job outside the service area; D-09 says "Please leave the property and call the National Gas Emergency Service on 0800 111 999 now." for gas, "Please call 999." when life is at risk and "Call 105." for a power cut, alerts the owner at once and books nothing; D-10 ends politely and logs spam. Scripts read the business's real services, prices, hours and area so they work for any claimed listing. The hub Simulate panel runs any script against Swift Plumbing; B-33 runs one for the current business.
@@ -258,7 +258,7 @@ Mark the IDs built in the hub. pnpm build and lint pass. Commit.
 ## P7 · Public website
 
 ```markdown
-Build the public website W-01 to W-12 and W-20 to W-27 from docs/answerd-spec.md with WebHeader, WebFooter ("Answerd is a Vitalos product · Powered by AskBridge") and the shared store. The site lives at answerd.vitalos.co.uk; use that host in canonical URLs, share links and structured data.
+Build the public website W-01 to W-12 and W-20 to W-27 from docs/answerd-spec.md with WebHeader, WebFooter ("Answerd is a Vitalos product · Powered by Askbridge") and the shared store. The site lives at answerd.vitalos.co.uk; use that host in canonical URLs, share links and structured data.
 
 Specifics
 - W-01: hero "Local help, just a message away." with SearchBar and postcode; popular categories; How it works in three steps; "Businesses that respond instantly near you"; For businesses band with "Every business picks up." and List your business; app download; footer category and city links that resolve to W-03 and W-04.
@@ -268,10 +268,10 @@ Specifics
 - W-08, W-09, W-10: marketing pages with the spec's copy; no testimonials (none exist yet); W-09 includes the desk sample-call player; W-10 states all prices ex VAT and the line "You'll never pay before you've had 10 enquiries from Answerd".
 - W-11: claim stepper reusing the B-01 to B-08 logic in a centred desktop card, ending with Go to dashboard (W-13) and Open in the app.
 - W-12: phone and code, Continue with Google (mock), Email me a sign-in link (shows "Check your inbox" then an "Open the link" demo button). Businesses go to /dashboard; customers to a simple account page.
-- W-20 help centre with search over 20 seeded articles. W-21 About: Answerd by Vitalos, powered by AskBridge, mission line "Local businesses. Happier customers. A stronger community." W-22 legal pages as clearly marked placeholder text with headings for terms, privacy notice, cookies, review policy, acceptable use and the desk call-recording notice.
+- W-20 help centre with search over 20 seeded articles. W-21 About: Answerd by Vitalos, chat powered by Askbridge, mission line "Local businesses. Happier customers. A stronger community." W-22 legal pages as clearly marked placeholder text with headings for terms, privacy notice, cookies, review policy, acceptable use and the desk call-recording notice.
 - W-23 cookie banner: Accept all and Reject non-essential with equal visual weight, Manage opens toggles; the choice is stored; nothing non-essential runs before a choice.
 - W-24 custom not-found with search, and an error boundary with Try again.
-- W-25: floating "Chat with Answerd" pill opening a 380-wide panel that runs the same lib/askAnswerd.ts as C-38, captioned "Powered by AskBridge".
+- W-25: floating "Chat with Answerd" pill opening a 380-wide panel that runs the same lib/askAnswerd.ts as C-38, captioned "Powered by Askbridge".
 - W-26: QR code and store badges; a smart banner at mobile widths on every public page ("Open in the Answerd app").
 - W-27: /review/[token] with tokens seeded for Tayo's completed bookings; posts through postReview; an expired token shows sign-in.
 
@@ -294,7 +294,7 @@ Specifics
 - W-14: three panes (filters, thread list, conversation) with Take over, Propose times, Send quote and call detail with transcript.
 - W-15: week calendar with drag to reschedule (@dnd-kit); dropping onto a clash shows a warning and snaps back; a job side panel with the status stepper.
 - W-16: tabs Details, Services, Hours, Service area, Photos, Credentials, Booking settings.
-- W-17: tabs Overview, Setup, Knowledge, Handoff, Test call (the test call runs in a side panel with a streaming transcript); caption "Powered by AskBridge".
+- W-17: tabs Overview, Setup, Knowledge, Handoff, Test call (the test call runs in a side panel with a streaming transcript).
 - W-18: plan cards and gate progress. Upgrade and Get Featured open /dashboard/billing/checkout, a mock hosted checkout clearly labelled "Prototype checkout, no card needed" showing plan, price ex VAT, VAT and total, with Confirm calling startSubscription and returning with a success toast. "Manage payment method and invoices" opens /dashboard/billing/portal, a mock portal with invoices and Cancel (SMS code required).
 - W-19: team, notifications and settings as B-38 to B-40.
 - Any change here appears in business mode in the app and the reverse, because both use the same store.
@@ -355,7 +355,7 @@ Final pass over the whole Answerd prototype against docs/answerd-spec.md. Add no
 4. One app: from Account, More and a business notification, the mode switch lands on the right screen and is remembered after reload; staff open in business mode.
 5. Accessibility: run axe on every route and fix all serious and critical issues; confirm no teal or amber text on white, labelled icon buttons, visible focus and 44 x 44 targets.
 6. Screenshots: save a PNG of every screen at its viewport (app 390 x 844, web 1440 and 390, admin 1280) to docs/screens/[ID].png using ?clean=1.
-7. Consistency: one primary action per screen, British English, VAT stated with prices, the "Answerd desk" label on every AI message, "Powered by AskBridge" wherever the spec puts it.
-8. README.md: how to run, personas, the hub and simulations, and how the prototype maps to the MVP (one Expo app with business mode, Next.js web at answerd.vitalos.co.uk, Workforce backend, AI powered by AskBridge).
+7. Consistency: one primary action per screen, British English, VAT stated with prices, the "Answerd desk" label on every AI message, "Powered by Askbridge" only where the spec puts it.
+8. README.md: how to run, personas, the hub and simulations, and how the prototype maps to the MVP (one Expo app with business mode, Next.js web at answerd.vitalos.co.uk, Workforce backend and AI desk, Ask Answerd powered by Askbridge).
 pnpm build, lint and all tests pass. Commit.
 ```

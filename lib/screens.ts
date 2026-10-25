@@ -1,6 +1,6 @@
 // Screen registry: every ID in docs/answerd-spec.md with its route and an example URL for the hub.
 
-export type Surface = "customer" | "business" | "web" | "admin" | "desk" | "ask"
+export type Surface = "customer" | "business" | "web" | "admin" | "super" | "desk" | "ask"
 
 export interface ScreenDef {
   id: string
@@ -181,6 +181,16 @@ A-20 Content /admin/content
 A-21 Admin users /admin/users
 A-22 Audit log /admin/audit
 A-23 Settings /admin/settings`],
+  ["super", `S-01 Super admin overview /admin/super
+S-02 Revenue and plans /admin/super/revenue
+S-03 Costs and margins /admin/super/costs
+S-04 Growth /admin/super/growth
+S-05 Team and roles /admin/super/team
+S-06 Pricing and rules /admin/super/pricing
+S-07 Platform switches /admin/super/switches
+S-08 Integrations /admin/super/integrations
+S-09 Impersonate and data requests /admin/super/impersonate
+S-10 Security log /admin/super/security`],
   ["desk", `D-01 Missed call answered /hub#simulate
 D-02 Text message /hub#simulate
 D-03 In-app message /hub#simulate
@@ -213,6 +223,7 @@ export const SURFACES: { id: Surface; name: string; count: number }[] = [
   { id: "business", name: "Business mode", count: 41 },
   { id: "web", name: "Web", count: 27 },
   { id: "admin", name: "Admin console", count: 23 },
+  { id: "super", name: "Super admin", count: 10 },
   { id: "desk", name: "AI desk behaviours", count: 10 },
   { id: "ask", name: "Ask Answerd", count: 6 },
 ]
@@ -241,6 +252,9 @@ export const BUILT = new Set<string>([
   // P9
   ...Array.from({ length: 23 }, (_, i) => `A-${String(i + 1).padStart(2, "0")}`),
 ])
+
+/** Built, but deferred for the MVP: the website is app first, so businesses run these in the app (design review, 25 Oct). */
+export const DEFERRED = new Set<string>(["W-13", "W-14", "W-15", "W-16", "W-17", "W-19"])
 
 export function screenById(id: string) {
   return SCREENS.find((s) => s.id === id)

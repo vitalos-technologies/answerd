@@ -173,7 +173,7 @@ export function WebFooter() {
               {label}
             </Link>
           ))}
-          <span className="ml-auto">Answerd is a Vitalos product · Powered by AskBridge</span>
+          <span className="ml-auto">Answerd is a Vitalos product · Powered by Askbridge</span>
         </div>
       </div>
     </footer>

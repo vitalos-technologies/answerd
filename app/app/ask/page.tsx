@@ -6,7 +6,7 @@ import { AskChat } from "@/components/answerd/AskChat"
 import { Mark } from "@/components/brand/Mark"
 import { signInHref, withSuspense } from "@/components/app/helpers"
 
-/** C-38: Ask Answerd (Q-01 to Q-06), powered by AskBridge. */
+/** C-38: Ask Answerd (Q-01 to Q-06), powered by Askbridge. */
 function AskPage() {
   const router = useRouter()
   const initial = useSearchParams().get("q")
@@ -22,7 +22,7 @@ function AskPage() {
               <Mark size={28} /> Ask Answerd
             </span>
           }
-          subtitle="Powered by AskBridge"
+          subtitle="Powered by Askbridge"
         />
       }
       bodyClassName="overflow-hidden"
