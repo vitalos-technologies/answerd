@@ -1,0 +1,22 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  // Production on answerd-demo.vitalos.co.uk (OpenNext). Deploy with `pnpm deploy:cf:prod`; needs a token for the account that owns vitalos.co.uk.
+  "name": "answerd-prototype",
+  "main": ".open-next/worker.js",
+  "compatibility_date": "2026-10-01",
+  "compatibility_flags": ["nodejs_compat", "global_fetch_strictly_public"],
+  "assets": {
+    "directory": ".open-next/assets",
+    "binding": "ASSETS"
+  },
+  "services": [
+    {
+      // Self-reference service binding; must match "name"
+      "binding": "WORKER_SELF_REFERENCE",
+      "service": "answerd-prototype"
+    }
+  ],
+  "observability": { "enabled": true },
+  // Custom domain on the vitalos.co.uk zone (Cloudflare creates the DNS record and certificate)
+  "routes": [{ "pattern": "answerd-demo.vitalos.co.uk", "custom_domain": true }]
+}

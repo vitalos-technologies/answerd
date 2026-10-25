@@ -9,7 +9,8 @@
     "lint": "eslint",
     "preview:cf": "opennextjs-cloudflare build && opennextjs-cloudflare preview",
     "deploy:cf": "opennextjs-cloudflare build && opennextjs-cloudflare deploy",
-    "cf-typegen": "wrangler types --env-interface CloudflareEnv cloudflare-env.d.ts"
+    "cf-typegen": "wrangler types --env-interface CloudflareEnv cloudflare-env.d.ts",
+    "deploy:cf:prod": "opennextjs-cloudflare build && opennextjs-cloudflare deploy --config wrangler.production.jsonc"
   },
   "dependencies": {
     "@base-ui/react": "^1.9.0",
