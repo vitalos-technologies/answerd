@@ -14,7 +14,7 @@ const PANELS: Record<string, { bg: string; glow: string }> = {
 export function WhyAnswerd() {
   const w = site.why
   return (
-    <section id={w.id} aria-labelledby="why-heading" className="scroll-mt-20 py-20 md:py-28">
+    <section id={w.id} aria-labelledby="why-heading" className="scroll-mt-20 py-16 md:py-24">
       <div className="container-site">
         <Reveal>
           <h2 id="why-heading" className="t-section">

@@ -23,7 +23,7 @@ export function Hero() {
         <div className="dots-hero absolute inset-0" />
       </div>
 
-      <div className="container-site grid items-center gap-12 pt-10 pb-16 md:pt-16 md:pb-20 lg:grid-cols-[minmax(0,1.05fr)_minmax(0,0.95fr)] lg:gap-8 lg:pt-16 lg:pb-24 xl:gap-16">
+      <div className="container-site grid items-center gap-12 pt-8 pb-12 md:pt-12 md:pb-16 lg:grid-cols-[minmax(0,1.05fr)_minmax(0,0.95fr)] lg:gap-8 lg:pt-12 lg:pb-16 xl:gap-16">
         {/* Copy */}
         <div className="max-w-[600px]">
           <p className={cn(fadeUp, "inline-flex items-center gap-2 rounded-full border border-line bg-white/80 py-1.5 pr-3.5 pl-3 text-[14px] leading-5 font-semibold text-navy shadow-card backdrop-blur")}>

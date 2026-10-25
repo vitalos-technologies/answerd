@@ -26,15 +26,15 @@ export function Footer() {
   return (
     <footer className="bg-navy pt-16 pb-[calc(152px+env(safe-area-inset-bottom))] text-white md:pt-20 md:pb-24">
       <div className="container-site">
-        <div className="grid gap-12 lg:grid-cols-[minmax(0,1.1fr)_minmax(0,2fr)] lg:gap-16">
+        <div className="grid gap-12 lg:grid-cols-[minmax(0,0.9fr)_minmax(0,2fr)] lg:gap-16">
           <div className="flex flex-col items-start gap-8">
-            <Link href="/" aria-label="Answerd home" className="-m-1 rounded-lg p-1 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white">
+            <Link href="/" aria-label={`${site.name} ${site.tagline} Home`} className="-m-1 rounded-lg p-1 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white">
               <Logo variant="reversed" layout="horizontal" tagline size={36} />
             </Link>
             <StoreBadges size="sm" className="[&_a]:focus-visible:outline-white" />
           </div>
 
-          <nav aria-label="Footer" className="grid grid-cols-2 gap-x-8 gap-y-10 sm:grid-cols-4">
+          <nav aria-label="Footer" className="grid grid-cols-2 gap-x-8 gap-y-10 sm:grid-cols-3">
             {site.footer.columns.map((col) => (
               <div key={col.title}>
                 <h2 className="text-sm font-semibold tracking-[0.06em] text-white uppercase">{col.title}</h2>

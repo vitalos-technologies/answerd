@@ -17,8 +17,8 @@ export function DownloadBand() {
         <div className="absolute -bottom-[45%] left-[-15%] size-[760px] rounded-full bg-[radial-gradient(closest-side,rgba(20,184,166,.22),rgba(20,184,166,0))]" />
       </div>
 
-      <div className="container-site grid items-center gap-10 pt-16 md:pt-20 lg:grid-cols-[minmax(0,1.1fr)_minmax(0,0.9fr)] lg:gap-8 lg:pt-0">
-        <Reveal className="lg:py-28">
+      <div className="container-site grid items-center gap-10 pt-16 md:pt-24 lg:grid-cols-[minmax(0,1.1fr)_minmax(0,0.9fr)] lg:gap-8 lg:pt-0">
+        <Reveal className="lg:py-24">
           <AppIcon size={56} className="shadow-[0_10px_30px_-10px_rgba(37,99,255,.8)] ring-1 ring-white/15" />
           <h2 id="download-heading" className="t-section mt-6 !text-white text-balance md:max-w-[15ch] lg:text-[44px] lg:leading-[52px]">
             {d.headline}

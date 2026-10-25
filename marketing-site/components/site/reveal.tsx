@@ -3,23 +3,30 @@ import * as React from "react"
 
 /*
  * Scroll reveals without an animation library: an IntersectionObserver sets `data-shown` once, and CSS in
- * globals.css does the fade and 16 px rise (0.4 s). Reduced motion and no-JS both show content immediately.
+ * globals.css does the fade and 12 px rise (0.3 s, all done within 400 ms). Reduced
+ * motion and no-JS both show content immediately.
  */
 
 type DivProps = React.HTMLAttributes<HTMLDivElement>
 
-/** Sets `data-shown` on the element the first time it scrolls into view. */
-export function useShownOnce(ref: React.RefObject<HTMLElement | null>, rootMargin = "0px 0px -60px 0px") {
+/**
+ * Sets `data-shown` on the element the first time 15% of it is in view (a small negative bottom margin keeps
+ * it from firing on the last pixel). Tall elements can't reach 15% of themselves until well on screen, so
+ * they also count as shown once they fill 15% of the viewport.
+ */
+export function useShownOnce(ref: React.RefObject<HTMLElement | null>, rootMargin = "0px 0px -24px 0px") {
   React.useEffect(() => {
     const el = ref.current
     if (!el) return
     const io = new IntersectionObserver(
       ([entry]) => {
         if (!entry.isIntersecting) return
+        const enough = entry.intersectionRatio >= 0.15 || entry.intersectionRect.height >= window.innerHeight * 0.15
+        if (!enough) return
         el.dataset.shown = ""
         io.disconnect()
       },
-      { rootMargin },
+      { rootMargin, threshold: [0, 0.05, 0.1, 0.15] },
     )
     io.observe(el)
     return () => io.disconnect()

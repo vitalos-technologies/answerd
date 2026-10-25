@@ -6,8 +6,10 @@ export const SITE_URL = "https://answerd.vitalos.co.uk"
 export const APP_STORE_URL = process.env.APP_STORE_URL || "/#download"
 export const PLAY_STORE_URL = process.env.PLAY_STORE_URL || "/#download"
 export const STORES_LIVE = APP_STORE_URL.startsWith("http") && PLAY_STORE_URL.startsWith("http")
-/** What the QR code encodes: one link that redirects to the right store. */
-export const DOWNLOAD_URL = `${SITE_URL}/#download`
+/** What the QR code encodes: the Get the app page, which sends phones to the right store. */
+export const DOWNLOAD_URL = `${SITE_URL}/get-the-app`
+/** Universal link for a listing: opens the business in the app when it is installed, else the web page. */
+export const listingUrl = (slug: string) => `${SITE_URL}/b/${slug}`
 
 export const site = {
   name: "Answerd",
@@ -20,9 +22,9 @@ export const site = {
   },
 
   nav: [
-    { label: "How it works", href: "/#how-it-works" },
+    { label: "Find a business", href: "/#popular-services" },
     { label: "For businesses", href: "/#for-businesses" },
-    { label: "FAQs", href: "/#faqs" },
+    { label: "Help", href: "/help" },
   ],
   getApp: "Get the app",
 
@@ -57,17 +59,24 @@ export const site = {
     heading: "Popular services",
     intro: "Whatever the job, there's someone local.",
     items: [
-      { label: "Plumbers", icon: "Wrench" },
-      { label: "Electricians", icon: "Zap" },
-      { label: "Cleaners", icon: "Sparkles" },
-      { label: "Mechanics", icon: "Car" },
-      { label: "Barbers & salons", icon: "Scissors" },
-      { label: "Gardeners", icon: "Trees" },
-      { label: "Removals", icon: "Truck" },
-      { label: "Couriers", icon: "Package" },
+      { label: "Plumbers", icon: "Wrench", href: "/plumbers" },
+      { label: "Electricians", icon: "Zap", href: "/electricians" },
+      { label: "Cleaners", icon: "Sparkles", href: "/cleaners" },
+      { label: "Mechanics", icon: "Car", href: "/mobile-mechanics" },
+      { label: "Barbers", icon: "Scissors", href: "/barbers" },
+      { label: "Gardeners", icon: "Trees", href: "/gardeners" },
+      { label: "Removals", icon: "Truck", href: "/removals" },
+      { label: "Couriers", icon: "Package", href: "/couriers" },
     ],
     more: "And hundreds more",
     moreBody: "Search for any local service in the app.",
+  },
+
+  /** W-01: under Popular services. Cards come from the mock data (businesses with a live Answerd desk). */
+  instant: {
+    id: "respond-instantly",
+    heading: "Businesses that respond instantly near you",
+    intro: "Their Answerd desk replies straight away, even when they're on a job.",
   },
 
   why: {
@@ -94,7 +103,7 @@ export const site = {
     headline: "Run a local business? Every business picks up.",
     points: ["List free, no contract", "See every call and message Answerd sends you", "Add an AI front desk that answers calls, replies to texts and books jobs"],
     note: "Free to list. AI front desk from £49/month after a 14-day free trial (ex VAT).",
-    primary: { label: "List your business", href: "/#download" },
+    primary: { label: "List your business", href: "/claim" },
     secondary: "Get the app",
     /** Decorative cards beside the business pitch (aria-hidden). Illustrative, no numbers or stats. */
     visual: [
@@ -113,16 +122,18 @@ export const site = {
       { q: "What does “Responds instantly” mean?", a: "The business uses an Answerd AI front desk, so calls and messages get answered straight away, even when they're busy." },
       { q: "Is the AI desk a real person?", a: "No. It's an AI assistant, always labelled, and it hands over to the business for anything it can't handle." },
       { q: "Where does Answerd work?", a: "Across the UK." },
-      { q: "How do I list my business?", a: "Download the app, tap “I run a business”, and find or add your business. It's free." },
+      { q: "How do I list my business?", a: "Find or add your business on our claim page, or download the app and tap “I run a business”. It's free." },
     ],
   },
 
   footer: {
     columns: [
-      { title: "Customers", links: [{ label: "How it works", href: "/#how-it-works" }, { label: "Popular services", href: "/#popular-services" }, { label: "Get the app", href: "/#download" }] },
-      { title: "Businesses", links: [{ label: "List your business", href: "/#for-businesses" }, { label: "Pricing", href: "/#for-businesses" }, { label: "Help", href: "/#faqs" }] },
-      { title: "Company", links: [{ label: "About", href: "/#why-answerd" }, { label: "Contact", href: "mailto:hello@vitalos.co.uk" }] },
-      { title: "Legal", links: [{ label: "Terms", href: "/terms" }, { label: "Privacy", href: "/privacy" }, { label: "Cookies", href: "/cookies" }] },
+      { title: "Customers", links: [{ label: "How it works", href: "/#how-it-works" }, { label: "Popular services", href: "/#popular-services" }, { label: "Get the app", href: "/get-the-app" }, { label: "Help centre", href: "/help" }] },
+      { title: "Businesses", links: [{ label: "List your business", href: "/claim" }, { label: "Plans and billing", href: "/billing" }, { label: "Sign in", href: "/sign-in" }, { label: "Business help", href: "/help#for-businesses" }] },
+      { title: "Services", links: [{ label: "Plumbers", href: "/plumbers" }, { label: "Electricians", href: "/electricians" }, { label: "Cleaners", href: "/cleaners" }, { label: "Mobile mechanics", href: "/mobile-mechanics" }, { label: "Barbers", href: "/barbers" }, { label: "Locksmiths", href: "/locksmiths" }] },
+      { title: "Cities", links: [{ label: "London (Croydon)", href: "/areas/croydon" }, { label: "Birmingham", href: "/areas/birmingham" }, { label: "Manchester", href: "/areas/manchester" }] },
+      { title: "Company", links: [{ label: "About", href: "/about" }, { label: "Contact", href: "mailto:hello@vitalos.co.uk" }] },
+      { title: "Legal", links: [{ label: "Terms", href: "/terms" }, { label: "Privacy", href: "/privacy" }, { label: "Cookies", href: "/cookies" }, { label: "Review policy", href: "/legal/review-policy" }, { label: "Acceptable use", href: "/legal/acceptable-use" }, { label: "Call recording", href: "/legal/call-recording" }] },
     ],
     bottom: "Answerd is a Vitalos product · Powered by Askbridge · © 2026 Vitalos Technologies",
   },
@@ -134,6 +145,8 @@ export const site = {
     footer: "Powered by Askbridge",
     title: "Chat with Answerd",
     reply: "Thanks! The full assistant is on its way. Get the app to find local help now.",
+    /** Shown above the suggested businesses for a picked chip (placeholder matches from the mock data) */
+    matches: "Here are local businesses that can help. Tap one to see prices and reviews, then call, message or book.",
     comingSoon: "Chat is coming soon",
     close: "Close chat",
   },

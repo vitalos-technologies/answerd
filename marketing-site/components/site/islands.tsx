@@ -1,4 +1,5 @@
 import { site } from "@/content/site"
+import { askSuggestions } from "@/lib/data/queries"
 import { CookieBannerClient, CookieSettingsClient } from "./cookie-banner"
 import { MobileAppBarClient } from "./mobile-app-bar"
 import { AskbridgeClient } from "./askbridge"
@@ -21,5 +22,5 @@ export function MobileAppBar() {
 }
 
 export function Askbridge() {
-  return <AskbridgeClient copy={site.askbridge} />
+  return <AskbridgeClient copy={site.askbridge} suggestions={askSuggestions(site.askbridge.chips)} />
 }

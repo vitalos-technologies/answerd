@@ -35,12 +35,12 @@ function Badge({ href, store, className, size }: { href: string; store: "apple" 
         size === "md" ? "h-14 px-4" : "h-10 px-3",
         className,
       )}
-      aria-label={apple ? "Download Answerd on the App Store" : "Get Answerd on Google Play"}
+      aria-label={apple ? "Download on the App Store: Answerd" : "Get it on Google Play: Answerd"}
       data-placeholder-badge={store}
     >
       {apple ? <AppleGlyph /> : <PlayGlyph />}
       <span className="flex flex-col leading-none">
-        <span className={cn("font-medium", size === "md" ? "text-[11px]" : "text-[9px]")}>{apple ? "Download on the" : "Get it on"}</span>
+        <span className={cn("font-medium", size === "md" ? "text-[11px]" : "text-[9px]")}>{apple ? "Download on the" : "Get it on"}</span>{" "}
         <span className={cn("font-semibold tracking-tight", size === "md" ? "text-[19px] mt-0.5" : "text-[14px]")}>{apple ? "App Store" : "Google Play"}</span>
       </span>
     </a>

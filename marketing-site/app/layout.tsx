@@ -13,14 +13,12 @@ export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
   title: site.metaTitle,
   description: site.description,
-  alternates: { canonical: SITE_URL },
   applicationName: site.name,
   keywords: [...site.seo.keywords],
   authors: [{ name: "Vitalos Technologies", url: "https://vitalos.co.uk" }],
   publisher: "Vitalos Technologies",
   openGraph: {
     type: "website",
-    url: SITE_URL,
     siteName: site.name,
     title: site.metaTitle,
     description: site.description,
@@ -46,6 +44,8 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <head>
         {/* Hide the cookie banner before paint for visitors who already chose (no flash, no layout shift) */}
         <script dangerouslySetInnerHTML={{ __html: `try{var c=localStorage.getItem("answerd-consent");if(c)document.documentElement.dataset.consent=c}catch(e){}` }} />
+        {/* Same for the smart app banner once closed this session (components/site/smart-banner.tsx) */}
+        <script dangerouslySetInnerHTML={{ __html: `try{if(sessionStorage.getItem("answerd-sb-off"))document.documentElement.dataset.sbOff=""}catch(e){}` }} />
         {/* Without JS, scroll reveals and the Ask Answerd sequence show in their final state */}
         <noscript>
           <style>{`[data-reveal],[data-stagger-item],.ask-reply,.ask-chip{opacity:1!important;transform:none!important}.ask-typing{display:none}`}</style>

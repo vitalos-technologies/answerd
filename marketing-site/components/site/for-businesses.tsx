@@ -17,7 +17,7 @@ const STACK = ["self-start", "self-end", "self-start ml-6"]
 
 export function ForBusinesses() {
   return (
-    <section id={id} aria-labelledby={`${id}-title`} className="overflow-hidden bg-sky py-20 md:py-28">
+    <section id={id} aria-labelledby={`${id}-title`} className="overflow-hidden bg-sky py-16 md:py-24">
       <div className="container-site grid items-center gap-12 lg:grid-cols-[minmax(0,1fr)_minmax(0,460px)] lg:gap-20">
         <Reveal>
           <h2 id={`${id}-title`} className="t-section max-w-[560px]">

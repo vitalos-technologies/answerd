@@ -12,7 +12,7 @@ const { id, heading, items } = site.faqs
  */
 export function Faqs() {
   return (
-    <section id={id} aria-labelledby={`${id}-title`} className="py-20 md:py-28">
+    <section id={id} aria-labelledby={`${id}-title`} className="py-16 md:py-24">
       <div className="container-site">
         <Reveal className="mx-auto max-w-[760px]">
           <h2 id={`${id}-title`} className="t-section text-center">

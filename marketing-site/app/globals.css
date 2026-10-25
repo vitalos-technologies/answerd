@@ -17,6 +17,10 @@
   --color-muted-ink: #64748b;
   --color-line: #e2e8f0;
   --color-amber: #f59e0b;
+  --color-amber-ink: #b45309;
+  --color-amber-tint: #fef3c7;
+  --color-red: #dc2626;
+  --color-red-tint: #fee2e2;
 
   --color-background: var(--background);
   --color-foreground: var(--foreground);
@@ -168,7 +172,7 @@ html[data-consent] [data-cookie-banner] {
 /* Below-the-fold sections skip style, layout and paint until they near the viewport (the trust strip is
    left out because its tooltips overflow the section). */
 @media screen {
-  #main > section:not(#hero):not(:nth-child(2)),
+  #main[data-home] > section:not(#hero):not(:nth-child(2)),
   body footer {
     content-visibility: auto;
     contain-intrinsic-size: auto 960px;
@@ -177,17 +181,18 @@ html[data-consent] [data-cookie-banner] {
 
 /* ---------- Motion (CSS) ----------
    Scroll reveals, the phone float and the Ask Answerd sequence. JS only flips `data-shown`
-   (components/site/reveal.tsx), so none of this needs an animation library on first load. */
+   (components/site/reveal.tsx), so none of this needs an animation library on first load.
+   Every reveal finishes within 400 ms: a 300 ms fade and rise, with delays capped at 100 ms. */
 :root {
   --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
 }
 [data-reveal],
 [data-stagger-item] {
   opacity: 0;
-  transform: translateY(16px);
+  transform: translateY(12px);
   transition:
-    opacity 0.4s var(--ease-out-expo) var(--reveal-delay, 0s),
-    transform 0.4s var(--ease-out-expo) var(--reveal-delay, 0s);
+    opacity 0.3s var(--ease-out-expo) min(var(--reveal-delay, 0s), 0.1s),
+    transform 0.3s var(--ease-out-expo) min(var(--reveal-delay, 0s), 0.1s);
 }
 [data-stagger-item] {
   --reveal-delay: calc(var(--stagger, 0.06s) * var(--i, 0));
@@ -249,4 +254,24 @@ html[data-consent] [data-cookie-banner] {
       translate: 0 24px;
     }
   }
+}
+
+/* Listing pages: below 1024 px the Call / Message / Book bar is fixed to the bottom, so the chat pill and
+   the page end sit above it. */
+@media (max-width: 1023.98px) {
+  html:has([data-listing-bar]) {
+    --listing-bar-h: 72px;
+  }
+}
+
+/* W-26 smart app banner: hidden before paint once dismissed this session (see the inline script in layout). */
+html[data-sb-off] [data-smart-banner] {
+  display: none;
+}
+
+/* Results filters (W-04): the client island sets data-f-* on the list; CSS hides what doesn't match. */
+[data-results][data-f-instant] > li:not([data-instant]),
+[data-results][data-f-verified] > li:not([data-verified]),
+[data-results][data-f-rated] > li:not([data-rated]) {
+  display: none;
 }

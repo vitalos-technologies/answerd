@@ -5,7 +5,7 @@ const { id, heading, intro, steps } = site.howItWorks
 
 export function HowItWorks() {
   return (
-    <section id={id} aria-labelledby={`${id}-title`} className="py-20 md:py-28">
+    <section id={id} aria-labelledby={`${id}-title`} className="py-16 md:py-24">
       <div className="container-site">
         <Reveal className="mx-auto max-w-[640px] text-center">
           <h2 id={`${id}-title`} className="t-section">
