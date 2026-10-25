@@ -50,7 +50,7 @@ To sign in by hand, any UK mobile number works. Tayo is 07700 900123, Sam is 077
 | --- | --- | --- |
 | Customer app (in a phone frame) | `/app/…` | C-01 to C-48, Q-01 to Q-06 |
 | Business mode (the same app) | `/app/biz/…` | B-01 to B-41 |
-| Public website | On the website, `marketing-site/` (set its address with `NEXT_PUBLIC_SITE_URL`). Old prototype URLs such as `/b/[slug]` redirect there; `/` opens the hub. | W-01 to W-12, W-20 to W-27 |
+| Public website | On the website, `marketing-site/` (its address is `NEXT_PUBLIC_SITE_URL`, which `pnpm deploy:cf:prod` sets to https://answerd.vitalos.co.uk). Old prototype URLs such as `/b/[slug]` redirect there; `/` opens the hub. | W-01 to W-12, W-20 to W-27 |
 | Business web dashboard | `/dashboard/…` | W-13 to W-19 |
 | Admin console | `/admin/…` | A-01 to A-23 |
 | AI desk behaviours | Hub › Simulate, B-33, W-17 | D-01 to D-10 |
