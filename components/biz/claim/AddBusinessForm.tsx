@@ -63,7 +63,7 @@ export function AddBusinessForm({ initialName = "", initialPostcode = "", onPick
           {dupes.map((l) => (
             <li key={l.id}>
               <button type="button" onClick={() => onPickExisting(l.id)} className="flex w-full items-center gap-3 rounded-2xl border border-line bg-white p-3 text-left hover:border-blue">
-                <ListingAvatar initials={l.initials} hue={l.hue} size={44} />
+                <ListingAvatar listing={l} size={44} />
                 <span className="min-w-0 flex-1">
                   <span className="block truncate t-label text-navy">{l.name}</span>
                   <span className="block truncate t-caption text-muted-ink">

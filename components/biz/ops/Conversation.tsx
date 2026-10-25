@@ -2,7 +2,8 @@
 import * as React from "react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
-import { ArrowLeft, Bot, CalendarPlus, ChevronRight, FileText, Hand, Info, Phone, SendHorizontal, UserCheck } from "lucide-react"
+import { ArrowLeft, CalendarPlus, ChevronRight, FileText, Hand, Info, Phone, SendHorizontal, UserCheck } from "lucide-react"
+import { DeskIcon } from "@/components/brand/DeskIcon"
 import { useStore } from "@/lib/store"
 import { Banner, EmptyState } from "@/components/answerd/Feedback"
 import { Button, IconButton } from "@/components/answerd/Button"
@@ -171,14 +172,14 @@ export function ConversationView({ threadId, back, customerPanel = "sheet", clas
         {deskLive ? (
           deskOn ? (
             <div className="flex items-center gap-2">
-              <Bot className="size-5 shrink-0 text-teal-ink" aria-hidden />
+              <DeskIcon className="size-5 shrink-0 text-teal-ink" aria-hidden />
               <p className="min-w-0 flex-1 t-caption text-slate">The Answerd desk is replying to {first}.</p>
               <Button size="sm" disabled={readOnly} onClick={() => (s.setThreadDesk(thread.id, false), toast("You took over. The desk is paused here."))}>
                 Take over
               </Button>
             </div>
           ) : (
-            <Banner tone="warning" title="You're replying. The desk is paused for this conversation." action={<Button size="sm" variant="secondary" disabled={readOnly} onClick={() => (s.setThreadDesk(thread.id, true), toast("The desk is back on for this conversation"))}><Bot /> Hand back to the desk</Button>} />
+            <Banner tone="warning" title="You're replying. The desk is paused for this conversation." action={<Button size="sm" variant="secondary" disabled={readOnly} onClick={() => (s.setThreadDesk(thread.id, true), toast("The desk is back on for this conversation"))}><DeskIcon /> Hand back to the desk</Button>} />
           )
         ) : (
           <p className="t-caption text-muted-ink">Your AI desk is off, so you&apos;re replying.</p>

@@ -42,7 +42,7 @@ export function Account() {
     const review = reviewTokenState(s, b.id)
     return (
       <li key={b.id} className="flex flex-wrap items-center gap-3 py-3">
-        {l && <ListingAvatar initials={l.initials} hue={l.hue} size={44} />}
+        {l && <ListingAvatar listing={l} size={44} />}
         <div className="min-w-0 flex-1">
           <p className="truncate t-label text-navy">
             {svc?.name ?? "Booking"} · {l ? <Link href={`/b/${l.slug}`} className="hover:underline">{l.name}</Link> : null}

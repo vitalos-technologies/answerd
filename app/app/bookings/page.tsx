@@ -63,7 +63,7 @@ export default function BookingsPage() {
                 return (
                   <li key={b.id}>
                     <Link href={`/app/bookings/${b.id}`} className="card flex items-start gap-3 p-4 hover:border-blue">
-                      <ListingAvatar initials={l.initials} hue={l.hue} size={48} />
+                      <ListingAvatar listing={l} size={48} />
                       <div className="min-w-0 flex-1">
                         <p className="t-subhead truncate">{bookingTitle(s, b)}</p>
                         <p className="truncate t-label font-normal text-slate">{l.name}</p>

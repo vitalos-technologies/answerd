@@ -47,7 +47,8 @@ test("J1 guest books, signs in, owner accepts and completes, customer reviews an
   // Sam accepts from Needs you
   await as(page, "sam")
   await page.goto("/app/biz")
-  await F.getByRole("link", { name: /Booking request: Tayo A\./ }).click()
+  // Needs you rows lead with customer and job, then type and time (design review, 25 Oct 2026)
+  await F.getByRole("link", { name: /^Tayo A\. · Boiler service Booking request · Thu 29 Oct, 10am/ }).click()
   await expect(page).toHaveURL(new RegExp(`/app/biz/requests/${req.id}$`))
   await F.getByRole("button", { name: "Accept" }).click()
   await expect(page).toHaveURL(new RegExp(`/app/biz/jobs/${req.id}$`))

@@ -1,7 +1,8 @@
 "use client"
 import * as React from "react"
 import Link from "next/link"
-import { BookOpen, Bot, ChevronRight, MessageSquare, Pause, Phone, PhoneCall, Play, Settings2, Smartphone, UserRound } from "lucide-react"
+import { BookOpen, ChevronRight, MessageSquare, Pause, Phone, PhoneCall, Play, Settings2, Smartphone, UserRound } from "lucide-react"
+import { DeskIcon } from "@/components/brand/DeskIcon"
 import { Button, ButtonLink } from "@/components/answerd/Button"
 import { Banner, EmptyState } from "@/components/answerd/Feedback"
 import { BottomSheet } from "@/components/answerd/Sheet"
@@ -130,7 +131,7 @@ export function DeskOverview({ businessId, links = APP_DESK_LINKS, showLinks = t
       <div className="card p-4">
         <div className="flex items-start gap-3">
           <span className="inline-flex size-11 shrink-0 items-center justify-center rounded-full bg-blue-tint text-blue">
-            <Bot className="size-6" aria-hidden />
+            <DeskIcon variant="color" className="size-7" aria-hidden />
           </span>
           <div className="min-w-0 flex-1">
             <div className="flex flex-wrap items-center gap-2">

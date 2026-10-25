@@ -219,7 +219,7 @@ function FindStep({ onPick, onAdd, onDispute }: { onPick: (l: Listing) => void; 
                   <li key={l.id}>
                     {st === "taken" ? (
                       <div className="flex items-center gap-3 rounded-2xl border border-line p-3">
-                        <ListingAvatar initials={l.initials} hue={l.hue} size={44} />
+                        <ListingAvatar listing={l} size={44} />
                         <div className="min-w-0 flex-1">
                           <p className="truncate t-label text-navy">{l.name}</p>
                           <p className="truncate t-caption text-muted-ink">{l.address}</p>
@@ -242,7 +242,7 @@ function FindStep({ onPick, onAdd, onDispute }: { onPick: (l: Listing) => void; 
                         }}
                         className="flex w-full items-center gap-3 rounded-2xl border border-line p-3 text-left hover:border-blue"
                       >
-                        <ListingAvatar initials={l.initials} hue={l.hue} size={44} />
+                        <ListingAvatar listing={l} size={44} />
                         <span className="min-w-0 flex-1">
                           <span className="block truncate t-label text-navy">{l.name}</span>
                           <span className="block truncate t-caption text-muted-ink">
@@ -320,7 +320,7 @@ function AddStep({ onCreated, onPick }: { onCreated: (id: string, a: { legalType
           {dupes.map((l) => (
             <li key={l.id}>
               <button type="button" onClick={() => onPick(l)} className="flex w-full items-center gap-3 rounded-2xl border border-line p-3 text-left hover:border-blue">
-                <ListingAvatar initials={l.initials} hue={l.hue} size={44} />
+                <ListingAvatar listing={l} size={44} />
                 <span className="min-w-0 flex-1">
                   <span className="block truncate t-label text-navy">{l.name}</span>
                   <span className="block truncate t-caption text-muted-ink">
@@ -409,7 +409,7 @@ function ConfirmStep({ listing, onYes, onNo }: { listing: Listing; onYes: () => 
       <p className="mt-1 t-body text-slate">This is how customers see your listing today.</p>
       <div className="mt-5 rounded-2xl border border-line p-4">
         <div className="flex items-start gap-3">
-          <ListingAvatar initials={listing.initials} hue={listing.hue} size={56} />
+          <ListingAvatar listing={listing} size={56} />
           <div className="min-w-0">
             <p className="t-subhead">{listing.name}</p>
             <p className="t-caption text-muted-ink">

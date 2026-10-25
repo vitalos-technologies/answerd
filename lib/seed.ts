@@ -85,7 +85,7 @@ export interface DemoData {
   deskRuns: DeskRun[]
 }
 
-export const SEED_VERSION = 2
+export const SEED_VERSION = 3
 
 const L = london
 const NOW = DEMO_START
@@ -496,7 +496,7 @@ export function createSeed(): DemoData {
       cancellationPolicy: "24h",
       customerReminders: true,
       photos,
-      coverPhotoId: photos[0]!.id,
+      // No cover photo by default: C-16 and W-06 show the category band until the owner picks one (B-15)
       emergencyCallout: spec.cats.includes("plumbers") || spec.cats.includes("locksmiths"),
       notificationPrefs: { newEnquiry: true, handoff: true, bookingRequest: true, dailyDigest: true, reviewPosted: true, push: true, sms: true, email: true },
       createdAt: "2026-09-09T10:00:00.000Z",

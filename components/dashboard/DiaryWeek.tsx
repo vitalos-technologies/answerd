@@ -369,8 +369,8 @@ function DayColumn({
       })}
       {nowMin !== null && nowMin >= START_H * 60 && nowMin <= END_H * 60 && (
         <div className="pointer-events-none absolute inset-x-0 z-[25] flex items-center" style={{ top: y(nowMin) - 4 }} aria-hidden>
-          <span className="-ml-1 size-2.5 rounded-full bg-red" />
-          <span className="h-0.5 flex-1 bg-red" />
+          <span className="-ml-1 size-2.5 rounded-full bg-blue" />
+          <span className="h-0.5 flex-1 bg-blue" />
         </div>
       )}
     </div>

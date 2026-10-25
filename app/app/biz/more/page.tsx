@@ -41,7 +41,7 @@ export default function MorePage() {
       <div className="space-y-4 px-4 py-4">
         {listing && (
           <Link href={`/app/b/${listing.slug}`} className="card flex items-center gap-3 p-3.5 hover:border-blue">
-            <ListingAvatar initials={listing.initials} hue={listing.hue} size={48} />
+            <ListingAvatar listing={listing} size={48} />
             <span className="min-w-0 flex-1">
               <span className="block truncate t-subhead">{listing.name}</span>
               <span className="block t-caption text-muted-ink">{role === "owner" ? "Owner" : role === "staff" ? "Staff" : "Support view"} · See your public listing</span>

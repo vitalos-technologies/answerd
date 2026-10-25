@@ -2,7 +2,8 @@
 import * as React from "react"
 import Link from "next/link"
 import { usePathname, useRouter } from "next/navigation"
-import { ArrowLeft, CalendarDays, Bot, House, Inbox, LayoutGrid, MessageCircle, Search, Sun, User, X } from "lucide-react"
+import { ArrowLeft, CalendarDays, House, Inbox, LayoutGrid, MessageCircle, Search, Sun, User, X } from "lucide-react"
+import { DeskIcon } from "@/components/brand/DeskIcon"
 import { useStore, useCurrentBusiness } from "@/lib/store"
 import { OfflineBanner } from "@/components/answerd/Feedback"
 import { ScreenMeta } from "./ScreenMeta"
@@ -77,7 +78,7 @@ export function BizHeader({ right, title }: { right?: React.ReactNode; title?: s
   )
 }
 
-function TabLink({ href, label, icon: I, active, badge }: { href: string; label: string; icon: typeof House; active: boolean; badge?: number }) {
+function TabLink({ href, label, icon: I, active, badge }: { href: string; label: string; icon: React.ComponentType<{ className?: string; "aria-hidden"?: boolean }>; active: boolean; badge?: number }) {
   return (
     <Link href={href} className={cn("relative flex min-h-12 flex-1 flex-col items-center justify-center gap-0.5 pt-1.5", active ? "text-blue" : "text-muted-ink hover:text-navy")} aria-current={active ? "page" : undefined}>
       <span className="relative">
@@ -125,7 +126,7 @@ export function BusinessTabs() {
       <TabLink href="/app/biz" label="Today" icon={Sun} active={is("/app/biz", true)} badge={staff ? 0 : requests} />
       <TabLink href="/app/biz/inbox" label="Inbox" icon={Inbox} active={is("/app/biz/inbox") || is("/app/biz/calls") || is("/app/biz/requests")} badge={needs} />
       <TabLink href="/app/biz/diary" label="Diary" icon={CalendarDays} active={is("/app/biz/diary") || is("/app/biz/jobs")} />
-      {!staff && <TabLink href="/app/biz/desk" label="Desk" icon={Bot} active={is("/app/biz/desk")} />}
+      {!staff && <TabLink href="/app/biz/desk" label="Desk" icon={DeskIcon} active={is("/app/biz/desk")} />}
       {!staff && <TabLink href="/app/biz/more" label="More" icon={LayoutGrid} active={is("/app/biz/more")} />}
     </nav>
   )
@@ -163,8 +164,9 @@ export function AppScreen({
       {biz && (biz === true ? <BizHeader /> : biz)}
       {offline && <OfflineBanner />}
       {header}
-      <main className={cn("relative min-h-0 flex-1 overflow-y-auto overscroll-contain", bodyClassName)}>{children}</main>
-      {footer}
+      {/* With no tab bar, the last thing on screen keeps clear of the home indicator (pb-home) */}
+      <main className={cn("relative min-h-0 flex-1 overflow-y-auto overscroll-contain", !tabs && !footer && "pb-home", bodyClassName)}>{children}</main>
+      {footer && (tabs ? footer : <div className="shrink-0 bg-white pb-home">{footer}</div>)}
       {tabs === "customer" && <CustomerTabs />}
       {tabs === "business" && <BusinessTabs />}
     </div>

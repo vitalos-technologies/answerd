@@ -54,7 +54,7 @@ export default function BookedPage({ params }: { params: Promise<{ id: string }>
           <p className="mt-2 t-body text-slate">{request ? `${listing.name} will confirm within 2 hours. We'll let you know.` : `${listing.name} has your booking and details.`}</p>
         </div>
         <div className="card mt-8 flex items-center gap-3 p-4">
-          <ListingAvatar initials={listing.initials} hue={listing.hue} size={48} />
+          <ListingAvatar listing={listing} size={48} />
           <div className="min-w-0">
             <p className="t-subhead">{svc?.name ?? "Booking"}</p>
             <p className="t-label font-normal text-slate">{listing.name}</p>

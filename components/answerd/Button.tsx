@@ -10,7 +10,8 @@ export const buttonStyles = cva(
   {
     variants: {
       variant: {
-        primary: "bg-blue text-white hover:bg-blue-hover",
+        // Disabled primary: sky fill, muted text (#5B6B80 on #F1F5F9 is 5:1), hairline border, no shadow or fade (a loading button stays blue)
+        primary: "bg-blue text-white hover:bg-blue-hover disabled:not-aria-busy:border disabled:not-aria-busy:border-line disabled:not-aria-busy:bg-sky disabled:not-aria-busy:text-muted-ink disabled:opacity-100 disabled:shadow-none",
         secondary: "bg-white text-navy border border-line hover:bg-sky",
         ghost: "text-navy hover:bg-blue-tint",
         destructive: "bg-red text-white hover:bg-[#B91C1C]",

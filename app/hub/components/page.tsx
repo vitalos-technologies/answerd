@@ -138,10 +138,10 @@ export default function ComponentsPage() {
 
         <Block title="Result card" note="Claimed, featured, unclaimed and Places gap-fill">
           <div className="space-y-3">
-            <ResultCard listing={swift} href="/app/b/swift-plumbing-heating" category="Plumber" distance={0.4} rating={4.9} count={132} badges={["responds_instantly", "verified", "gas_safe", "insured"]} line="Replies in under a minute" lineTone="teal" />
-            <ResultCard listing={{ name: "Croydon Heating Pros", layer: "claimed", initials: "CH", hue: 200 }} href="/app/b/croydon-heating-pros" category="Heating engineer" distance={1.8} rating={4.7} count={7} badges={["featured", "verified", "gas_safe"]} line="Opens 8am" featured />
-            <ResultCard listing={{ name: "Norwood Locksmiths", layer: "seeded", initials: "NL", hue: 30 }} href="/app/b/norwood-locksmiths" category="Locksmith" distance={0.6} rating={0} count={0} badges={["unclaimed"]} line="Hasn't joined Answerd yet" />
-            <ResultCard listing={{ name: "Rapid Response Plumbing Ltd", layer: "places", initials: "RR", hue: 120 }} href="/app/b/rapid-response-plumbing-ltd" category="Plumber" distance={2.3} rating={4.3} count={87} google badges={["unclaimed"]} line="Hasn't joined Answerd yet" />
+            <ResultCard listing={swift} href="/app/b/swift-plumbing-heating" callHref="/app/b/swift-plumbing-heating/call" category="Plumber" distance={0.4} rating={4.9} count={132} badges={["responds_instantly", "verified", "gas_safe", "insured"]} line="Replies in under a minute" lineTone="teal" />
+            <ResultCard listing={{ name: "Croydon Heating Pros", layer: "claimed", initials: "CH", categoryIds: ["heating-engineers"] }} href="/app/b/croydon-heating-pros" category="Heating engineer" distance={1.8} rating={4.7} count={7} badges={["featured", "verified", "gas_safe"]} line="Opens 8am" featured />
+            <ResultCard listing={{ name: "Norwood Locksmiths", layer: "seeded", initials: "NL", categoryIds: ["locksmiths"] }} href="/app/b/norwood-locksmiths" category="Locksmith" distance={0.6} rating={0} count={0} badges={["unclaimed"]} line="Hasn't joined Answerd yet" />
+            <ResultCard listing={{ name: "Rapid Response Plumbing Ltd", layer: "places", initials: "RR", categoryIds: ["plumbers"] }} href="/app/b/rapid-response-plumbing-ltd" callHref="/app/b/rapid-response-plumbing-ltd/call" category="Plumber" distance={2.3} rating={4.3} count={87} google badges={["unclaimed"]} line="Hasn't joined Answerd yet" />
           </div>
         </Block>
 
@@ -311,7 +311,7 @@ export default function ComponentsPage() {
 
         <Block title="Screen ID badge">
           <div className="relative h-16 rounded-xl border border-dashed border-line bg-sky">
-            <ScreenIdBadge className="absolute left-2 top-2" idOverride="C-16" />
+            <ScreenIdBadge className="absolute right-2 top-2" idOverride="C-16" />
           </div>
         </Block>
       </div>

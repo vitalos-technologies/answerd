@@ -70,7 +70,7 @@ export function BusinessSettingsPanel({ businessId, onSwitched, onTransferred, o
                   }}
                   className={cn("flex min-h-14 w-full items-center gap-3 rounded-2xl border p-2.5 text-left", current ? "border-blue bg-blue-tint" : "border-line bg-white hover:border-blue/50")}
                 >
-                  {l && <ListingAvatar initials={l.initials} hue={l.hue} size={40} />}
+                  {l && <ListingAvatar listing={l} size={40} />}
                   <span className="min-w-0 flex-1">
                     <span className="block truncate t-label font-semibold text-navy">{l?.name ?? "Business"}</span>
                     <span className="block t-caption text-muted-ink">

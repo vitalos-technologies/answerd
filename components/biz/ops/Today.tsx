@@ -6,7 +6,7 @@ import { useStore } from "@/lib/store"
 import { StatusPill } from "@/components/answerd/Status"
 import { ButtonLink } from "@/components/answerd/Button"
 import { gateStatus, serviceById } from "@/lib/selectors"
-import { dayKey, fmtTime, ms } from "@/lib/time"
+import { dayKey, fmtDate, fmtTime, ms } from "@/lib/time"
 import { cn } from "@/lib/utils"
 import { deskState, jobsOn, needsYou, requestCountdown, todayStats, type NeedItem } from "./data"
 import { useOpsLinks } from "./links"
@@ -38,21 +38,24 @@ export function DeskPill({ businessId, className }: { businessId: string; classN
   )
 }
 
-/** B-18 stat row: New enquiries, Jobs today, Desk handled, Profile views. */
+/** B-18 stat row: Enquiries, Jobs, Desk, Views (short labels fit one line; screen readers hear the full name). */
 export function TodayStatRow({ listingId, staffUserId = null, className }: { listingId: string; staffUserId?: string | null; className?: string }) {
   const s = useStore()
   const t = todayStats(s, listingId, staffUserId)
   const tiles = [
-    { label: "New enquiries", value: t.newEnquiries },
-    { label: "Jobs today", value: t.jobsToday },
-    { label: "Desk handled", value: t.deskHandled },
-    { label: "Profile views", value: t.profileViews },
+    { label: "Enquiries", full: "New enquiries", value: t.newEnquiries },
+    { label: "Jobs", full: "Jobs today", value: t.jobsToday },
+    { label: "Desk", full: "Handled by the desk", value: t.deskHandled },
+    { label: "Views", full: "Profile views", value: t.profileViews },
   ]
   return (
     <dl className={cn("grid grid-cols-4 gap-2", className)} aria-label="Today so far">
       {tiles.map((x) => (
-        <div key={x.label} className="card flex flex-col-reverse justify-end gap-0.5 px-2.5 py-3">
-          <dt className="t-caption leading-tight text-muted-ink">{x.label}</dt>
+        <div key={x.label} className="card flex flex-col-reverse justify-end gap-0.5 px-2.5 py-3" title={x.full}>
+          <dt className="truncate t-caption leading-tight text-muted-ink">
+            <span aria-hidden>{x.label}</span>
+            <span className="sr-only">{x.full}</span>
+          </dt>
           <dd className="t-title tnum">{x.value}</dd>
         </div>
       ))}
@@ -60,25 +63,24 @@ export function TodayStatRow({ listingId, staffUserId = null, className }: { lis
   )
 }
 
+/**
+ * Needs you rows lead with who and what ("Tayo A. · Boiler service"), then the type and time
+ * ("Booking request · Thu 5 Nov, 10am"), with the countdown or channel on the right.
+ */
 function needRow(s: ReturnType<typeof useStore.getState>, n: NeedItem, links: ReturnType<typeof useOpsLinks>) {
   if (n.kind === "thread") {
-    const first = n.thread.customerName.split(" ")[0]
-    return { href: links.thread(n.thread.id), icon: Hand, tone: "bg-red-tint text-red", title: `${first} needs you`, sub: n.thread.handoffReason ?? "Waiting for a reply", right: n.thread.channel === "sms" ? "SMS" : n.thread.channel === "call" ? "Call" : "App" }
+    const t = n.thread
+    const channel = t.channel === "sms" ? "SMS" : t.channel === "call" ? "Call" : "App"
+    return { href: links.thread(t.id), icon: Hand, tone: "bg-red-tint text-red", title: `${t.customerName} · ${t.handoffReason ?? "Waiting for a reply"}`, sub: `Handed to you · ${fmtDate(t.updatedAt)}, ${fmtTime(t.updatedAt)}`, right: channel }
   }
   const b = n.booking
   const svc = serviceById(s, b.serviceId)?.name ?? "Job"
   if (n.kind === "request") {
     const c = requestCountdown(b.requestExpiresAt, s.clock)
-    return { href: links.request(b.id), icon: CalendarClock, tone: "bg-amber-tint text-amber-ink", title: `Booking request: ${b.customerName}`, sub: `${svc}, ${fmtTime(b.startAt)} ${dayLabel(b.startAt, s.clock)}`, right: c?.label ?? "" }
+    return { href: links.request(b.id), icon: CalendarClock, tone: "bg-amber-tint text-amber-ink", title: `${b.customerName} · ${svc}`, sub: `Booking request · ${fmtDate(b.startAt)}, ${fmtTime(b.startAt)}`, right: c?.label ?? "" }
   }
-  return { href: links.job(b.id), icon: CalendarSync, tone: "bg-blue-tint text-blue", title: `${b.customerName} wants to move`, sub: `${svc} to ${fmtTime(b.changeRequest!.startAt)} ${dayLabel(b.changeRequest!.startAt, s.clock)}`, right: "Change" }
-}
-
-function dayLabel(iso: string, now: string) {
-  const diff = Math.round((ms(iso) - ms(now)) / 86_400_000)
-  if (dayKey(iso) === dayKey(now)) return "today"
-  if (diff <= 1 && dayKey(iso) !== dayKey(now)) return "tomorrow"
-  return new Intl.DateTimeFormat("en-GB", { weekday: "short", day: "numeric", month: "short", timeZone: "Europe/London" }).format(new Date(iso)).replace(",", "")
+  const to = b.changeRequest!.startAt
+  return { href: links.job(b.id), icon: CalendarSync, tone: "bg-blue-tint text-blue", title: `${b.customerName} · ${svc}`, sub: `Wants to move · ${fmtDate(to)}, ${fmtTime(to)}`, right: "Change" }
 }
 
 /** Threads handed to the owner, booking requests and change requests. */
@@ -105,8 +107,8 @@ export function NeedsYouList({ listingId, limit, className }: { listingId: strin
                 <I className="size-5" aria-hidden />
               </span>
               <span className="min-w-0 flex-1">
-                <span className="block truncate t-label text-navy">{r.title}</span>
-                <span className="block truncate t-caption text-muted-ink">{r.sub}</span>
+                <span className="line-clamp-2 t-label text-navy">{r.title}</span>
+                <span className="block t-caption text-muted-ink tnum">{r.sub}</span>
               </span>
               {r.right && <span className="shrink-0 t-caption text-muted-ink tnum">{r.right}</span>}
               <ChevronRight className="size-4 shrink-0 text-muted-ink" aria-hidden />
@@ -177,13 +179,14 @@ export function JobsTimeline({ listingId, staffUserId = null, day, className }: 
   return <ol className={cn("relative space-y-3 before:absolute before:bottom-2 before:left-[58px] before:top-2 before:w-0.5 before:bg-line", className)}>{rows}</ol>
 }
 
+// Blue: red stays for errors and destructive actions
 function NowLine({ time }: { time: string }) {
   return (
     <li className="relative flex items-center gap-2 pl-16" aria-label={`Now, ${time}`}>
-      <span className="absolute left-0 w-12 text-right t-caption font-semibold text-red tnum">{time}</span>
-      <span className="absolute left-[53px] size-3 rounded-full bg-red" aria-hidden />
-      <span className="h-0.5 flex-1 bg-red" aria-hidden />
-      <span className="t-caption font-semibold text-red">Now</span>
+      <span className="absolute left-0 w-12 text-right t-caption font-semibold text-blue tnum">{time}</span>
+      <span className="absolute left-[53px] size-3 rounded-full bg-blue" aria-hidden />
+      <span className="h-0.5 flex-1 bg-blue" aria-hidden />
+      <span className="t-caption font-semibold text-blue">Now</span>
     </li>
   )
 }

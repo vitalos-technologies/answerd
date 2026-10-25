@@ -35,9 +35,16 @@ export function ResultsHeader({ query, view }: { query: ResultsQuery; view: "lis
         </button>
         <Link href="/app/search" className="min-w-0 flex-1 rounded-xl px-1 py-1 hover:bg-sky">
           <h1 className="truncate t-subhead">{resultsTitle(query, cats)}</h1>
-          <p className="truncate t-caption text-muted-ink">
-            {loc ? `Near ${loc.postcode.split(" ")[0]} · ${loc.label}` : "Anywhere in the UK"}
-            {f.withinMiles ? ` · within ${f.withinMiles} mi` : ""}
+          {/* Postcode district and the search radius (search() defaults to 25 miles); the full area name is on C-10 */}
+          <p className="truncate t-caption text-muted-ink tnum">
+            {loc ? (
+              <>
+                <span className="sr-only">Near </span>
+                {loc.postcode.split(" ")[0]} · {f.withinMiles ?? 25} mi
+              </>
+            ) : (
+              "Anywhere in the UK"
+            )}
           </p>
         </Link>
         <div className="mr-1 inline-flex rounded-full bg-sky p-1" role="group" aria-label="View">
