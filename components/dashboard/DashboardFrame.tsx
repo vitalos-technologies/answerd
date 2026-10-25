@@ -42,7 +42,8 @@ function FrameInner({ children }: { children: React.ReactNode }) {
 
   React.useEffect(() => {
     if (!hydrated || allowed) return
-    router.replace(`/sign-in?next=${encodeURIComponent(next)}${userId ? "&reason=business" : ""}`)
+    // Signed out: sign in through the app. Signed in without a business: claim one in the app.
+    router.replace(userId ? "/app/biz/claim" : `/app/sign-in?next=${encodeURIComponent(next)}`)
   }, [hydrated, allowed, userId, next, router])
 
   React.useEffect(() => {

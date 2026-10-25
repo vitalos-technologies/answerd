@@ -3,7 +3,7 @@
 // from /app/ask. Usage: pnpm build && pnpm start, then BASE_URL=http://localhost:3000 pnpm screenshots [ID-prefix…]
 import { mkdirSync } from "node:fs"
 import { chromium, type Browser, type Page } from "@playwright/test"
-import { SCREENS, type ScreenDef } from "../lib/screens"
+import { ON_SITE, SCREENS, type ScreenDef } from "../lib/screens"
 import { personaFor, viewportFor, withClean } from "../tests/e2e/screens"
 
 const BASE = process.env.BASE_URL ?? "http://localhost:3000"
@@ -85,7 +85,8 @@ async function ask(browser: Browser, s: ScreenDef) {
 ;(async () => {
   mkdirSync(OUT, { recursive: true })
   const browser = await chromium.launch()
-  const list = SCREENS.filter((s) => !only.length || only.some((o) => s.id.startsWith(o)))
+  // Web screens on the website (ON_SITE) are captured from marketing-site/, not here
+  const list = SCREENS.filter((s) => !ON_SITE[s.id] && (!only.length || only.some((o) => s.id.startsWith(o))))
   for (const s of list) {
     try {
       if (s.surface === "desk") await desk(browser, s)

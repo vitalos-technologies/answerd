@@ -4,6 +4,7 @@ import Link from "next/link"
 import { ChevronRight, Download, ExternalLink, Trash2 } from "lucide-react"
 import { AppScreen, TopBar } from "@/components/shells/AppScreen"
 import { ToggleRow } from "@/components/answerd/Fields"
+import { siteUrl } from "@/lib/site"
 import { useStore } from "@/lib/store"
 import { toast } from "@/lib/toast"
 
@@ -36,7 +37,7 @@ export default function PrivacyPage() {
             <span className="flex-1 t-label text-red">Delete account</span>
             <ChevronRight className="size-5 text-muted-ink" aria-hidden />
           </Link>
-          <Link href="/legal/privacy" className="flex min-h-14 items-center gap-3 px-4 hover:bg-sky">
+          <Link href={siteUrl("/privacy")} className="flex min-h-14 items-center gap-3 px-4 hover:bg-sky">
             <ExternalLink className="size-5 text-muted-ink" aria-hidden />
             <span className="flex-1 t-label text-navy">Privacy notice</span>
           </Link>

@@ -227,7 +227,6 @@ export default function PricingRulesPage() {
             {[
               ["B-36 Plan and billing (app)", "/app/biz/billing", `${gbp(rules.deskPricePence)} desk, gate button copy`],
               ["B-37 Featured (app)", "/app/biz/featured", `${gbp(rules.featuredPricePence)}, ${rules.featuredSlotsPerArea} slots`],
-              ["W-10 Pricing (web)", "/pricing", `${rules.trialDays}-day trial, ${rules.gateEnquiries} enquiries`],
               ["W-18 Billing and checkout (web)", "/dashboard/billing", "Checkout totals"],
               ["A-18 Monetise gate", "/admin/gate", `${rules.gateEnquiries} enquiries, day ${rules.gateDays}`],
               ["A-19 Featured slots", "/admin/featured", `${rules.featuredSlotsPerArea} per category and area`],

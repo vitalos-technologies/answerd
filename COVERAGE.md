@@ -9,6 +9,7 @@ Every ID in `docs/answerd-spec.md`, generated from `lib/screens.ts` by `pnpm cov
 - Demo calendar: the spec's example dates (Mon 27 Oct, Thu 30 Oct 2026) fall on the wrong weekdays, so the demo uses the real 2026 calendar. The clock starts on Mon 26 Oct 2026 at 9am London time, and "Thu" in the journeys is Thu 29 Oct.
 - Codes: 000000 is always the wrong code; any other 6 digits are accepted.
 - No real calls, texts, payments or audio: calls, SMS, Stripe and voice are simulated in the shared store.
+- One website, app first (design review, 25 Oct 2026): the public web pages live on the website (marketing-site/), not in the prototype. Their old prototype URLs redirect there and "/" opens the hub. The website is a separate app, so it doesn't share the prototype's demo state (S-06 prices, S-07 switches).
 
 ## Customer app
 
@@ -113,18 +114,18 @@ Every ID in `docs/answerd-spec.md`, generated from `lib/screens.ts` by `pnpm cov
 
 | ID | Screen | Route or trigger | Status | Deviation from the spec |
 | --- | --- | --- | --- | --- |
-| W-01 | Home | `/` | Built |  |
-| W-02 | Search results | `/search` | Built |  |
-| W-03 | Category hub | `/[category]` | Built |  |
-| W-04 | Category in area | `/[category]/[area]` | Built |  |
-| W-05 | Area hub | `/areas/[area]` | Built |  |
-| W-06 | Listing (claimed) | `/b/[slug]` | Built |  |
-| W-07 | Listing (unclaimed) | `/b/[slug]` | Built |  |
-| W-08 | How it works | `/how-it-works` | Built |  |
-| W-09 | For businesses | `/for-businesses` | Built |  |
-| W-10 | Pricing | `/pricing` | Built |  |
-| W-11 | Claim or add | `/claim` | Built | Guests sign in through W-12 first (with next=), which handles the new-account name step. |
-| W-12 | Sign in | `/sign-in` | Built |  |
+| W-01 | Home | Website: `/` | Built |  |
+| W-02 | Search results | Website: `/#popular-services` | Built |  |
+| W-03 | Category hub | Website: `/plumbers` | Built |  |
+| W-04 | Category in area | Website: `/plumbers/croydon` | Built |  |
+| W-05 | Area hub | Website: `/areas/croydon` | Built |  |
+| W-06 | Listing (claimed) | Website: `/b/swift-plumbing-heating` | Built |  |
+| W-07 | Listing (unclaimed) | Website: `/b/norwood-locksmiths` | Built |  |
+| W-08 | How it works | Website: `/#how-it-works` | Built |  |
+| W-09 | For businesses | Website: `/#for-businesses` | Built |  |
+| W-10 | Pricing | Website: `/billing` | Built |  |
+| W-11 | Claim or add | Website: `/claim` | Built | On the website. Businesses that start there finish setup in the app. |
+| W-12 | Sign in | Website: `/sign-in` | Built |  |
 | W-13 | Dashboard: Overview | `/dashboard` | Built |  |
 | W-14 | Dashboard: Inbox | `/dashboard/inbox` | Built |  |
 | W-15 | Dashboard: Diary | `/dashboard/diary` | Built |  |
@@ -132,14 +133,14 @@ Every ID in `docs/answerd-spec.md`, generated from `lib/screens.ts` by `pnpm cov
 | W-17 | Dashboard: AI desk | `/dashboard/desk` | Built |  |
 | W-18 | Dashboard: Billing | `/dashboard/billing` | Built |  |
 | W-19 | Dashboard: Team and settings | `/dashboard/team` | Built |  |
-| W-20 | Help centre | `/help` | Built |  |
-| W-21 | About | `/about` | Built |  |
-| W-22 | Legal | `/legal/[doc]` | Built |  |
-| W-23 | Cookie banner | Every public page on first visit (/?cookies=reset to show it again) | Built |  |
-| W-24 | Not found and errors | `/404` | Built |  |
-| W-25 | Chat with Answerd | Every public page (/?chat=open) | Built |  |
-| W-26 | Get the app | `/get-the-app` | Built |  |
-| W-27 | Review from link | `/review/[token]` | Built | A review token is the ID of a completed booking and is valid for 30 days after the job. |
+| W-20 | Help centre | Website: `/help` | Built |  |
+| W-21 | About | Website: `/about` | Built |  |
+| W-22 | Legal | Website: `/terms` | Built |  |
+| W-23 | Cookie banner | Website: `/` | Built |  |
+| W-24 | Not found and errors | Website: `/this-page-does-not-exist` | Built |  |
+| W-25 | Chat with Answerd | Website: `/` | Built |  |
+| W-26 | Get the app | Website: `/get-the-app` | Built |  |
+| W-27 | Review from link | Website: `/review/bk-tayo-swift-past` | Built |  |
 
 ## Admin console
 
@@ -178,7 +179,7 @@ Every ID in `docs/answerd-spec.md`, generated from `lib/screens.ts` by `pnpm cov
 | S-03 | Costs and margins | `/admin/super/costs` | Built |  |
 | S-04 | Growth | `/admin/super/growth` | Built |  |
 | S-05 | Team and roles | `/admin/super/team` | Built | The permissions matrix edits what Admin and Support may do (useCan reads it); super-admin-only areas are fixed. |
-| S-06 | Pricing and rules | `/admin/super/pricing` | Built | Rules are versioned in Settings.ruleVersions with a reason and an effective date. The version in force on the demo clock drives the monetise gate, request expiry, trial length, plan prices (B-36, B-37, W-10, W-18 and checkout), Featured slots and review rules. |
+| S-06 | Pricing and rules | `/admin/super/pricing` | Built | Rules are versioned in Settings.ruleVersions with a reason and an effective date. The version in force on the demo clock drives the monetise gate, request expiry, trial length, plan prices (B-36, B-37, W-18 and checkout; W-10 is on the website), Featured slots and review rules. |
 | S-07 | Platform switches | `/admin/super/switches` | Built | Switches are checked in one place (platformFor in lib/selectors.ts). Gap-fill is the A-23 flag; the desk kill switch stays in A-23. |
 | S-08 | Integrations | `/admin/super/integrations` | Built |  |
 | S-09 | Impersonate and data requests | `/admin/super/impersonate` | Built | Business views reuse the support view (read-only banner); customer views open the app as the customer with every control disabled. Both end on the demo clock or on returning to the console, and are audited. |
@@ -203,7 +204,7 @@ Every ID in `docs/answerd-spec.md`, generated from `lib/screens.ts` by `pnpm cov
 
 | ID | Screen | Route or trigger | Status | Deviation from the spec |
 | --- | --- | --- | --- | --- |
-| Q-01 | Open | /app/ask (C-38) and the web chat panel (W-25) | Built |  |
+| Q-01 | Open | /app/ask (C-38); the web chat panel (W-25) is on the website | Built |  |
 | Q-02 | Understand | /app/ask: free-text understanding | Built |  |
 | Q-03 | Match | /app/ask: up to 3 matches with reasons | Built |  |
 | Q-04 | Act | /app/ask: Call, Message, Book from a match | Built |  |

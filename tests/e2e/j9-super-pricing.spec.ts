@@ -12,14 +12,11 @@ async function signInSuper(page: Page) {
   await expect(page).toHaveURL(/\/admin$/)
 }
 
-// J9: the super admin changes the AI desk price in S-06; B-36, W-10 and W-18 show the new price.
-test("J9 super admin changes the AI desk price; B-36, W-10 and W-18 follow", async ({ page }) => {
+// J9: the super admin changes the AI desk price in S-06; B-36 and W-18 show the new price. (W-10 pricing is on the
+// website, marketing-site/, which has its own copy of the prices.)
+test("J9 super admin changes the AI desk price; B-36 and W-18 follow", async ({ page }) => {
   const errors = watchErrors(page)
   await start(page, "guest")
-
-  // Before: the launch price everywhere
-  await page.goto("/pricing")
-  await expect(page.locator('[data-plan-price="AI desk"]')).toContainText("£49")
 
   await signInSuper(page)
   // Only the super admin sees the Super admin section, at the top of the sidebar
@@ -42,11 +39,6 @@ test("J9 super admin changes the AI desk price; B-36, W-10 and W-18 follow", asy
   const st = await state<{ settings: { ruleVersions: { version: number; rules: { deskPricePence: number }; reason: string }[] }; audit: { action: string }[] }>(page)
   expect(st.settings.ruleVersions.at(-1)).toMatchObject({ version: 2, reason: "Price review", rules: { deskPricePence: 5900 } })
   expect(st.audit[0]!.action).toBe("rules.update")
-
-  // W-10 pricing
-  await page.goto("/pricing")
-  await expect(page.locator('[data-plan-price="AI desk"]')).toContainText("£59")
-  await expect(page.getByText(/The desk is £59\/month ex VAT after the trial/)).toHaveCount(1)
 
   // B-36 in the app, as Sam
   await as(page, "sam")

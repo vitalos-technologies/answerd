@@ -26,8 +26,6 @@ const EX: Record<string, string> = {
 
 const EX_OVERRIDE: Record<string, string> = {
   "C-17": "/app/b/norwood-locksmiths",
-  "W-07": "/b/norwood-locksmiths",
-  "W-05": "/areas/croydon",
   "B-24": "/app/biz/jobs/bk-mark",
   "C-28": "/app/bookings/bk-tayo-upcoming/booked",
   "C-34": "/app/bookings/bk-tayo-swift-past/review",
@@ -36,9 +34,6 @@ const EX_OVERRIDE: Record<string, string> = {
   "A-05": "/admin/listings/l-swift-plumbing-heating/merge",
   "B-20": "/app/biz/inbox/t-leon-swift",
   "B-26": "/app/biz/inbox/t-tayo-swift/quote",
-  "W-24": "/this-page-does-not-exist",
-  "W-23": "/?cookies=reset",
-  "W-25": "/?chat=open",
 }
 
 const RAW: [Surface, string][] = [
@@ -257,6 +252,30 @@ export const BUILT = new Set<string>([
 
 /** Built, but deferred for the MVP: the website is app first, so businesses run these in the app (design review, 25 Oct). */
 export const DEFERRED = new Set<string>(["W-13", "W-14", "W-15", "W-16", "W-17", "W-19"])
+
+/** Web screens that live on the website (marketing-site/), not in the prototype: the hub links to these pages there. */
+export const ON_SITE: Record<string, string> = {
+  "W-01": "/",
+  "W-02": "/#popular-services",
+  "W-03": "/plumbers",
+  "W-04": "/plumbers/croydon",
+  "W-05": "/areas/croydon",
+  "W-06": "/b/swift-plumbing-heating",
+  "W-07": "/b/norwood-locksmiths",
+  "W-08": "/#how-it-works",
+  "W-09": "/#for-businesses",
+  "W-10": "/billing",
+  "W-11": "/claim",
+  "W-12": "/sign-in",
+  "W-20": "/help",
+  "W-21": "/about",
+  "W-22": "/terms",
+  "W-23": "/",
+  "W-24": "/this-page-does-not-exist",
+  "W-25": "/",
+  "W-26": "/get-the-app",
+  "W-27": "/review/bk-tayo-swift-past",
+}
 
 export function screenById(id: string) {
   return SCREENS.find((s) => s.id === id)

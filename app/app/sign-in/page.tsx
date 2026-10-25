@@ -10,6 +10,7 @@ import { Banner } from "@/components/answerd/Feedback"
 import { Mark } from "@/components/brand/Mark"
 import { OsAuthSheet, OsRow } from "@/components/app/OsDialogs"
 import { safeNext, withSuspense } from "@/components/app/helpers"
+import { siteUrl } from "@/lib/site"
 import { useStore } from "@/lib/store"
 
 function GoogleG() {
@@ -84,11 +85,11 @@ function SignInSheet() {
         </div>
         <p className="mt-3 text-center t-caption text-muted-ink">
           By continuing you agree to our{" "}
-          <Link href="/legal/terms" className="text-blue underline">
+          <Link href={siteUrl("/terms")} className="text-blue underline">
             terms
           </Link>{" "}
           and{" "}
-          <Link href="/legal/privacy" className="text-blue underline">
+          <Link href={siteUrl("/privacy")} className="text-blue underline">
             privacy notice
           </Link>
           .

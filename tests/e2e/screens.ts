@@ -1,11 +1,12 @@
 import type { Page } from "@playwright/test"
-import { SCREENS, type ScreenDef } from "@/lib/screens"
+import { ON_SITE, SCREENS, type ScreenDef } from "@/lib/screens"
 import type { PersonaId } from "@/lib/types"
 
 type W = Window & { __answerdStore: { getState: () => Record<string, (...a: unknown[]) => unknown> & { hydrated: boolean } } }
 
-/** Every routed screen (desk behaviours and Ask Answerd steps run inside other screens). */
-export const ROUTED = SCREENS.filter((s) => s.surface !== "desk" && s.surface !== "ask")
+/** Every routed screen (desk behaviours and Ask Answerd steps run inside other screens). Web screens that moved to
+ * the website (ON_SITE) live in marketing-site/ and are not routed here. */
+export const ROUTED = SCREENS.filter((s) => s.surface !== "desk" && s.surface !== "ask" && !ON_SITE[s.id])
 
 const SIGN_IN_FLOW = ["C-01", "C-02", "C-03", "C-04", "C-05", "C-06", "C-07", "C-08"]
 const DASHBOARD = /^W-1[3-9]$/

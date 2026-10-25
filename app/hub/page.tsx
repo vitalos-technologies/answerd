@@ -1,11 +1,12 @@
 "use client"
 import * as React from "react"
 import Link from "next/link"
-import { Crown, CheckCircle2, Circle, Clock, FastForward, Layers, PlayCircle, RotateCcw, Hash, Eye, CalendarPlus, Gauge, ArrowRight, Smartphone, Globe, LayoutDashboard, Shield, UserCheck } from "lucide-react"
+import { Crown, CheckCircle2, Circle, Clock, FastForward, Layers, PlayCircle, RotateCcw, Hash, Eye, CalendarPlus, Gauge, ArrowRight, Smartphone, Globe, LayoutDashboard, Shield, UserCheck, ExternalLink } from "lucide-react"
 import { Logo } from "@/components/brand/Logo"
 import { useStore } from "@/lib/store"
 import { PERSONAS } from "@/lib/seed"
-import { SCREENS, SURFACES, BUILT, DEFERRED, type Surface } from "@/lib/screens"
+import { SCREENS, SURFACES, BUILT, DEFERRED, ON_SITE, type Surface } from "@/lib/screens"
+import { siteUrl } from "@/lib/site"
 import { DESK_EMERGENCIES, DESK_SCRIPTS } from "@/lib/deskScripts"
 import { Button } from "@/components/answerd/Button"
 import { SegmentedControl } from "@/components/answerd/Status"
@@ -108,9 +109,9 @@ export default function HubPage() {
             <Link href="/app/splash" className="inline-flex h-11 items-center gap-2 rounded-full bg-blue px-4 t-label font-semibold text-white hover:bg-blue-hover">
               <Smartphone className="size-4" /> Open the app
             </Link>
-            <Link href="/" className="inline-flex h-11 items-center gap-2 rounded-full border border-line bg-white px-4 t-label text-navy hover:bg-sky">
-              <Globe className="size-4" /> Website
-            </Link>
+            <a href={siteUrl("/")} target="_blank" rel="noopener" className="inline-flex h-11 items-center gap-2 rounded-full border border-line bg-white px-4 t-label text-navy hover:bg-sky">
+              <Globe className="size-4" /> Website <ExternalLink className="size-3.5" aria-label="opens in a new tab" />
+            </a>
             <Link href="/dashboard" className="inline-flex h-11 items-center gap-2 rounded-full border border-line bg-white px-4 t-label text-navy hover:bg-sky">
               <LayoutDashboard className="size-4" /> Dashboard
             </Link>
@@ -298,18 +299,27 @@ export default function HubPage() {
                   </span>
                 </h3>
                 <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
-                  {list.map((x) => (
-                    <Link key={x.id} href={x.example} className="group flex items-start gap-2.5 rounded-xl border border-line bg-white p-3 hover:border-blue">
+                  {list.map((x) => {
+                    const site = ON_SITE[x.id]
+                    const Tag = site ? "a" : Link
+                    return (
+                      <Tag key={x.id} href={site ? siteUrl(site) : x.example} {...(site && { target: "_blank", rel: "noopener" })} className="group flex items-start gap-2.5 rounded-xl border border-line bg-white p-3 hover:border-blue">
                       {BUILT.has(x.id) ? <CheckCircle2 className="mt-0.5 size-4 shrink-0 text-teal-ink" aria-label="Built" /> : <Circle className="mt-0.5 size-4 shrink-0 text-line" aria-label="Not built yet" />}
                       <span className="min-w-0 flex-1">
                         <span className="block font-mono t-caption text-blue">{x.id}</span>
                         <span className="block t-label text-navy">{x.title}</span>
                         {DEFERRED.has(x.id) && <span className="mt-1 inline-block rounded-full bg-amber-tint px-2 py-0.5 t-caption text-amber-ink">Deferred: app first</span>}
-                        <span className="block truncate t-caption font-normal text-muted-ink">{x.route}</span>
+                        {site && <span className="mt-1 inline-block rounded-full bg-blue-tint px-2 py-0.5 t-caption text-blue">On the website</span>}
+                        <span className="block truncate t-caption font-normal text-muted-ink">{site ?? x.route}</span>
                       </span>
-                      <ArrowRight className="mt-0.5 size-4 shrink-0 text-muted-ink opacity-0 transition-opacity group-hover:opacity-100" aria-hidden />
-                    </Link>
-                  ))}
+                      {site ? (
+                        <ExternalLink className="mt-0.5 size-4 shrink-0 text-muted-ink" aria-label="opens the website in a new tab" />
+                      ) : (
+                        <ArrowRight className="mt-0.5 size-4 shrink-0 text-muted-ink opacity-0 transition-opacity group-hover:opacity-100" aria-hidden />
+                      )}
+                    </Tag>
+                    )
+                  })}
                   {!list.length && <p className="t-label font-normal text-muted-ink">Nothing here for this filter.</p>}
                 </div>
               </section>

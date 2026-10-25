@@ -15,10 +15,10 @@ type Key = "signups" | "claims" | "gapFill" | "payments" | "ask"
 
 const ROWS: { key: Key; label: string; off: string; where: { label: string; href: string }[] }[] = [
   { key: "signups", label: "New sign-ups", off: "New customers can't create an account. Existing customers still sign in.", where: [{ label: "C-06 Phone number", href: "/app/sign-in/phone" }, { label: "C-08 About you", href: "/app/sign-in/about-you" }] },
-  { key: "claims", label: "Claims and new listings", off: "Businesses can't claim or add a listing in the app or on the web.", where: [{ label: "B-01 Find your business", href: "/app/biz/claim" }, { label: "W-11 Claim or add", href: "/claim" }] },
+  { key: "claims", label: "Claims and new listings", off: "Businesses can't claim or add a listing in the app or on the web.", where: [{ label: "B-01 Find your business", href: "/app/biz/claim" }] },
   { key: "gapFill", label: "Google gap-fill", off: "Places results disappear from search; claimed and seeded listings stay.", where: [{ label: "C-12 Results", href: "/app/results?q=plumber" }, { label: "A-16 Places spend", href: "/admin/places" }] },
   { key: "payments", label: "Payments", off: "Checkout is disabled; nothing new is charged. Existing plans keep running.", where: [{ label: "B-36 Plan and billing", href: "/app/biz/billing" }, { label: "W-18 Checkout", href: "/dashboard/billing/checkout?plan=desk" }] },
-  { key: "ask", label: "Ask Answerd", off: "The assistant shows a paused state; search still works.", where: [{ label: "C-38 Ask Answerd", href: "/app/ask" }, { label: "W-25 Chat with Answerd", href: "/?chat=open" }] },
+  { key: "ask", label: "Ask Answerd", off: "The assistant shows a paused state; search still works.", where: [{ label: "C-38 Ask Answerd", href: "/app/ask" }] },
 ]
 
 function SwitchRow({ row, on }: { row: (typeof ROWS)[number]; on: boolean }) {

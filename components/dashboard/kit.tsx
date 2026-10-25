@@ -41,7 +41,7 @@ export function DashPage({
       <>
         <ScreenMeta id={id} />
         <div className="card mx-auto max-w-xl">
-          <EmptyState title="No business yet" body="Claim or add your business to get calls, messages and bookings from Answerd." action={<ButtonLink href="/claim" size="md">Claim or add your business</ButtonLink>} />
+          <EmptyState title="No business yet" body="Claim or add your business to get calls, messages and bookings from Answerd." action={<ButtonLink href="/app/biz/claim" size="md">Claim or add your business</ButtonLink>} />
         </div>
       </>
     )

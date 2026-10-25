@@ -1,6 +1,6 @@
 # Answerd prototype
 
-A clickable prototype of **Answerd**, the local services app where every business picks up. It is built from `docs/answerd-spec.md`. All 155 IDs in the spec are on screen: the customer app, business mode, the public website, the business web dashboard, the admin console, the ten AI desk behaviours and Ask Answerd. Everything runs against one shared demo store, so a change on one surface shows up on all the others.
+A clickable prototype of **Answerd**, the local services app where every business picks up. It is built from `docs/answerd-spec.md`. All 155 IDs in the spec are on screen: the customer app, business mode, the business web dashboard, the admin console, the ten AI desk behaviours and Ask Answerd. Everything runs against one shared demo store, so a change on one surface shows up on all the others.
 
 `COVERAGE.md` lists every ID with its route, status and any deviation from the spec.
 
@@ -50,7 +50,7 @@ To sign in by hand, any UK mobile number works. Tayo is 07700 900123, Sam is 077
 | --- | --- | --- |
 | Customer app (in a phone frame) | `/app/…` | C-01 to C-48, Q-01 to Q-06 |
 | Business mode (the same app) | `/app/biz/…` | B-01 to B-41 |
-| Public website | `/`, `/search`, `/[category]/[area]`, `/b/[slug]`, … | W-01 to W-12, W-20 to W-27 |
+| Public website | On the website, `marketing-site/` (set its address with `NEXT_PUBLIC_SITE_URL`). Old prototype URLs such as `/b/[slug]` redirect there; `/` opens the hub. | W-01 to W-12, W-20 to W-27 |
 | Business web dashboard | `/dashboard/…` | W-13 to W-19 |
 | Admin console | `/admin/…` | A-01 to A-23 |
 | AI desk behaviours | Hub › Simulate, B-33, W-17 | D-01 to D-10 |
@@ -103,8 +103,8 @@ BASE_URL=http://localhost:3000 pnpm test:e2e   # or against a running server
   - `ops/` for Today, inbox, calls, diary, quotes and stats;
   - `desk/` for the AI desk;
   - `account/` for billing, team and settings.
-- **`components/web/`, `components/dashboard/`, `components/admin/`:** the website, dashboard and admin pieces.
-- **`marketing-site/`:** the separate Answerd marketing site, a standalone Next.js project with its own README.
+- **`components/dashboard/`, `components/admin/`:** the dashboard and admin pieces.
+- **`marketing-site/`:** the Answerd website (W-01 to W-12, W-20 to W-27), a standalone Next.js project with its own README. The prototype links to it through `lib/site.ts`.
 
 ## From prototype to MVP
 
@@ -113,7 +113,7 @@ The prototype gives every surface the shape and behaviour the MVP needs, using o
 | Prototype | MVP |
 | --- | --- |
 | `/app` in a phone frame, with a mode switch for business | **One Expo app** (iOS and Android) with customer mode and business mode. Staff accounts open straight into business mode. |
-| Public website and `/dashboard` | **Next.js web** at answerd.vitalos.co.uk: SEO pages for every category and area, listings, booking and claiming, plus the business dashboard. |
+| `marketing-site/` and `/dashboard` | **Next.js web** at answerd.vitalos.co.uk: SEO pages for every category and area, listings, claiming and billing. Message and Book continue in the app. |
 | `/admin` | Internal admin console on the same web stack, Google sign-in restricted to vitalos.co.uk. |
 | The zustand store and the demo clock | **Workforce backend**: tenants, listings (claimed, seeded from Companies House and OpenStreetMap, Places gap-fill), bookings, threads, calls, quotes, reviews, notifications, billing (Stripe) and the audit log. |
 | `lib/deskScripts.ts` | **AI front desk on Workforce**: the voice and SMS desk (missed-call forwarding, tracked numbers, transcripts, handoffs, safety rules) on the telephony and voice stack. |

@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation"
 import { BarChart3, CalendarDays, CreditCard, Inbox, LayoutDashboard, Settings, Star, Store, Users, ChevronDown, ExternalLink } from "lucide-react"
 import { DeskIcon } from "@/components/brand/DeskIcon"
 import { Logo } from "@/components/brand/Logo"
+import { siteUrl } from "@/lib/site"
 import { useStore, useCurrentBusiness, useCurrentUser } from "@/lib/store"
 import { membershipsFor, roleIn } from "@/lib/selectors"
 import { PersonAvatar } from "@/components/answerd/Media"
@@ -44,7 +45,7 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
   return (
     <div className="flex min-h-dvh bg-sky">
       <aside className="sticky top-0 hidden h-dvh w-[240px] shrink-0 flex-col border-r border-line bg-white lg:flex">
-        <Link href="/" className="flex h-16 items-center px-5" aria-label="Answerd home">
+        <Link href="/dashboard" className="flex h-16 items-center px-5" aria-label="Answerd dashboard">
           <Logo size={28} />
         </Link>
         <nav className="flex-1 space-y-0.5 px-3 py-2" aria-label="Dashboard">
@@ -79,11 +80,11 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
                 )
               })}
               <DropdownMenuSeparator />
-              <DropdownMenuItem onSelect={() => router.push("/claim")}>Claim or add another business</DropdownMenuItem>
+              <DropdownMenuItem onSelect={() => router.push("/app/biz/claim")}>Claim or add another business</DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
           {listing && (
-            <Link href={`/b/${listing.slug}`} className="hidden items-center gap-1 t-label text-blue hover:underline md:inline-flex">
+            <Link href={siteUrl(`/b/${listing.slug}`)} className="hidden items-center gap-1 t-label text-blue hover:underline md:inline-flex">
               View public listing <ExternalLink className="size-3.5" aria-hidden />
             </Link>
           )}
@@ -104,7 +105,7 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
                 <DropdownMenuItem
                   onSelect={() => {
                     s.signOut()
-                    router.push("/sign-in")
+                    router.push("/hub")
                   }}
                 >
                   Sign out
