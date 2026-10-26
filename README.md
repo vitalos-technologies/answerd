@@ -1,6 +1,10 @@
-# Answerd prototype
+# Answerd
 
-A clickable prototype of **Answerd**, the local services app where every business picks up. It is built from `docs/answerd-spec.md`. All 155 IDs in the spec are on screen: the customer app, business mode, the business web dashboard, the admin console, the ten AI desk behaviours and Ask Answerd. Everything runs against one shared demo store, so a change on one surface shows up on all the others.
+The frontend for **[Answerd](https://answerd.vitalos.co.uk)**, the UK local services app where every business picks up, built by [Vitalos](https://vitalos.co.uk). This repo holds the clickable prototype and the Answerd website (`marketing-site/`). The backend runs on Vitalos Workforce and lives in a separate private repository.
+
+## The prototype
+
+The clickable prototype is built from `docs/answerd-spec.md`. All 155 IDs in the spec are on screen: the customer app, business mode, the business web dashboard, the admin console, the ten AI desk behaviours and Ask Answerd. Everything runs against one shared demo store, so a change on one surface shows up on all the others.
 
 `COVERAGE.md` lists every ID with its route, status and any deviation from the spec.
 
@@ -126,3 +130,7 @@ The prototype's rules carry over as product requirements:
 - Emergencies get the safety line and no booking.
 - Businesses never pay before they've had 10 enquiries from Answerd.
 - Every admin write needs a reason and is audited.
+
+---
+
+Proprietary. Copyright Vitalos Technologies Limited. All rights reserved.
