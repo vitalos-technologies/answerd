@@ -1,10 +1,12 @@
 "use client"
-// API mode realtime: one WebSocket to /v1/realtime on the API's own origin while signed in. Browsers can't send
-// an Authorization header on a WebSocket, so the access token goes in the query string (access_token).
-// Reconnects with backoff (staging may be waking up) and hands each event to the bridge.
-import { REALTIME_URL } from "./config"
+// API mode realtime while signed in. The API's /v1/realtime WebSocket refuses browser Origins other than the
+// production website, so the browser listens to the prototype's own relay (app/api/answerd/realtime) over
+// Server-Sent Events; the relay holds the WebSocket. Reconnects with backoff (staging may be waking up) and hands
+// each event to the bridge.
+import { PROXY_BASE, REALTIME_URL } from "./config"
 import { getSession } from "./session"
 import { useApiStatus } from "./status"
+import { call } from "./client"
 
 export interface RealtimeEvent {
   type: string
@@ -12,7 +14,7 @@ export interface RealtimeEvent {
   [k: string]: unknown
 }
 
-let socket: WebSocket | null = null
+let source: EventSource | null = null
 let retry = 0
 let timer: ReturnType<typeof setTimeout> | undefined
 let wanted = false
@@ -20,35 +22,40 @@ let wanted = false
 export function connectRealtime(onEvent: (e: RealtimeEvent) => void) {
   wanted = true
   const s = getSession()
-  if (!REALTIME_URL || !s || socket) return
+  if (!REALTIME_URL || !s || source) return
   useApiStatus.setState({ realtime: "connecting" })
-  const ws = new WebSocket(`${REALTIME_URL}?access_token=${encodeURIComponent(s.accessToken)}`)
-  socket = ws
-  ws.onopen = () => {
+  // Same origin: the token only travels to this prototype's own relay
+  const es = new EventSource(`${PROXY_BASE}/realtime?access_token=${encodeURIComponent(s.accessToken)}`)
+  source = es
+  const reconnect = () => {
+    es.close()
+    source = null
+    useApiStatus.setState({ realtime: "closed" })
+    if (!wanted) return
+    const delay = Math.min(30_000, 1_000 * 2 ** retry++)
+    // An authenticated call first: it refreshes the access token if it has expired
+    timer = setTimeout(() => void call("/v1/me").catch(() => undefined).finally(() => connectRealtime(onEvent)), delay)
+  }
+  es.addEventListener("ready", () => {
     retry = 0
     useApiStatus.setState({ realtime: "open" })
-  }
-  ws.onmessage = (m) => {
+  })
+  es.addEventListener("closed", reconnect)
+  es.onerror = reconnect
+  es.onmessage = (m) => {
     try {
       const e = JSON.parse(String(m.data)) as RealtimeEvent
       if (e && typeof e.type === "string") onEvent(e)
     } catch {
-      /* not JSON: ignore (pings) */
+      /* not JSON: ignore */
     }
-  }
-  ws.onclose = () => {
-    socket = null
-    useApiStatus.setState({ realtime: "closed" })
-    if (!wanted) return
-    const delay = Math.min(30_000, 1_000 * 2 ** retry++)
-    timer = setTimeout(() => connectRealtime(onEvent), delay)
   }
 }
 
 export function disconnectRealtime() {
   wanted = false
   clearTimeout(timer)
-  socket?.close()
-  socket = null
+  source?.close()
+  source = null
   useApiStatus.setState({ realtime: "off" })
 }
