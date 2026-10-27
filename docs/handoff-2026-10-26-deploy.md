@@ -5,7 +5,7 @@ Tracking issue: https://github.com/vitalos-technologies/answerd-prototype/issues
 ## Update, 27 Oct 2026: deploys now go through GitHub Actions
 
 `.github/workflows/deploy.yml` is now the normal way to deploy. The steps below are the fallback.
-- **On push to `main`:** it deploys whichever app changed.
+- **After CI passes on `main`:** it deploys whichever app changed since the last successful deploy. An app deploys only if its own CI job passed; a held-back app fails the run, and the next green run deploys it.
 - **By hand:** Actions → Deploy → Run workflow, then pick `both`, `prototype` or `website`.
 - **Each job:**
   1. checks that the Cloudflare credentials exist, without printing them;

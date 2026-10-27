@@ -94,7 +94,7 @@ Set `NEXT_PUBLIC_ANSWERD_API_URL` and the site reads the Answerd API instead of 
   - Header `x-answerd-signature`: `sha256=` + hex HMAC-SHA256 of `"<timestamp>.<raw body>"`, keyed with `ANSWERD_REVALIDATE_SECRET`.
   - Body: `{"listingSlug"}` or `{"listingId"}`.
   - The window is 5 minutes.
-- **On Cloudflare.** `open-next.config.ts` uses the read-only static-assets cache. In API mode, pages render on request, but regenerated pages are only kept once an R2 incremental cache is configured.
+- **On Cloudflare.** `open-next.config.ts` uses the read-only static-assets cache, which needs no paid Cloudflare product. In API mode, pages render on request and aren't kept between requests. A persistent ISR cache (R2) needs a paid Cloudflare subscription, so it isn't planned.
 
 ## Performance notes
 
@@ -109,7 +109,7 @@ Set `NEXT_PUBLIC_ANSWERD_API_URL` and the site reads the Answerd API instead of 
 Uses OpenNext (`@opennextjs/cloudflare`); config is in `wrangler.jsonc` and `open-next.config.ts`, and production is `wrangler.production.jsonc` (https://answerd.vitalos.co.uk).
 
 **Production deploys go through GitHub Actions** (`.github/workflows/deploy.yml`):
-- A push to `main` that changes `marketing-site/` (Markdown aside) deploys it to https://answerd.vitalos.co.uk.
+- When CI passes on `main`, a change to `marketing-site/` (Markdown aside) deploys it to https://answerd.vitalos.co.uk.
 - To deploy by hand, use **Actions → Deploy → Run workflow** and pick `both`, `prototype` or `website`.
 - The job runs `pnpm deploy:cf:prod` with the repo's `CLOUDFLARE_API_TOKEN` (secret) and `CLOUDFLARE_ACCOUNT_ID` (variable or secret).
 - Production stays in mock mode unless the repo variable `ANSWERD_API_URL_SITE` is set.

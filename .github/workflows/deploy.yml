@@ -3,7 +3,9 @@ name: Deploy
 # Production deploys to Cloudflare Workers (OpenNext), one job per app:
 #   prototype (repo root)   → answerd-demo.vitalos.co.uk  (wrangler.production.jsonc)
 #   website (marketing-site) → answerd.vitalos.co.uk       (marketing-site/wrangler.production.jsonc)
-# A push to main deploys the app(s) it changes; "Run workflow" deploys either or both by hand.
+# After CI passes on main, it deploys the app(s) changed since the last successful automatic deploy; an app
+# deploys only if its own CI job passed (the staging job doesn't gate production). "Run workflow" deploys
+# either or both by hand, without waiting for CI.
 # Each job runs the app's own `pnpm deploy:cf:prod`, so a manual deploy and this workflow build the same thing.
 #
 # Production stays in mock mode: NEXT_PUBLIC_ANSWERD_API_URL is set only from the repo variable for that app
@@ -11,7 +13,9 @@ name: Deploy
 # Never point these at staging.
 
 on:
-  push:
+  workflow_run:
+    workflows: [CI]
+    types: [completed]
     branches: [main]
   workflow_dispatch:
     inputs:
@@ -24,44 +28,72 @@ on:
 permissions:
   contents: read
   packages: read
+  actions: read
 
 jobs:
   changes:
-    name: What changed
+    name: What changed, and did CI pass
+    # Only CI runs for pushes to main (not pull requests that happen to target main)
+    if: github.event_name == 'workflow_dispatch' || (github.event.workflow_run.event == 'push' && github.event.workflow_run.head_branch == 'main')
     runs-on: ubuntu-latest
     outputs:
+      sha: ${{ steps.pick.outputs.sha }}
       prototype: ${{ steps.pick.outputs.prototype }}
       website: ${{ steps.pick.outputs.website }}
+      blocked: ${{ steps.pick.outputs.blocked }}
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
         with:
+          ref: ${{ github.event.workflow_run.head_sha || github.sha }}
           fetch-depth: 0
       - id: pick
         env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          REPO: ${{ github.repository }}
           EVENT: ${{ github.event_name }}
           APP: ${{ inputs.app }}
-          BEFORE: ${{ github.event.before }}
-          AFTER: ${{ github.sha }}
+          CI_RUN: ${{ github.event.workflow_run.id }}
+          AFTER: ${{ github.event.workflow_run.head_sha || github.sha }}
         run: |
+          echo "sha=$AFTER" >> "$GITHUB_OUTPUT"
           if [ "$EVENT" = "workflow_dispatch" ]; then
             [ "$APP" = both ] || [ "$APP" = prototype ] && echo "prototype=true" >> "$GITHUB_OUTPUT"
             [ "$APP" = both ] || [ "$APP" = website ] && echo "website=true" >> "$GITHUB_OUTPUT"
             exit 0
           fi
-          # A new branch or a force push has no usable "before": deploy both
-          if ! git cat-file -e "$BEFORE^{commit}" 2>/dev/null; then
-            echo "prototype=true" >> "$GITHUB_OUTPUT"
-            echo "website=true" >> "$GITHUB_OUTPUT"
-            exit 0
+          # What changed since the last automatic deploy that fully succeeded (none yet: deploy both)
+          BEFORE=$(gh run list -R "$REPO" --workflow deploy.yml --event workflow_run --status success -L 1 --json headSha -q '.[0].headSha' || true)
+          want_p=false; want_w=false
+          if [ -z "$BEFORE" ] || ! git cat-file -e "$BEFORE^{commit}" 2>/dev/null; then
+            want_p=true; want_w=true
+          else
+            files=$(git diff --name-only "$BEFORE" "$AFTER")
+            # Docs, Markdown and tests don't change what ships
+            shipped=$(printf '%s\n' "$files" | grep -vE '(^docs/|\.md$|^tests/|^\.github/workflows/(ci|update-answerd-client)\.yml$)' || true)
+            printf '%s\n' "$shipped" | grep -qvE '^marketing-site/|^$' && want_p=true
+            printf '%s\n' "$shipped" | grep -qE '^marketing-site/' && want_w=true
+            # This workflow itself changing redeploys both
+            printf '%s\n' "$files" | grep -qx '.github/workflows/deploy.yml' && { want_p=true; want_w=true; }
           fi
-          files=$(git diff --name-only "$BEFORE" "$AFTER")
-          # Docs, Markdown and tests don't change what ships
-          shipped=$(printf '%s\n' "$files" | grep -vE '(^docs/|\.md$|^tests/|^\.github/workflows/(ci|update-answerd-client)\.yml$)' || true)
-          printf '%s\n' "$shipped" | grep -qvE '^marketing-site/|^$' && echo "prototype=true" >> "$GITHUB_OUTPUT"
-          printf '%s\n' "$shipped" | grep -qE '^marketing-site/' && echo "website=true" >> "$GITHUB_OUTPUT"
-          # This workflow itself changing redeploys both
-          printf '%s\n' "$files" | grep -qx '.github/workflows/deploy.yml' && { echo "prototype=true"; echo "website=true"; } >> "$GITHUB_OUTPUT"
+          # Each app deploys only if its own CI job passed on this commit
+          jobs=$(gh api "repos/$REPO/actions/runs/$CI_RUN/jobs?per_page=100" -q '.jobs[] | "\(.name)=\(.conclusion)"')
+          ok() { printf '%s\n' "$jobs" | grep -qx "$1=success"; }
+          blocked=false
+          if $want_p; then ok "Prototype (mock mode)" && echo "prototype=true" >> "$GITHUB_OUTPUT" || { echo "::error::Prototype not deployed: its CI job didn't pass"; blocked=true; }; fi
+          if $want_w; then ok "Website (static and API mode builds)" && echo "website=true" >> "$GITHUB_OUTPUT" || { echo "::error::Website not deployed: its CI job didn't pass"; blocked=true; }; fi
+          echo "blocked=$blocked" >> "$GITHUB_OUTPUT"
           exit 0
+
+  blocked:
+    name: Fail the run if CI held an app back
+    # A failed run doesn't count as the last deploy, so the next one picks up the held-back changes
+    needs: changes
+    if: needs.changes.outputs.blocked == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - run: |
+          echo "::error::An app with changes wasn't deployed because its CI job failed. Fix CI on main; the next green run deploys it."
+          exit 1
 
   prototype:
     name: Prototype → answerd-demo.vitalos.co.uk
@@ -83,6 +115,8 @@ jobs:
       NEXT_PUBLIC_ANSWERD_API_URL: ${{ vars.ANSWERD_API_URL_PROTOTYPE }}
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+        with:
+          ref: ${{ needs.changes.outputs.sha }}
       - uses: pnpm/action-setup@fc06bc1257f339d1d5d8b3a19a8cae5388b55320 # v4.4.0
       - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
         with:
@@ -120,6 +154,8 @@ jobs:
       NEXT_PUBLIC_ANSWERD_API_URL: ${{ vars.ANSWERD_API_URL_SITE }}
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+        with:
+          ref: ${{ needs.changes.outputs.sha }}
       - uses: pnpm/action-setup@fc06bc1257f339d1d5d8b3a19a8cae5388b55320 # v4.4.0
         with:
           package_json_file: marketing-site/package.json

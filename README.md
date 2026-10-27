@@ -87,7 +87,7 @@ Production stays in mock mode: the deploy workflow sets `NEXT_PUBLIC_ANSWERD_API
 Uses OpenNext (`@opennextjs/cloudflare`); config is in `wrangler.jsonc` and `open-next.config.ts`, and production is `wrangler.production.jsonc` (https://answerd-demo.vitalos.co.uk).
 
 **Production deploys go through GitHub Actions** (`.github/workflows/deploy.yml`):
-- A push to `main` that changes the prototype (anything outside `marketing-site/`, docs, Markdown and tests) deploys it to https://answerd-demo.vitalos.co.uk.
+- When CI passes on `main`, a change to the prototype (anything outside `marketing-site/`, docs, Markdown and tests) deploys it to https://answerd-demo.vitalos.co.uk.
 - To deploy by hand, use **Actions → Deploy → Run workflow** and pick `both`, `prototype` or `website`.
 - The job runs `pnpm deploy:cf:prod` with the repo's `CLOUDFLARE_API_TOKEN` (secret) and `CLOUDFLARE_ACCOUNT_ID` (variable or secret).
 - Production stays in mock mode unless the repo variable `ANSWERD_API_URL_PROTOTYPE` is set.
