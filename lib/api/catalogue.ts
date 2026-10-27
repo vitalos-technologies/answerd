@@ -146,7 +146,9 @@ function applyListing(d: D, a: ApiListing, reviews: ApiReview[]) {
   l.unpublished = false
 
   // Reviews: the API's latest page replaces the mock ones (the rating uses the API's summary above)
-  d.reviews = d.reviews.filter((r) => r.listingId !== l.id || r.bookingId)
+  // Kept local: reviews from a booking in this demo, and the moderation queue (flagged or removed), which the
+  // public reviews don't carry until admin reads are wired to the API
+  d.reviews = d.reviews.filter((r) => r.listingId !== l.id || r.bookingId || r.flagged || r.status === "removed")
   for (const r of reviews)
     d.reviews.push({
       id: `api-${r.id}`,
