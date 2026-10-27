@@ -9,30 +9,35 @@ import { ResultCard } from "@/components/web/result-card"
 import { ResultFilters } from "@/components/web/result-filters"
 import { focusRing } from "@/components/site/focus"
 import { breadcrumbLd, faqLd, itemListLd } from "@/lib/data/jsonld"
-import { AREAS, LEAF_CATEGORIES, areaBySlug, cardData, categoryFaqs, categoryListings, nearbyAreas, parentArea, priceGuide, priceText, rank } from "@/lib/data/queries"
+import { AREAS, LEAF_CATEGORIES, areaBySlug, categoryFaqs, nearbyAreas, parentArea, priceText } from "@/lib/data/queries"
+import { apiMode, getCategoryArea } from "@/lib/data/source"
+import { GoogleResults } from "@/components/web/google-results"
+import { areaCentre } from "@/lib/data/listing-view"
 import { categoryBySlug } from "@/lib/data/categories"
 import { fill } from "@/lib/fill"
 import { pages } from "@/content/pages"
 
-export const dynamicParams = false
+// Static data: all 32 × 14 pages are prerendered. API mode: each renders on first request and is then cached
+// (ISR), regenerating hourly or when a listing in it changes (/api/revalidate).
+export const dynamicParams = true
 
 export function generateStaticParams() {
-  return LEAF_CATEGORIES.flatMap((c) => AREAS.map((a) => ({ category: c.slug, area: a.slug })))
+  return apiMode ? [] : LEAF_CATEGORIES.flatMap((c) => AREAS.map((a) => ({ category: c.slug, area: a.slug })))
 }
 
-function load(category: string, area: string) {
+async function load(category: string, area: string) {
   const cat = categoryBySlug(category)
   const a = areaBySlug(area)
-  if (!cat || !a) return null
-  return { cat, area: a, listings: rank(categoryListings(cat.id, a)) }
+  if (!cat?.parentId || !a) return null
+  return { cat, area: a, ...(await getCategoryArea(cat, a)) }
 }
 
 export async function generateMetadata({ params }: PageProps<"/[category]/[area]">): Promise<Metadata> {
   const { category, area } = await params
-  const d = load(category, area)
+  const d = await load(category, area)
   if (!d) return {}
   const c = pages.categoryArea
-  const n = d.listings.length
+  const n = d.cards.length
   const plural = d.cat.plural.toLowerCase()
   const title = fill(c.metaTitle, { plural: d.cat.plural, area: d.area.name })
   const description = n ? fill(c.metaDescription, { count: n, plural: n === 1 ? d.cat.name.toLowerCase() : plural, area: d.area.name }) : fill(c.metaDescriptionEmpty, { plural, area: d.area.name })
@@ -43,9 +48,9 @@ export async function generateMetadata({ params }: PageProps<"/[category]/[area]
 /** W-04: category in area, e.g. /plumbers/croydon. Thin areas also list businesses covering nearby areas. */
 export default async function CategoryAreaPage({ params }: PageProps<"/[category]/[area]">) {
   const { category, area } = await params
-  const d = load(category, area)
+  const d = await load(category, area)
   if (!d) notFound()
-  const { cat, area: a, listings } = d
+  const { cat, area: a, cards, near } = d
   const c = pages.categoryArea
   const plural = cat.plural.toLowerCase()
   const parent = parentArea(a)
@@ -56,22 +61,14 @@ export default async function CategoryAreaPage({ params }: PageProps<"/[category
     { name: fill(pages.category.inArea, { plural: cat.plural, area: a.name }), href: `/${cat.slug}/${a.slug}` },
   ]
   const faqs = categoryFaqs(cat, a)
-  const local = priceGuide(cat.id, a)
-  const prices = local.length ? local : priceGuide(cat.id)
+  const local = d.prices.local
+  const prices = local.length ? local : d.prices.wider
   const nearby = nearbyAreas(a)
-  const thin = listings.length < 3
-  const near = thin
-    ? nearby
-        .flatMap((n) => rank(categoryListings(cat.id, n)).map((l) => ({ l, n })))
-        .filter((x, i, all) => !listings.some((l) => l.id === x.l.id) && all.findIndex((y) => y.l.id === x.l.id) === i)
-        .slice(0, 6)
-    : []
-  const cards = listings.map(cardData)
-  const countLabel = `${listings.length} ${listings.length === 1 ? cat.name.toLowerCase() : plural}`
+  const countLabel = `${cards.length} ${cards.length === 1 ? cat.name.toLowerCase() : plural}`
 
   return (
     <WebPage>
-      <JsonLd data={[breadcrumbLd(crumbs), itemListLd(fill(pages.category.inArea, { plural: cat.plural, area: a.name }), listings), faqLd(faqs)]} />
+      <JsonLd data={[breadcrumbLd(crumbs), itemListLd(fill(pages.category.inArea, { plural: cat.plural, area: a.name }), d.items), faqLd(faqs)]} />
       <PageHeader crumbs={crumbs} title={fill(pages.category.inArea, { plural: cat.plural, area: a.name })}>
         <p className="t-lead mt-4 max-w-[46rem]">
           <span className="tnum font-semibold text-navy">{countLabel}</span> {fill(c.count, { districts: a.districts.join(", ") })}
@@ -96,20 +93,21 @@ export default async function CategoryAreaPage({ params }: PageProps<"/[category
             <section className={cards.length ? "mt-12" : ""} aria-labelledby="nearby-res-h">
               <SectionTitle id="nearby-res-h" title={cards.length ? c.nearbyResults : fill(c.nearbyResultsEmpty, { area: a.name })} />
               <ul className="mt-5 grid gap-4">
-                {near.map(({ l, n }) => (
-                  <li key={l.id} className="min-w-0">
+                {near.map(({ card, area: n }) => (
+                  <li key={card.slug} className="min-w-0">
                     <p className="mb-1.5 text-[14px] leading-5 text-muted-ink">
                       {c.inPlace}{" "}
                       <Link href={`/${cat.slug}/${n.slug}`} className={`rounded-sm font-medium text-blue hover:underline ${focusRing}`}>
                         {n.name}
                       </Link>
                     </p>
-                    <ResultCard c={cardData(l)} />
+                    <ResultCard c={card} />
                   </li>
                 ))}
               </ul>
             </section>
           )}
+          {apiMode && <GoogleResults query={{ ...areaCentre(a), category: cat.slug }} heading={fill(c.googleHeading, { plural, area: a.name })} />}
         </section>
 
         <aside className="flex flex-col gap-6">

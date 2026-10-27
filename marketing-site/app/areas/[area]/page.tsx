@@ -8,14 +8,16 @@ import { FaqList, JsonLd, PageHeader, SectionTitle } from "@/components/web/ui"
 import { CategoryIcon } from "@/components/web/category-icon"
 import { focusRing } from "@/components/site/focus"
 import { breadcrumbLd, faqLd } from "@/lib/data/jsonld"
-import { AREAS, CATEGORY_GROUPS, LEAF_CATEGORIES, areaBySlug, areaFaqs, categoryListings, childAreas, listingsInArea, nearbyAreas, parentArea } from "@/lib/data/queries"
+import { AREAS, CATEGORY_GROUPS, LEAF_CATEGORIES, areaBySlug, areaFaqs, childAreas, nearbyAreas, parentArea } from "@/lib/data/queries"
+import { apiMode, getAreaCounts } from "@/lib/data/source"
 import { fill } from "@/lib/fill"
 import { pages } from "@/content/pages"
 
-export const dynamicParams = false
+// API mode: rendered on first request, then cached (ISR) and regenerated hourly or on demand.
+export const dynamicParams = true
 
 export function generateStaticParams() {
-  return AREAS.map((a) => ({ area: a.slug }))
+  return apiMode ? [] : AREAS.map((a) => ({ area: a.slug }))
 }
 
 export async function generateMetadata({ params }: PageProps<"/areas/[area]">): Promise<Metadata> {
@@ -23,7 +25,7 @@ export async function generateMetadata({ params }: PageProps<"/areas/[area]">): 
   if (!a) return {}
   const c = pages.area
   const title = fill(c.metaTitle, { area: a.name })
-  const description = fill(c.metaDescription, { count: listingsInArea(a).length, area: a.name })
+  const description = fill(c.metaDescription, { count: (await getAreaCounts(a)).total, area: a.name })
   return pageMeta({ title, description, path: `/areas/${a.slug}` })
 }
 
@@ -34,7 +36,8 @@ export default async function AreaPage({ params }: PageProps<"/areas/[area]">) {
   const c = pages.area
   const parent = parentArea(a)
   const crumbs = [{ name: pages.common.home, href: "/" }, ...(parent ? [{ name: parent.name, href: `/areas/${parent.slug}` }] : []), { name: a.name, href: `/areas/${a.slug}` }]
-  const total = listingsInArea(a).length
+  const counts = await getAreaCounts(a)
+  const total = counts.total
   const faqs = areaFaqs(a)
   const kids = childAreas(a)
   const nearby = nearbyAreas(a).filter((n) => !kids.some((k) => k.slug === n.slug))
@@ -69,7 +72,7 @@ export default async function AreaPage({ params }: PageProps<"/areas/[area]">) {
             <SectionTitle id={`g-${g.id}`} title={g.name} />
             <ul className="mt-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
               {LEAF_CATEGORIES.filter((x) => x.parentId === g.id).map((x) => {
-                const n = categoryListings(x.id, a).length
+                const n = counts.byCategory[x.id] ?? 0
                 return (
                   <li key={x.id}>
                     <Link href={`/${x.slug}/${a.slug}`} className={`card-site group flex min-h-[72px] items-center gap-3 p-4 transition-colors hover:border-blue/40 ${focusRing}`}>

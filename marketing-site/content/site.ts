@@ -148,6 +148,17 @@ export const site = {
     /** Shown above the suggested businesses for a picked chip (placeholder matches from the mock data) */
     matches: "Here are local businesses that can help. Tap one to see prices and reviews, then call, message or book.",
     comingSoon: "Chat is coming soon",
+    /** API mode (live search through Answerd's public search tool) */
+    live: {
+      placeholder: "Describe what you need",
+      askPostcode: "Which postcode should I look near?",
+      searching: "Looking…",
+      none: "I couldn't find anyone for that yet. Try other words, or get the app to search more widely.",
+      error: "I couldn't reach Answerd just now. Please try again in a minute.",
+      google: "Powered by Google",
+      call: "Call",
+      send: "Send",
+    },
     close: "Close chat",
   },
 

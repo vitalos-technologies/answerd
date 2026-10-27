@@ -107,6 +107,9 @@ export interface Listing {
   suspended?: boolean
   unpublished?: boolean
   mergedInto?: ID
+  /** API mode: the listing's id in the Answerd API, and its rating summary (the store holds one page of reviews) */
+  apiId?: string
+  apiRating?: { average: number; count: number }
 }
 
 export interface Photo {

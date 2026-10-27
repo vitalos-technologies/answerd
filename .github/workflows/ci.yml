@@ -1,0 +1,95 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+# packages: read lets installs fetch @vitalos-technologies/answerd-client from GitHub Packages with GITHUB_TOKEN
+# (once the client is a dependency; see update-answerd-client.yml). The token is only read through .npmrc.
+permissions:
+  contents: read
+  packages: read
+
+env:
+  NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+jobs:
+  prototype:
+    name: Prototype (mock mode)
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm lint
+      - run: pnpm build
+      - run: pnpm exec playwright install --with-deps chromium
+      - run: pnpm test:e2e
+        env:
+          CI: "true"
+
+  site:
+    name: Website (static and API mode builds)
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    defaults:
+      run:
+        working-directory: marketing-site
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          package_json_file: marketing-site/package.json
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+          cache-dependency-path: marketing-site/pnpm-lock.yaml
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm lint
+      - name: Build without the API (static fallback data)
+        run: pnpm build
+      - name: Build in API mode (pages render on request, so the build doesn't need the API awake)
+        run: pnpm build
+        env:
+          NEXT_PUBLIC_ANSWERD_API_URL: https://answerd-staging-api.onrender.com
+
+  staging:
+    name: Prototype journeys against staging (API mode)
+    # Opt in with the repo variable ANSWERD_STAGING_E2E=true, or run the workflow by hand. The sign-in and
+    # journey tests also need the secret ANSWERD_STAGING_TEST_PHONES (allowlisted test numbers); see issue #2.
+    if: github.event_name == 'workflow_dispatch' || vars.ANSWERD_STAGING_E2E == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    env:
+      NEXT_PUBLIC_ANSWERD_API_URL: https://answerd-staging-api.onrender.com
+      ANSWERD_STAGING_TEST_PHONES: ${{ secrets.ANSWERD_STAGING_TEST_PHONES }}
+      CI: "true"
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm build
+      - run: pnpm exec playwright install --with-deps chromium
+      - run: pnpm test:e2e:api
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: staging-playwright-traces
+          path: test-results/
+          retention-days: 7

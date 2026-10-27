@@ -17,6 +17,7 @@ import { gateStatus, membershipsFor, nextSlots, servicesFor, listingById, rulesF
 import { cn } from "@/lib/utils"
 import { toast } from "@/lib/toast"
 import type { StateOverride } from "@/lib/store"
+import { DataSourceBadge, DataSourcePanel } from "@/components/hub/DataSource"
 
 const SWIFT = "l-swift-plumbing-heating"
 
@@ -99,6 +100,7 @@ export default function HubPage() {
         <div className="mx-auto flex max-w-[1200px] flex-wrap items-center gap-4 px-6 py-5">
           <Logo size={34} />
           <span className="rounded-full bg-blue-tint px-3 py-1 t-label text-blue">Prototype hub</span>
+          <DataSourceBadge />
           <p className="t-label font-normal text-slate">
             {builtCount} of {SCREENS.length} IDs built
           </p>
@@ -123,6 +125,9 @@ export default function HubPage() {
       </header>
 
       <div className="mx-auto grid max-w-[1200px] gap-5 px-6 py-6 lg:grid-cols-[1.1fr_1fr]">
+        <Section title="Data source" id="data-source">
+          <DataSourcePanel />
+        </Section>
         <Section title="Persona">
           <div className="grid gap-2 sm:grid-cols-2">
             {PERSONAS.map((p) => {

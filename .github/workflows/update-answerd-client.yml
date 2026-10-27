@@ -1,0 +1,64 @@
+name: Update @vitalos/answerd-client
+
+# Adds or bumps the Answerd API client in the prototype and the website, then opens a PR. Run it by hand.
+# It installs from GitHub Packages with this workflow's own GITHUB_TOKEN, which works once this repo has Read
+# on the package (package settings → Manage Actions access). No personal token is involved.
+#
+# A PR opened with GITHUB_TOKEN doesn't trigger other workflows, so this job runs the same checks as CI
+# (install, lint, build) before it opens the PR.
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "@vitalos-technologies/answerd-client version"
+        required: true
+        default: "0.1.0"
+
+permissions:
+  contents: write
+  pull-requests: write
+  packages: read
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      VERSION: ${{ inputs.version }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Point the @vitalos-technologies scope at GitHub Packages (token read from the environment, never written)
+        run: |
+          for dir in . marketing-site; do
+            printf '@vitalos-technologies:registry=https://npm.pkg.github.com\n//npm.pkg.github.com/:_authToken=${NODE_AUTH_TOKEN}\n' > "$dir/.npmrc"
+          done
+      - name: Add the client (imported as @vitalos/answerd-client)
+        run: |
+          case "$VERSION" in (*[!0-9A-Za-z.+-]*|"") echo "Bad version" >&2; exit 1;; esac
+          pnpm add "@vitalos/answerd-client@npm:@vitalos-technologies/answerd-client@$VERSION"
+          pnpm -C marketing-site add "@vitalos/answerd-client@npm:@vitalos-technologies/answerd-client@$VERSION"
+      - name: Check both apps still lint and build
+        run: |
+          pnpm lint && pnpm build
+          pnpm -C marketing-site lint && pnpm -C marketing-site build
+      - name: Open a PR
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          branch="chore/answerd-client-$VERSION"
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git checkout -b "$branch"
+          # The .npmrc files hold only the registry and the ${NODE_AUTH_TOKEN} placeholder, never a token
+          git add package.json pnpm-lock.yaml marketing-site/package.json marketing-site/pnpm-lock.yaml .npmrc marketing-site/.npmrc
+          git commit -m "Add @vitalos/answerd-client $VERSION (GitHub Packages)"
+          git push -u origin "$branch"
+          gh pr create --base main --head "$branch" \
+            --title "Add @vitalos/answerd-client $VERSION" \
+            --body "Opened by the Update @vitalos/answerd-client workflow. Install, lint and build passed in that run for both apps. Installing now needs NODE_AUTH_TOKEN (read:packages): CI sets it from GITHUB_TOKEN; Cloudflare builds and local installs need it as a secret or env var (issue #2). Next: replace the stand-in clients (lib/api/client.ts, marketing-site/lib/api/client.ts) with the package."

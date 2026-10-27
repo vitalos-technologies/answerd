@@ -1,20 +1,26 @@
 "use client"
 import * as React from "react"
+import Link from "next/link"
 import { ArrowLeft, Building2, CheckCircle2, ChevronRight, Clock, FileText, MessageSquare, PhoneCall, Plus, Search, ShieldAlert, Smartphone } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { fill } from "@/lib/fill"
 import { focusRing } from "@/components/site/focus"
 import { findCompany, matchDirector } from "@/lib/data/companies-house"
 import type { Claimable, Tone } from "@/lib/data/queries"
+import { isLandline, maskPhone } from "@/lib/data/format"
+import { apiEnabled } from "@/lib/api/client"
+import { claimLookup, claimSearch, claimStart, claimVerify } from "@/lib/api/actions"
+import type { ApiListingCard } from "@/lib/api/types"
+import { useDemo } from "@/lib/demo-session"
 import type { pages } from "@/content/pages"
 import { Field, Note, PrototypeLabel, CodeInput, btnPrimary, btnSecondary, inputCls } from "./form"
 
 type Copy = (typeof pages)["claim"]
-type Step = "find" | "add" | "confirm" | "verify" | "code" | "director" | "document" | "done"
+type Step = "find" | "add" | "confirm" | "signin" | "verify" | "code" | "director" | "document" | "done"
 type Method = "sms" | "call" | "director" | "document"
 type Group = { id: string; name: string; leaves: { id: string; name: string }[] }
 
-const STEP_INDEX: Record<Step, number> = { find: 0, add: 0, confirm: 1, verify: 2, code: 2, director: 2, document: 2, done: 3 }
+const STEP_INDEX: Record<Step, number> = { find: 0, add: 0, confirm: 1, signin: 1, verify: 2, code: 2, director: 2, document: 2, done: 3 }
 const TONES: Record<Tone, string> = { blue: "bg-blue-tint text-blue-hover", teal: "bg-teal-tint text-teal-ink", amber: "bg-amber-tint text-amber-ink", sky: "bg-sky text-navy" }
 
 function Avatar({ l, size = 44 }: { l: Pick<Claimable, "initials" | "tone">; size?: number }) {
@@ -51,6 +57,32 @@ function subscribeSearch() {
   return () => {}
 }
 
+const TINT: Record<string, Tone> = { "blue-tint": "blue", "teal-tint": "teal", "amber-tint": "amber", sky: "sky" }
+
+/** API mode: a search result as the claim steps need it. */
+function claimableFrom(i: ApiListingCard & { address?: string | null; postcodeDistrict?: string | null }, copy: Copy): Claimable {
+  const phone = (i.phonePublic ?? "").replace(/^\+44/, "0")
+  return {
+    id: i.id!,
+    slug: i.slug ?? "",
+    name: i.name,
+    initials: i.avatar?.initials ?? i.name.slice(0, 2).toUpperCase(),
+    tone: TINT[i.avatar?.tint] ?? "blue",
+    categoryName: i.categoryName,
+    address: [i.address, i.postcodeDistrict].filter(Boolean).join(", ") || (i.distanceMiles != null ? `${i.distanceMiles.toFixed(1)} mi away` : ""),
+    district: i.postcodeDistrict ?? "",
+    layer: i.layer,
+    masked: phone ? maskPhone(phone) : "",
+    landline: phone ? isLandline(phone) : false,
+    ltd: /\b(ltd|limited)\b/i.test(i.name),
+    triedThisMonth: 0,
+    source: i.layer === "claimed" ? copy.live.fromAnswerd : copy.live.fromRecords,
+  }
+}
+
+/** API mode: verification goes to the claim endpoints. Returns an error message, or null when it worked. */
+type Verify = (method: Method, body?: Record<string, unknown>) => Promise<string | null>
+
 /**
  * W-11: claim or add a business, as a centred card stepper (desktop version of B-01 to B-08). Everything is
  * local state; nothing is sent. It ends with "Get the app to run your business", the QR code and the stores.
@@ -62,7 +94,20 @@ export function ClaimFlow({ copy, listings, groups, qr, badges }: { copy: Copy; 
     () => new URLSearchParams(window.location.search).get("listing"),
     () => null,
   )
-  const presetListing = preset ? listings.find((l) => l.slug === preset && l.layer !== "claimed") : undefined
+  const demo = useDemo()
+  const [apiPreset, setApiPreset] = React.useState<Claimable | null>(null)
+  const [claimId, setClaimId] = React.useState<string | null>(null)
+  const [apiError, setApiError] = React.useState("")
+  const [working, setWorking] = React.useState(false)
+  React.useEffect(() => {
+    if (!apiEnabled || !preset) return
+    let on = true
+    claimLookup(preset).then((r) => on && r.ok && r.data.id && r.data.layer !== "claimed" && setApiPreset(claimableFrom(r.data, copy)))
+    return () => {
+      on = false
+    }
+  }, [preset, copy])
+  const presetListing = apiEnabled ? (apiPreset ?? undefined) : preset ? listings.find((l) => l.slug === preset && l.layer !== "claimed") : undefined
   const [step, setStep] = React.useState<Step | null>(null)
   const [history, setHistory] = React.useState<Step[]>([])
   const [listingId, setListingId] = React.useState<string | null>(null)
@@ -70,7 +115,9 @@ export function ClaimFlow({ copy, listings, groups, qr, badges }: { copy: Copy; 
   const [method, setMethod] = React.useState<Method | null>(null)
   const [pending, setPending] = React.useState(false)
   const current: Step = step ?? (presetListing ? "confirm" : "find")
-  const listing = added?.id === listingId ? added : listings.find((l) => l.id === (listingId ?? presetListing?.id))
+  const [picked, setPicked] = React.useState<Claimable | null>(null)
+  const wanted = listingId ?? presetListing?.id
+  const listing = [added, picked, presetListing].find((x) => x && x.id === wanted) ?? listings.find((l) => l.id === wanted)
   const heading = React.useRef<HTMLDivElement>(null)
   const moved = React.useRef(false)
 
@@ -101,6 +148,27 @@ export function ClaimFlow({ copy, listings, groups, qr, badges }: { copy: Copy; 
     setStep("done")
   }
 
+  // API mode: confirming starts a claim on the signed-in account (sign in first if needed)
+  const confirm = async (l: Claimable) => {
+    setListingId(l.id)
+    if (!apiEnabled) return go("verify")
+    if (!demo?.user?.api) return go("signin")
+    setWorking(true)
+    const r = await claimStart(l.id)
+    setWorking(false)
+    if (!r.ok) return setApiError(fill(copy.live.error, { message: r.message }))
+    setApiError("")
+    setClaimId(r.data.id)
+    go("verify")
+  }
+  const verify: Verify | undefined =
+    apiEnabled && claimId
+      ? async (m, body = {}) => {
+          const r = await claimVerify(claimId, m, body)
+          return r.ok ? null : fill(copy.live.error, { message: r.message })
+        }
+      : undefined
+
   const idx = STEP_INDEX[current]
   return (
     <div className="container-site py-8 md:py-14">
@@ -119,7 +187,7 @@ export function ClaimFlow({ copy, listings, groups, qr, badges }: { copy: Copy; 
               <ArrowLeft className="size-4" aria-hidden /> {copy.back}
             </button>
           )}
-          {current === "find" && <FindStep copy={copy} listings={listings} onPick={(l) => (setListingId(l.id), go("confirm"))} onAdd={() => go("add")} />}
+          {current === "find" && <FindStep copy={copy} listings={listings} onPick={(l) => (setPicked(l), setListingId(l.id), go("confirm"))} onAdd={() => go("add")} />}
           {current === "add" && (
             <AddStep
               copy={copy}
@@ -133,14 +201,15 @@ export function ClaimFlow({ copy, listings, groups, qr, badges }: { copy: Copy; 
               }}
             />
           )}
-          {current === "confirm" && listing && <ConfirmStep copy={copy} l={listing} onYes={() => (setListingId(listing.id), go("verify"))} onNo={() => (setListingId(null), (moved.current = true), setStep("find"))} />}
+          {current === "confirm" && listing && <ConfirmStep copy={copy} l={listing} busy={working} error={apiError} onYes={() => confirm(listing)} onNo={() => (setListingId(null), (moved.current = true), setStep("find"))} />}
+          {current === "signin" && listing && <SignInStep copy={copy} l={listing} />}
           {current === "verify" && listing && <VerifyStep copy={copy} l={listing} onChoose={choose} />}
-          {current === "code" && listing && method && <CodeStep copy={copy} l={listing} method={method} onDone={() => done(false)} />}
-          {current === "director" && listing && <DirectorStep copy={copy} l={listing} onDone={() => done(false)} onDocument={() => choose("document")} />}
-          {current === "document" && <DocumentStep copy={copy} onDone={() => done(true)} />}
+          {current === "code" && listing && method && <CodeStep copy={copy} l={listing} method={method} verify={verify} onDone={() => done(false)} />}
+          {current === "director" && listing && <DirectorStep copy={copy} l={listing} verify={verify} onDone={() => done(false)} onDocument={() => choose("document")} />}
+          {current === "document" && <DocumentStep copy={copy} verify={verify} onDone={() => done(true)} />}
           {current === "done" && listing && <DoneStep copy={copy} l={listing} pending={pending} qr={qr} badges={badges} />}
         </div>
-        <p className="mt-4 text-center text-[14px] leading-5 text-slate">{copy.prototypeNote}</p>
+        {!apiEnabled && <p className="mt-4 text-center text-[14px] leading-5 text-slate">{copy.prototypeNote}</p>}
       </div>
     </div>
   )
@@ -178,8 +247,19 @@ function FindStep({ copy, listings, onPick, onAdd }: { copy: Copy; listings: Cla
   const [postcode, setPostcode] = React.useState("")
   const [query, setQuery] = React.useState<{ name: string; postcode: string } | null>(null)
   const [dispute, setDispute] = React.useState<string | null>(null)
-  const results = React.useMemo(() => {
-    if (!query) return []
+  const [found, setFound] = React.useState<Claimable[] | null>(null)
+  const [searching, setSearching] = React.useState(false)
+  const seq = React.useRef(0)
+  const apiSearch = async (q: { name: string; postcode: string }) => {
+    const mine = ++seq.current
+    setSearching(true)
+    const r = await claimSearch(q.name.trim(), q.postcode.trim())
+    if (mine !== seq.current) return
+    setSearching(false)
+    setFound(r.ok ? r.data.map((i) => claimableFrom(i, copy)) : [])
+  }
+  const local = React.useMemo(() => {
+    if (!query || apiEnabled) return []
     const d = query.postcode.trim() ? district(query.postcode) : null
     const n = query.name.trim().toLowerCase()
     return listings
@@ -189,6 +269,7 @@ function FindStep({ copy, listings, onPick, onAdd }: { copy: Copy; listings: Cla
       .slice(0, 8)
       .map((x) => x.l)
   }, [query, listings])
+  const results = apiEnabled ? (found ?? []) : local
 
   return (
     <>
@@ -198,6 +279,7 @@ function FindStep({ copy, listings, onPick, onAdd }: { copy: Copy; listings: Cla
         onSubmit={(e) => {
           e.preventDefault()
           setQuery({ name, postcode })
+          if (apiEnabled) void apiSearch({ name, postcode })
         }}
       >
         <Field label={c.name} htmlFor="cf-name">
@@ -213,7 +295,7 @@ function FindStep({ copy, listings, onPick, onAdd }: { copy: Copy; listings: Cla
       {query && (
         <section className="mt-6" aria-labelledby="cf-res" aria-live="polite">
           <h2 id="cf-res" className="font-semibold text-navy">
-            {results.length ? (results.length === 1 ? c.matchesOne : fill(c.matchesMany, { n: results.length })) : c.none}
+            {searching ? copy.live.searching : results.length ? (results.length === 1 ? c.matchesOne : fill(c.matchesMany, { n: results.length })) : c.none}
           </h2>
           <ul className="mt-3 flex flex-col gap-2">
             {results.map((l) =>
@@ -245,13 +327,24 @@ function FindStep({ copy, listings, onPick, onAdd }: { copy: Copy; listings: Cla
           </ul>
         </section>
       )}
-      <button type="button" onClick={onAdd} className={`mt-6 flex min-h-14 w-full items-center gap-3 rounded-2xl bg-sky px-4 py-3 text-left hover:bg-blue-tint ${focusRing}`}>
-        <Plus className="size-5 shrink-0 text-blue" aria-hidden />
-        <span className="flex-1">
-          <span className="block font-semibold text-navy">{c.add}</span>
-          <span className="block text-[14px] leading-5 text-slate">{c.addBody}</span>
-        </span>
-      </button>
+      {apiEnabled ? (
+        // API mode: adding a new business happens in the app until the web flow is wired to POST /v1/businesses
+        <Link href="/get-the-app" className={`mt-6 flex min-h-14 w-full items-center gap-3 rounded-2xl bg-sky px-4 py-3 text-left hover:bg-blue-tint ${focusRing}`}>
+          <Plus className="size-5 shrink-0 text-blue" aria-hidden />
+          <span className="flex-1">
+            <span className="block font-semibold text-navy">{c.add}</span>
+            <span className="block text-[14px] leading-5 text-slate">{copy.live.addInApp}</span>
+          </span>
+        </Link>
+      ) : (
+        <button type="button" onClick={onAdd} className={`mt-6 flex min-h-14 w-full items-center gap-3 rounded-2xl bg-sky px-4 py-3 text-left hover:bg-blue-tint ${focusRing}`}>
+          <Plus className="size-5 shrink-0 text-blue" aria-hidden />
+          <span className="flex-1">
+            <span className="block font-semibold text-navy">{c.add}</span>
+            <span className="block text-[14px] leading-5 text-slate">{c.addBody}</span>
+          </span>
+        </button>
+      )}
     </>
   )
 }
@@ -412,7 +505,21 @@ function AddStep({ copy, groups, listings, onCreated, onPick }: { copy: Copy; gr
 
 // ------------------------------------------------------------------ B-02 confirm
 
-function ConfirmStep({ copy, l, onYes, onNo }: { copy: Copy; l: Claimable; onYes: () => void; onNo: () => void }) {
+// ------------------------------------------------------------------ API mode: sign in before claiming
+
+function SignInStep({ copy, l }: { copy: Copy; l: Claimable }) {
+  const next = l.slug ? `/claim?listing=${l.slug}` : "/claim"
+  return (
+    <>
+      <Heading sub={copy.live.signInBody}>{fill(copy.live.signInHeading, { name: l.name })}</Heading>
+      <Link href={`/sign-in?next=${encodeURIComponent(next)}`} className={cn(btnPrimary, "mt-6")}>
+        {copy.live.signIn}
+      </Link>
+    </>
+  )
+}
+
+function ConfirmStep({ copy, l, busy, error, onYes, onNo }: { copy: Copy; l: Claimable; busy?: boolean; error?: string; onYes: () => void; onNo: () => void }) {
   const c = copy.confirm
   return (
     <>
@@ -435,9 +542,10 @@ function ConfirmStep({ copy, l, onYes, onNo }: { copy: Copy; l: Claimable; onYes
           </span>
         </Note>
       )}
+      {error && <Note tone="error" className="mt-4" title={error} />}
       <div className="mt-6 flex flex-col gap-2 sm:flex-row">
-        <button type="button" className={btnPrimary} onClick={onYes}>
-          {c.yes}
+        <button type="button" className={btnPrimary} onClick={onYes} disabled={busy}>
+          {busy ? copy.live.working : c.yes}
         </button>
         <button type="button" className={btnSecondary} onClick={onNo}>
           {c.no}
@@ -485,16 +593,34 @@ function VerifyStep({ copy, l, onChoose }: { copy: Copy; l: Claimable; onChoose:
 
 // ------------------------------------------------------------------ B-05 code
 
-function CodeStep({ copy, l, method, onDone }: { copy: Copy; l: Claimable; method: Method; onDone: () => void }) {
+function CodeStep({ copy, l, method, verify, onDone }: { copy: Copy; l: Claimable; method: Method; verify?: Verify; onDone: () => void }) {
   const c = copy.code
   const [code, setCode] = React.useState("")
   const [error, setError] = React.useState("")
+  const [busy, setBusy] = React.useState(false)
+  // API mode: ask for the text or call as the step opens, then send the code back
+  const sent = React.useRef(false)
+  React.useEffect(() => {
+    if (!verify || sent.current) return
+    sent.current = true
+    verify(method).then((err) => err && setError(err))
+  }, [verify, method])
   return (
     <form
       noValidate
-      onSubmit={(e) => {
+      onSubmit={async (e) => {
         e.preventDefault()
         if (code.length !== 6) return setError(c.short)
+        if (verify) {
+          setBusy(true)
+          const err = await verify(method, { code })
+          setBusy(false)
+          if (err) {
+            setCode("")
+            return setError(err)
+          }
+          return onDone()
+        }
         if (code === "000000") {
           setCode("")
           return setError(c.wrong)
@@ -503,11 +629,11 @@ function CodeStep({ copy, l, method, onDone }: { copy: Copy; l: Claimable; metho
       }}
     >
       <Heading sub={fill(method === "sms" ? c.sms : c.call, { masked: l.masked })}>{c.heading}</Heading>
-      <Field label={c.label} htmlFor="claim-code" error={error} hint={c.hint} className="mt-6">
+      <Field label={c.label} htmlFor="claim-code" error={error} hint={verify ? undefined : c.hint} className="mt-6">
         <CodeInput id="claim-code" value={code} onChange={setCode} invalid={!!error} describedBy="claim-code-msg" />
       </Field>
-      <button type="submit" className={cn(btnPrimary, "mt-6")}>
-        {c.submit}
+      <button type="submit" className={cn(btnPrimary, "mt-6")} disabled={busy}>
+        {busy ? copy.live.working : c.submit}
       </button>
     </form>
   )
@@ -515,7 +641,7 @@ function CodeStep({ copy, l, method, onDone }: { copy: Copy; l: Claimable; metho
 
 // ------------------------------------------------------------------ B-06 director
 
-function DirectorStep({ copy, l, onDone, onDocument }: { copy: Copy; l: Claimable; onDone: () => void; onDocument: () => void }) {
+function DirectorStep({ copy, l, verify, onDone, onDocument }: { copy: Copy; l: Claimable; verify?: Verify; onDone: () => void; onDocument: () => void }) {
   const c = copy.director
   const company = findCompany(l.name)
   const [fullName, setFullName] = React.useState("")
@@ -525,9 +651,14 @@ function DirectorStep({ copy, l, onDone, onDocument }: { copy: Copy; l: Claimabl
   return (
     <form
       noValidate
-      onSubmit={(e) => {
+      onSubmit={async (e) => {
         e.preventDefault()
         if (!fullName.trim() || !month || !/^\d{4}$/.test(year)) return setError(c.missing)
+        if (verify) {
+          // API mode: Companies House is checked on the server
+          const err = await verify("director", { fullName: fullName.trim(), birthMonth: Number(month), birthYear: Number(year) })
+          return err ? setError(err) : onDone()
+        }
         if (!matchDirector(company, fullName, `${month}/${year}`)) return setError(c.noMatch)
         onDone()
       }}
@@ -558,7 +689,7 @@ function DirectorStep({ copy, l, onDone, onDocument }: { copy: Copy; l: Claimabl
           <input id="dir-year" inputMode="numeric" className={cn(inputCls, "tnum")} value={year} onChange={(e) => setYear(e.target.value)} placeholder="1985" />
         </Field>
       </div>
-      {company && (
+      {company && !verify && (
         <p className="mt-3 text-[14px] leading-5 text-muted-ink">
           {fill(c.hint, {
             officers: company.officers
@@ -577,7 +708,7 @@ function DirectorStep({ copy, l, onDone, onDocument }: { copy: Copy; l: Claimabl
 
 // ------------------------------------------------------------------ B-07 document
 
-function DocumentStep({ copy, onDone }: { copy: Copy; onDone: () => void }) {
+function DocumentStep({ copy, verify, onDone }: { copy: Copy; verify?: Verify; onDone: () => void }) {
   const c = copy.document
   const [kind, setKind] = React.useState<string>(c.kinds[0])
   const [file, setFile] = React.useState("")
@@ -585,9 +716,13 @@ function DocumentStep({ copy, onDone }: { copy: Copy; onDone: () => void }) {
   return (
     <form
       noValidate
-      onSubmit={(e) => {
+      onSubmit={async (e) => {
         e.preventDefault()
         if (!file) return setError(c.missing)
+        if (verify) {
+          const err = await verify("document", { kind, fileName: file })
+          if (err) return setError(err)
+        }
         onDone()
       }}
     >

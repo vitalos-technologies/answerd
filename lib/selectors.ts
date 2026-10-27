@@ -47,6 +47,8 @@ export function isDeskLive(s: S, listing: Listing | undefined) {
 
 export function listingRating(s: S, listing: Listing) {
   if (listing.layer === "places") return { rating: listing.googleRating ?? 0, count: listing.googleCount ?? 0, google: true }
+  // API mode: the API's summary covers every review; the store only holds the latest page
+  if (listing.apiRating) return { rating: listing.apiRating.count ? Math.round(listing.apiRating.average * 10) / 10 : 0, count: listing.apiRating.count, google: false }
   const live = s.reviews.filter((r) => r.listingId === listing.id && r.status === "live")
   if (!live.length) return { rating: 0, count: 0, google: false }
   const avg = live.reduce((a, r) => a + r.stars, 0) / live.length

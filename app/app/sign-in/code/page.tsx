@@ -9,6 +9,9 @@ import { safeNext, withSuspense } from "@/components/app/helpers"
 import { useStore } from "@/lib/store"
 import { fmtTime, ms } from "@/lib/time"
 import { toast } from "@/lib/toast"
+import { apiMode } from "@/lib/api/config"
+import { otpStart, otpVerify } from "@/lib/api/client"
+import { afterApiSignIn } from "@/lib/api/boot"
 
 /** C-07: any 6 digits work except 000000; 5 wrong codes lock the number for 15 minutes on the demo clock. */
 function CodePage() {
@@ -23,8 +26,28 @@ function CodePage() {
   const lockedUntil = s.session.lockedUntil[phone] && ms(s.session.lockedUntil[phone]!) > ms(s.clock) ? s.session.lockedUntil[phone]! : null
   const attempts = s.session.failedCodes[phone] ?? 0
 
-  const submit = (v: string) => {
+  const signedIn = () => {
+    s.clearFailedCodes(phone)
+    const res = s.signInByPhone(phone)
+    if (res.existing) router.replace(next)
+    else router.replace(`/app/sign-in/about-you?next=${encodeURIComponent(next)}&method=phone`)
+  }
+
+  const submit = async (v: string) => {
     if (lockedUntil) return
+    if (apiMode) {
+      // API mode: the API checks the code and counts attempts
+      try {
+        await otpVerify(phone, v)
+      } catch (x) {
+        setError(x instanceof Error ? x.message : "That code didn't match.")
+        setShakeKey((k) => k + 1)
+        setCode("")
+        return
+      }
+      void afterApiSignIn()
+      return signedIn()
+    }
     if (v === "000000") {
       const r = s.recordFailedCode(phone)
       setError(r.locked ? "" : `That code didn't match. ${5 - r.attempts} ${5 - r.attempts === 1 ? "try" : "tries"} left.`)
@@ -32,10 +55,7 @@ function CodePage() {
       setCode("")
       return
     }
-    s.clearFailedCodes(phone)
-    const res = s.signInByPhone(phone)
-    if (res.existing) router.replace(next)
-    else router.replace(`/app/sign-in/about-you?next=${encodeURIComponent(next)}&method=phone`)
+    signedIn()
   }
 
   return (
@@ -60,13 +80,13 @@ function CodePage() {
           <OTPInput value={code} onChange={setCode} onComplete={submit} error={!!error || !!lockedUntil} disabled={!!lockedUntil} />
         </div>
         <div className="mt-5 flex items-center justify-between">
-          {!lockedUntil && <ResendTimer onResend={() => toast(`New code sent to ${phone}`)} />}
+          {!lockedUntil && <ResendTimer onResend={() => (apiMode ? otpStart(phone).then(() => toast(`New code sent to ${phone}`), (x: Error) => toast(x.message)) : toast(`New code sent to ${phone}`))} />}
           <Link href={`/app/sign-in/phone?next=${encodeURIComponent(next)}&phone=${encodeURIComponent(phone)}`} className="inline-flex h-11 items-center t-label text-blue hover:underline">
             Change number
           </Link>
         </div>
         <p className="mt-auto t-caption text-muted-ink">
-          Prototype: any 6 digits sign you in. 000000 is always wrong{attempts ? ` (${attempts} of 5 used)` : ""}.
+          {apiMode ? "API mode: enter the code we texted you." : <>Prototype: any 6 digits sign you in. 000000 is always wrong{attempts ? ` (${attempts} of 5 used)` : ""}.</>}
         </p>
       </div>
     </AppScreen>

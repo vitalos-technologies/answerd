@@ -9,7 +9,8 @@ import * as React from "react"
 
 export type DemoPlan = "desk" | "featured"
 export type DemoState = {
-  user: { name: string; business: string; slug: string } | null
+  /** In API mode (NEXT_PUBLIC_ANSWERD_API_URL set) this is the real signed-in user; the tokens live in httpOnly cookies. */
+  user: { name: string; business: string; slug: string; businessId?: string | null; api?: boolean } | null
   subs: { plan: DemoPlan; since: string }[]
   gateMet: boolean
 }

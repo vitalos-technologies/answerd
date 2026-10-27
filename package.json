@@ -8,6 +8,7 @@
     "start": "next start",
     "lint": "eslint",
     "test:e2e": "playwright test",
+    "test:e2e:api": "playwright test -c playwright.api.config.ts",
     "coverage": "tsx scripts/coverage.ts",
     "screenshots": "tsx scripts/screenshots.ts",
     "preview:cf": "opennextjs-cloudflare build && opennextjs-cloudflare preview",
