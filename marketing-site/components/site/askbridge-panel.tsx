@@ -2,10 +2,12 @@
 import * as React from "react"
 import { AnimatePresence, motion, MotionConfig } from "motion/react"
 import Link from "next/link"
-import { ChevronRight, SendHorizontal, X } from "lucide-react"
+import { ChevronRight, Phone, SendHorizontal, X } from "lucide-react"
 import { Mark } from "@/components/brand/Mark"
 import { GetAppButton } from "./get-app"
 import type { AskbridgeCopy, Suggestions } from "./askbridge-placeholder"
+import { apiEnabled } from "@/lib/api/client"
+import { chatSearch, type LiveResult } from "@/lib/api/actions"
 
 /*
  * The Askbridge placeholder's chat panel. Loaded on the first tap of the pill (see askbridge-placeholder.tsx),
@@ -17,7 +19,9 @@ const PANEL_ID = "askbridge-panel"
 const TITLE_ID = "askbridge-title"
 const focusRing = "focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue"
 
-type Msg = { from: "user" | "assistant"; text: string; cta?: boolean; chip?: string }
+type Msg = { from: "user" | "assistant"; text: string; cta?: boolean; chip?: string; results?: LiveResult[] }
+
+const POSTCODE = /\b([A-Z]{1,2}\d[A-Z\d]?)(\s*\d[A-Z]{2})?\b/i
 
 const TONES: Record<string, string> = { blue: "bg-blue-tint text-blue-hover", teal: "bg-teal-tint text-teal-ink", amber: "bg-amber-tint text-amber-ink", sky: "bg-sky text-navy" }
 
@@ -26,6 +30,11 @@ export default function AskbridgePanel({ copy, suggestions, open, close }: { cop
   const panelRef = React.useRef<HTMLDivElement>(null)
   const logRef = React.useRef<HTMLDivElement>(null)
   const timer = React.useRef<number | undefined>(undefined)
+  const [text, setText] = React.useState("")
+  const [busy, setBusy] = React.useState(false)
+  // API mode: a query waiting for a postcode, and the postcode once given (used for later questions too)
+  const pending = React.useRef<string | null>(null)
+  const postcode = React.useRef<string | null>(null)
 
   // Escape closes the chat, unless it was pressed inside another dialog (e.g. Get the app), which handles its own.
   React.useEffect(() => {
@@ -52,7 +61,32 @@ export default function AskbridgePanel({ copy, suggestions, open, close }: { cop
     if (log) log.scrollTop = log.scrollHeight
   }, [messages])
 
+  async function ask(input: string) {
+    const say = (m: Msg) => setMessages((all) => [...all, m])
+    say({ from: "user", text: input })
+    panelRef.current?.focus({ preventScroll: true })
+    const typed = input.match(POSTCODE)?.[0]
+    let query = input
+    if (pending.current) {
+      if (!typed) return say({ from: "assistant", text: copy.live.askPostcode })
+      postcode.current = typed.toUpperCase()
+      query = pending.current
+      pending.current = null
+    } else if (typed) {
+      postcode.current = typed.toUpperCase()
+    } else if (!postcode.current) {
+      pending.current = input
+      return say({ from: "assistant", text: copy.live.askPostcode })
+    }
+    setBusy(true)
+    const r = await chatSearch(/\bnear\b/i.test(query) ? query : `${query} near ${postcode.current}`)
+    setBusy(false)
+    if (!r.ok) return say({ from: "assistant", text: copy.live.error })
+    say(r.data.length ? { from: "assistant", text: copy.matches, results: r.data, cta: true } : { from: "assistant", text: copy.live.none, cta: true })
+  }
+
   function pick(chip: string) {
+    if (apiEnabled) return void ask(chip)
     setMessages((m) => [...m, { from: "user", text: chip }])
     // The chips go away once one is picked, so keep focus in the panel rather than losing it to <body>.
     panelRef.current?.focus({ preventScroll: true })
@@ -94,7 +128,7 @@ export default function AskbridgePanel({ copy, suggestions, open, close }: { cop
                 </h2>
                 <p className="flex items-center gap-1.5 text-[13px] leading-5 text-muted-ink">
                   <span className="size-2 rounded-full bg-teal" aria-hidden />
-                  Preview
+                  {apiEnabled ? "Online" : "Preview"}
                 </p>
               </div>
               <button
@@ -152,6 +186,47 @@ export default function AskbridgePanel({ copy, suggestions, open, close }: { cop
                         ))}
                       </ul>
                     )}
+                    {m.results && (
+                      <ul className="mt-3 flex flex-col gap-2" aria-label={copy.matches}>
+                        {m.results.map((s) => (
+                          <li key={s.key}>
+                            {s.google || !s.slug ? (
+                              <div className="flex items-center gap-3 rounded-xl border border-line bg-white p-3 text-left">
+                                <span className="min-w-0 flex-1">
+                                  <span className="block truncate text-[15px] leading-5 font-semibold text-navy">{s.name}</span>
+                                  <span className="block truncate text-[13px] leading-5 text-muted-ink">
+                                    {s.categoryName}
+                                    {s.rating != null && ` · ${s.rating.toFixed(1)}★`}
+                                  </span>
+                                  {s.google && <span className="block text-[12px] leading-4 font-medium text-slate">{copy.live.google}</span>}
+                                </span>
+                                {s.phone && (
+                                  <a href={`tel:${s.phone}`} aria-label={`${copy.live.call} ${s.name}`} className={`inline-flex size-10 shrink-0 items-center justify-center rounded-full border border-line text-navy hover:border-blue ${focusRing}`}>
+                                    <Phone className="size-4" aria-hidden />
+                                  </a>
+                                )}
+                              </div>
+                            ) : (
+                              <Link href={`/b/${s.slug}`} onClick={() => close(false)} className={`flex items-center gap-3 rounded-xl border border-line bg-white p-3 text-left hover:border-blue/40 ${focusRing}`}>
+                                <span aria-hidden className={`grid size-10 shrink-0 place-items-center rounded-lg text-[14px] font-bold ${TONES.blue}`}>
+                                  {s.initials}
+                                </span>
+                                <span className="min-w-0 flex-1">
+                                  <span className="block truncate text-[15px] leading-5 font-semibold text-navy">{s.name}</span>
+                                  <span className="block truncate text-[13px] leading-5 text-muted-ink">
+                                    {s.categoryName}
+                                    {s.distanceMiles != null && ` · ${s.distanceMiles.toFixed(1)} mi`}
+                                    {s.rating != null && s.reviewCount > 0 && ` · ${s.rating.toFixed(1)}★`}
+                                  </span>
+                                  <span className="block text-[13px] leading-5 text-teal-ink">{s.reason}</span>
+                                </span>
+                                <ChevronRight className="size-4 shrink-0 text-muted-ink" aria-hidden />
+                              </Link>
+                            )}
+                          </li>
+                        ))}
+                      </ul>
+                    )}
                     {m.cta && (
                       <span className="mt-3 block">
                         <GetAppButton size="sm" icon />
@@ -163,20 +238,48 @@ export default function AskbridgePanel({ copy, suggestions, open, close }: { cop
             </div>
 
             <div className="border-t border-line px-4 pt-3 pb-2">
-              <div className="flex items-center gap-2 rounded-full border border-line bg-sky px-4" aria-disabled="true">
-                <label htmlFor="askbridge-input" className="sr-only">
-                  Message
-                </label>
-                <input
-                  id="askbridge-input"
-                  disabled
-                  placeholder={copy.comingSoon}
-                  className="h-11 min-w-0 flex-1 bg-transparent text-[15px] text-navy placeholder:text-muted-ink disabled:cursor-not-allowed"
-                />
-                <button type="button" disabled aria-label={`Send (${copy.comingSoon.toLowerCase()})`} className="-mr-2 inline-flex size-9 items-center justify-center rounded-full text-muted-ink disabled:cursor-not-allowed">
-                  <SendHorizontal className="size-[18px]" aria-hidden />
-                </button>
-              </div>
+              {apiEnabled ? (
+                <form
+                  className="flex items-center gap-2 rounded-full border border-line bg-white px-4 focus-within:border-blue"
+                  onSubmit={(e) => {
+                    e.preventDefault()
+                    const t = text.trim()
+                    if (!t || busy) return
+                    setText("")
+                    void ask(t)
+                  }}
+                >
+                  <label htmlFor="askbridge-input" className="sr-only">
+                    Message
+                  </label>
+                  <input
+                    id="askbridge-input"
+                    value={text}
+                    onChange={(e) => setText(e.target.value)}
+                    maxLength={200}
+                    placeholder={busy ? copy.live.searching : copy.live.placeholder}
+                    className="h-11 min-w-0 flex-1 bg-transparent text-[15px] text-navy outline-none placeholder:text-muted-ink"
+                  />
+                  <button type="submit" disabled={busy} aria-label={copy.live.send} className={`-mr-2 inline-flex size-9 items-center justify-center rounded-full text-blue hover:bg-blue-tint disabled:text-muted-ink ${focusRing}`}>
+                    <SendHorizontal className="size-[18px]" aria-hidden />
+                  </button>
+                </form>
+              ) : (
+                <div className="flex items-center gap-2 rounded-full border border-line bg-sky px-4" aria-disabled="true">
+                  <label htmlFor="askbridge-input" className="sr-only">
+                    Message
+                  </label>
+                  <input
+                    id="askbridge-input"
+                    disabled
+                    placeholder={copy.comingSoon}
+                    className="h-11 min-w-0 flex-1 bg-transparent text-[15px] text-navy placeholder:text-muted-ink disabled:cursor-not-allowed"
+                  />
+                  <button type="button" disabled aria-label={`Send (${copy.comingSoon.toLowerCase()})`} className="-mr-2 inline-flex size-9 items-center justify-center rounded-full text-muted-ink disabled:cursor-not-allowed">
+                    <SendHorizontal className="size-[18px]" aria-hidden />
+                  </button>
+                </div>
+              )}
               <p className="mt-2 text-center text-xs leading-5 text-muted-ink">{copy.footer}</p>
             </div>
           </motion.div>

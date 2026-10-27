@@ -13,47 +13,32 @@ import { GetAppButton } from "@/components/site/get-app"
 import { QrCode } from "@/components/site/qr-code"
 import { focusRing } from "@/components/site/focus"
 import { breadcrumbLd, localBusinessLd } from "@/lib/data/jsonld"
-import {
-  areaBySlug,
-  availabilityFor,
-  businessFor,
-  isDeskLive,
-  listingBadges,
-  listingBySlug,
-  listingRating,
-  primaryCategory,
-  replyLine,
-  reviewsFor,
-  serviceAreaFor,
-  servicesFor,
-  toneFor,
-  trackedNumber,
-  verifiedCredentials,
-} from "@/lib/data/queries"
 import { seed } from "@/lib/data/seed"
+import { apiMode, getListingView } from "@/lib/data/source"
 import { durationLabel, priceWithVat } from "@/lib/data/format"
-import { DEMO_NOW, addDays, fmtClock, fmtDate, fmtDayMonth } from "@/lib/data/time"
+import { fmtClock, fmtDate, fmtDayMonth } from "@/lib/data/time"
 import { fill } from "@/lib/fill"
 import { cn } from "@/lib/utils"
 import { pages } from "@/content/pages"
 import { APP_STORE_URL, PLAY_STORE_URL, listingUrl } from "@/content/site"
 
-export const dynamicParams = false
+// Static data: every listing is prerendered. API mode: listings render on first request and are then cached
+// (ISR), regenerating hourly or when the API calls /api/revalidate for that listing.
+export const dynamicParams = true
 
 export function generateStaticParams() {
-  return seed().listings.map((l) => ({ slug: l.slug }))
+  return apiMode ? [] : seed().listings.map((l) => ({ slug: l.slug }))
 }
 
 export async function generateMetadata({ params }: PageProps<"/b/[slug]">): Promise<Metadata> {
-  const l = listingBySlug((await params).slug)
-  if (!l) return {}
+  const v = await getListingView((await params).slug)
+  if (!v) return {}
   const c = pages.listing
-  const cat = primaryCategory(l)
-  const where = areaBySlug(l.area)?.name ?? l.postcodeDistrict
-  const values = { name: l.name, category: cat.name.toLowerCase(), area: where }
+  const where = v.area?.name ?? v.postcode
+  const values = { name: v.name, category: v.category.name.toLowerCase(), area: where }
   const title = fill(c.metaTitle, values)
-  const description = fill(l.layer === "claimed" ? c.metaClaimed : c.metaUnclaimed, values)
-  return pageMeta({ title, description, path: `/b/${l.slug}` })
+  const description = fill(v.layer === "claimed" ? c.metaClaimed : c.metaUnclaimed, values)
+  return pageMeta({ title, description, path: `/b/${v.slug}` })
 }
 
 function Section({ id, title, children }: { id: string; title: string; children: React.ReactNode }) {
@@ -69,31 +54,31 @@ function Section({ id, title, children }: { id: string; title: string; children:
 
 /** W-06 (claimed) and W-07 (unclaimed) share /b/[slug]: two columns with a sticky contact card. */
 export default async function ListingPage({ params }: PageProps<"/b/[slug]">) {
-  const l = listingBySlug((await params).slug)
-  if (!l) notFound()
+  const v = await getListingView((await params).slug)
+  if (!v) notFound()
   const c = pages.listing
-  const cat = primaryCategory(l)
-  const tone = toneFor(cat)
-  const area = areaBySlug(l.area)
+  const cat = v.category
+  const tone = v.tone
+  const area = v.area
   const crumbs = [
     { name: pages.common.home, href: "/" },
     { name: cat.plural, href: `/${cat.slug}` },
     ...(area ? [{ name: fill(pages.category.inArea, { plural: cat.plural, area: area.name }), href: `/${cat.slug}/${area.slug}` }] : []),
-    { name: l.name, href: `/b/${l.slug}` },
+    { name: v.name, href: `/b/${v.slug}` },
   ]
-  const r = listingRating(l)
-  const desk = isDeskLive(l)
-  const claimed = l.layer === "claimed"
-  const services = servicesFor(l)
+  const r = v.rating
+  const desk = v.desk
+  const claimed = v.layer === "claimed"
+  const services = v.services
   const bookable = services.some((s) => s.bookable)
   const actions: Omit<ListingActionsProps, "variant"> = {
-    name: l.name,
-    number: trackedNumber(l),
+    name: v.name,
+    number: v.trackedNumber,
     desk,
     claimed,
     bookable,
-    appUrl: listingUrl(l.slug),
-    qr: <QrCode size={168} url={listingUrl(l.slug)} label={fill(c.continueDialog.scan, { name: l.name })} />,
+    appUrl: listingUrl(v.slug),
+    qr: <QrCode size={168} url={listingUrl(v.slug)} label={fill(c.continueDialog.scan, { name: v.name })} />,
     appStoreUrl: APP_STORE_URL,
     playStoreUrl: PLAY_STORE_URL,
     labels: { call: c.call, message: c.message, book: c.book },
@@ -102,14 +87,14 @@ export default async function ListingPage({ params }: PageProps<"/b/[slug]">) {
 
   const header = (
     <div className="flex flex-col gap-4 sm:flex-row sm:items-start">
-      <Avatar initials={l.initials} tone={tone} size={72} className="border-4 border-white shadow-card" />
+      <Avatar initials={v.initials} tone={tone} size={72} className="border-4 border-white shadow-card" />
       <div className="min-w-0 flex-1">
-        <h1 className="text-[28px] leading-[34px] font-bold tracking-[-0.02em] break-words md:text-[34px] md:leading-[42px]">{l.name}</h1>
+        <h1 className="text-[28px] leading-[34px] font-bold tracking-[-0.02em] break-words md:text-[34px] md:leading-[42px]">{v.name}</h1>
         <p className="mt-1 text-[15px] leading-6 text-slate">
-          {cat.name} · {l.address.split(", ").at(-1)}
+          {cat.name} · {v.locality}
         </p>
         <Rating rating={r.rating} count={r.count} google={r.google} className="mt-1.5" />
-        <BadgeRow kinds={listingBadges(l)} max={8} className="mt-3" />
+        <BadgeRow kinds={v.badges} max={8} className="mt-3" />
       </div>
     </div>
   )
@@ -117,10 +102,10 @@ export default async function ListingPage({ params }: PageProps<"/b/[slug]">) {
   // ---------------------------------------------------------------- W-07 unclaimed
   if (!claimed) {
     const u = c.unclaimed
-    const claimHref = `/claim?listing=${l.slug}`
+    const claimHref = `/claim?listing=${v.slug}`
     return (
       <WebPage>
-        <JsonLd data={[localBusinessLd(l), breadcrumbLd(crumbs)]} />
+        <JsonLd data={[localBusinessLd(v), breadcrumbLd(crumbs)]} />
         <div className="container-site pt-4 pb-16 md:pt-6 md:pb-24">
           <Breadcrumbs items={crumbs} />
           <div className="mt-6 grid gap-6 lg:grid-cols-[minmax(0,1fr)_360px] lg:gap-8">
@@ -129,7 +114,7 @@ export default async function ListingPage({ params }: PageProps<"/b/[slug]">) {
                 {header}
                 <ul className="mt-5 flex flex-col gap-2 text-[15px] leading-6 text-slate">
                   <li className="flex items-start gap-2">
-                    <MapPin className="mt-1 size-4 shrink-0 text-muted-ink" aria-hidden /> {l.address}, {l.postcode}
+                    <MapPin className="mt-1 size-4 shrink-0 text-muted-ink" aria-hidden /> {v.addressLine}
                   </li>
                   <li className="flex items-start gap-2">
                     <Phone className="mt-1 size-4 shrink-0 text-muted-ink" aria-hidden /> {c.callVia}
@@ -172,18 +157,16 @@ export default async function ListingPage({ params }: PageProps<"/b/[slug]">) {
   }
 
   // ---------------------------------------------------------------- W-06 claimed
-  const biz = businessFor(l)!
-  const reviews = reviewsFor(l)
-  const dist = [5, 4, 3, 2, 1].map((n) => ({ n, count: reviews.filter((x) => x.stars === n).length }))
-  const creds = verifiedCredentials(l)
-  const sa = serviceAreaFor(l)
-  const avail = availabilityFor(l)
-  const today = DEMO_NOW.slice(0, 10)
-  const holiday = avail?.holidays.find((h) => today >= h.from && today <= h.to)
+  const reviews = v.reviews
+  const dist = v.distribution
+  const distTotal = dist.reduce((a, d) => a + d.count, 0) || 1
+  const creds = v.credentials
+  const sa = v.serviceArea
+  const holiday = v.away
 
   return (
     <WebPage>
-      <JsonLd data={[localBusinessLd(l), breadcrumbLd(crumbs)]} />
+      <JsonLd data={[localBusinessLd(v), breadcrumbLd(crumbs)]} />
       {/* No cover photo in the mock data: a 120 px band with the category's own icon */}
       <div aria-hidden className={cn("flex h-[120px] items-center justify-center", toneClasses(tone))}>
         <CategoryIcon name={cat.icon} className="size-10 opacity-80" strokeWidth={1.6} />
@@ -195,7 +178,7 @@ export default async function ListingPage({ params }: PageProps<"/b/[slug]">) {
           {holiday && (
             <p className="mt-5 flex items-start gap-2 rounded-xl bg-amber-tint p-4 text-[15px] leading-6 text-navy">
               <CalendarOff className="mt-0.5 size-5 shrink-0 text-amber-ink" aria-hidden />
-              {fill(c.away, { label: holiday.label, date: fmtDate(addDays(`${holiday.to}T12:00:00.000Z`, 1)) })}
+              {fill(c.away, { label: holiday.label, date: fmtDate(holiday.backOn) })}
             </p>
           )}
         </div>
@@ -203,20 +186,22 @@ export default async function ListingPage({ params }: PageProps<"/b/[slug]">) {
         <div className="mt-6 grid gap-6 lg:grid-cols-[minmax(0,1fr)_360px] lg:gap-8">
           <div className="flex min-w-0 flex-col gap-6">
             <Section id="about" title={c.sections.about}>
-              <p className="text-slate">{l.description || c.noDescription}</p>
+              <p className="text-slate">{v.description || c.noDescription}</p>
               <ul className="mt-4 grid gap-2 text-[15px] leading-6 text-slate sm:grid-cols-2">
                 <li className="flex items-start gap-2">
-                  <MapPin className="mt-1 size-4 shrink-0 text-muted-ink" aria-hidden /> {l.address}, {l.postcode}
+                  <MapPin className="mt-1 size-4 shrink-0 text-muted-ink" aria-hidden /> {v.addressLine}
                 </li>
                 <li className="flex items-start gap-2">
                   <Phone className="mt-1 size-4 shrink-0 text-muted-ink" aria-hidden /> {c.callVia}
                 </li>
-                <li className="flex items-start gap-2">
-                  <Globe className="mt-1 size-4 shrink-0 text-muted-ink" aria-hidden /> {biz.website}
-                </li>
-                {biz.yearFounded && (
+                {v.website && (
                   <li className="flex items-start gap-2">
-                    <BadgeCheck className="mt-1 size-4 shrink-0 text-muted-ink" aria-hidden /> {fill(c.tradingSince, { year: biz.yearFounded })}
+                    <Globe className="mt-1 size-4 shrink-0 text-muted-ink" aria-hidden /> {v.website}
+                  </li>
+                )}
+                {v.yearFounded && (
+                  <li className="flex items-start gap-2">
+                    <BadgeCheck className="mt-1 size-4 shrink-0 text-muted-ink" aria-hidden /> {fill(c.tradingSince, { year: v.yearFounded })}
                   </li>
                 )}
               </ul>
@@ -258,7 +243,7 @@ export default async function ListingPage({ params }: PageProps<"/b/[slug]">) {
                           <dt className="tnum w-14 shrink-0 text-[14px] leading-5 text-navy">{fill(c.starRow, { n })}</dt>
                           <dd className="flex flex-1 items-center gap-2">
                             <span aria-hidden className="h-2 flex-1 overflow-hidden rounded-full bg-sky">
-                              <span className="block h-full rounded-full bg-amber" style={{ width: `${(count / reviews.length) * 100}%` }} />
+                              <span className="block h-full rounded-full bg-amber" style={{ width: `${(count / distTotal) * 100}%` }} />
                             </span>
                             <span className="tnum w-8 text-right text-[14px] leading-5 text-muted-ink">{count}</span>
                           </dd>
@@ -281,13 +266,13 @@ export default async function ListingPage({ params }: PageProps<"/b/[slug]">) {
                         <p className="mt-1 text-slate">{rv.text}</p>
                         {rv.reply && (
                           <p className="mt-2 rounded-xl bg-sky px-4 py-2.5 text-[15px] leading-6 text-slate">
-                            <span className="font-semibold text-navy">{fill(c.replyFrom, { name: l.name })}</span> {rv.reply}
+                            <span className="font-semibold text-navy">{fill(c.replyFrom, { name: v.name })}</span> {rv.reply}
                           </p>
                         )}
                       </li>
                     ))}
                   </ul>
-                  {reviews.length > 5 && <GetAppButton variant="secondary" size="sm" label={fill(c.moreReviews, { count: reviews.length })} className="mt-5 whitespace-normal" />}
+                  {r.count > 5 && <GetAppButton variant="secondary" size="sm" label={fill(c.moreReviews, { count: r.count })} className="mt-5 whitespace-normal" />}
                 </>
               ) : (
                 <p className="text-slate">{pages.common.noReviews}</p>
@@ -321,14 +306,14 @@ export default async function ListingPage({ params }: PageProps<"/b/[slug]">) {
                 <p className="flex items-start gap-2 text-slate">
                   <MapPin className="mt-1 size-4 shrink-0 text-blue" aria-hidden />
                   <span>
-                    {sa ? fill(c.within, { miles: sa.radiusMiles, district: sa.basePostcode.split(" ")[0]! }) : l.address} {sa?.travelNote}
+                    {sa ? fill(c.within, { miles: sa.radiusMiles, district: sa.district }) : v.addressLine} {sa?.travelNote}
                   </span>
                 </p>
               </Section>
               <Section id="hours" title={c.sections.hours}>
                 <dl className="grid grid-cols-[1fr_auto] gap-x-4 gap-y-1.5 text-[15px] leading-6">
                   {[1, 2, 3, 4, 5, 6, 0].map((d) => {
-                    const h = avail?.weeklyHours.find((x) => x.day === d)
+                    const h = v.hours.find((x) => x.day === d)
                     return (
                       <div key={d} className="contents">
                         <dt className="text-slate">{c.days[d]}</dt>
@@ -344,9 +329,9 @@ export default async function ListingPage({ params }: PageProps<"/b/[slug]">) {
           <aside className="max-lg:hidden">
             <div className="card-site sticky top-24 p-6">
               <div className="flex items-center gap-3">
-                <Avatar initials={l.initials} tone={tone} size={44} />
+                <Avatar initials={v.initials} tone={tone} size={44} />
                 <div className="min-w-0">
-                  <p className="truncate text-[17px] leading-6 font-semibold text-navy">{l.name}</p>
+                  <p className="truncate text-[17px] leading-6 font-semibold text-navy">{v.name}</p>
                   <Rating rating={r.rating} count={r.count} />
                 </div>
               </div>
@@ -356,13 +341,14 @@ export default async function ListingPage({ params }: PageProps<"/b/[slug]">) {
                 </div>
               )}
               <p className={cn("mt-3 flex items-center gap-1.5 text-[15px] leading-6", desk ? "font-medium text-teal-ink" : "text-slate")}>
-                <Clock className="size-4 shrink-0" aria-hidden /> {replyLine(l)}
+                <Clock className="size-4 shrink-0" aria-hidden /> {v.reply}
               </p>
               <div className="mt-5">
                 <ListingActions {...actions} variant="card" />
               </div>
               <p className="mt-4 text-[14px] leading-5 text-muted-ink">
-                {biz.bookingMode === "instant" ? c.bookingInstant : c.bookingRequest} {c.payDirect} {c.appNote}
+                {v.bookingMode ? `${v.bookingMode === "instant" ? c.bookingInstant : c.bookingRequest} ` : ""}
+                {c.payDirect} {c.appNote}
               </p>
             </div>
           </aside>

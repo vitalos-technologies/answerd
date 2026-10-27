@@ -6,6 +6,7 @@ import { QrCode } from "@/components/site/qr-code"
 import { StoreBadges } from "@/components/site/store-badges"
 import { CATEGORY_GROUPS, LEAF_CATEGORIES, claimables } from "@/lib/data/queries"
 import { pages } from "@/content/pages"
+import { apiMode } from "@/lib/data/source"
 
 export const metadata: Metadata = pageMeta({ title: pages.claim.metaTitle, description: pages.claim.metaDescription, path: "/claim" })
 
@@ -14,7 +15,7 @@ export default function ClaimPage() {
   const groups = CATEGORY_GROUPS.map((g) => ({ id: g.id, name: g.name, leaves: LEAF_CATEGORIES.filter((c) => c.parentId === g.id).map((c) => ({ id: c.id, name: c.name })) }))
   return (
     <WebPage className="bg-sky">
-      <ClaimFlow copy={pages.claim} listings={claimables()} groups={groups} qr={<QrCode size={120} />} badges={<StoreBadges size="sm" block className="justify-center sm:flex-col" />} />
+      <ClaimFlow copy={pages.claim} listings={apiMode ? [] : claimables()} groups={groups} qr={<QrCode size={120} />} badges={<StoreBadges size="sm" block className="justify-center sm:flex-col" />} />
     </WebPage>
   )
 }

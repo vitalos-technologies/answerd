@@ -65,11 +65,36 @@ pnpm lint
 
 | Variable | Purpose | If unset |
 | --- | --- | --- |
+| `NEXT_PUBLIC_ANSWERD_API_URL` | Turns on API mode (see below), e.g. `https://answerd-staging-api.onrender.com` | Static fallback data, as before |
+| `ANSWERD_REVALIDATE_SECRET` | Secret for the signed `POST /api/revalidate` (API mode). Set it on the Worker as a secret, and on the API | `/api/revalidate` answers 503 |
 | `NEXT_PUBLIC_ASKBRIDGE_SITE_ID` | Loads the real Askbridge chat embed (only after the visitor accepts all cookies) | The local chat placeholder shows |
 | `APP_STORE_URL` | App Store listing for badges, QR flow and "Get the app" on iPhone | Links go to `/#download` |
 | `PLAY_STORE_URL` | Google Play listing, same uses on Android | Links go to `/#download` |
 
 The store URLs are inlined at build time, so rebuild after changing them. The canonical domain is `SITE_URL` in `content/site.ts` (`https://answerd.vitalos.co.uk`); canonical URLs, JSON-LD, the sitemap, QR codes and the listing universal links all derive from it.
+
+## API mode
+
+Set `NEXT_PUBLIC_ANSWERD_API_URL` and the site reads the Answerd API instead of `lib/data/seed.ts`. It's off by default, and production doesn't set it.
+
+- **Pages.** Search (`/search`, W-02), category in area, area and listing pages come from the API.
+  - All but search are cached with incremental static regeneration: hourly (`s-maxage=3600`), and at once when the API calls `POST /api/revalidate` for a changed listing.
+  - The data layer is `lib/data/source.ts`, with view models in `lib/data/listing-view.ts`.
+  - Category hubs (`/[category]`) and the home page still use the static data.
+- **Google results.** Results with `poweredByGoogle` are never put in a cached or prerendered page.
+  - `components/web/google-results.tsx` fetches them after load through a no-store Server Action.
+  - It always shows "Powered by Google".
+- **Browser calls.** Chat with Answerd uses the public search tool (`POST /v1/tools/search`).
+  - It asks for a postcode when the message has none.
+  - Sign-in (phone code), claim and billing (Stripe Checkout and Portal) go through Server Actions in `lib/api/actions.ts`, because the API's CORS only allows the production origin.
+  - Tokens are kept in httpOnly cookies.
+- **The client.** `lib/api/client.ts` stands in for `@vitalos/answerd-client` until the package can be installed (issue #2). It retries once and waits up to 90 s, because staging sleeps on Render's free tier.
+- **Revalidate signature.**
+  - Header `x-answerd-timestamp`: unix seconds.
+  - Header `x-answerd-signature`: `sha256=` + hex HMAC-SHA256 of `"<timestamp>.<raw body>"`, keyed with `ANSWERD_REVALIDATE_SECRET`.
+  - Body: `{"listingSlug"}` or `{"listingId"}`.
+  - The window is 5 minutes.
+- **On Cloudflare.** `open-next.config.ts` uses the read-only static-assets cache. In API mode, pages render on request, but regenerated pages are only kept once an R2 incremental cache is configured.
 
 ## Performance notes
 

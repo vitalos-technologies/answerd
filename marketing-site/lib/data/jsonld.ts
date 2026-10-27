@@ -1,7 +1,7 @@
 // Structured data builders for the SEO and listing pages (ported from the prototype's components/web/data.ts).
 import { SITE_URL } from "@/content/site"
-import { listingRating, primaryCategory, type Faq } from "./queries"
-import type { Listing } from "./types"
+import type { Faq } from "./queries"
+import type { ListingView } from "./listing-view"
 
 export function breadcrumbLd(items: { name: string; href: string }[]) {
   return {
@@ -19,7 +19,7 @@ export function faqLd(faqs: Faq[]) {
   }
 }
 
-export function itemListLd(name: string, listings: Listing[]) {
+export function itemListLd(name: string, listings: { slug: string; name: string }[]) {
   return {
     "@context": "https://schema.org",
     "@type": "ItemList",
@@ -29,21 +29,18 @@ export function itemListLd(name: string, listings: Listing[]) {
   }
 }
 
-export function localBusinessLd(l: Listing) {
-  const cat = primaryCategory(l)
-  const r = listingRating(l)
-  const [street, locality] = l.address.split(", ")
+export function localBusinessLd(v: ListingView) {
   return {
     "@context": "https://schema.org",
     "@type": "LocalBusiness",
-    "@id": `${SITE_URL}/b/${l.slug}`,
-    name: l.name,
-    url: `${SITE_URL}/b/${l.slug}`,
-    telephone: l.phonePublic,
-    description: l.description || `${cat.name} in ${locality ?? l.postcodeDistrict}`,
-    address: { "@type": "PostalAddress", streetAddress: street, addressLocality: locality, postalCode: l.postcode, addressCountry: "GB" },
-    geo: { "@type": "GeoCoordinates", latitude: l.geo.lat, longitude: l.geo.lng },
+    "@id": `${SITE_URL}/b/${v.slug}`,
+    name: v.name,
+    url: `${SITE_URL}/b/${v.slug}`,
+    telephone: v.phonePublic,
+    description: v.description || `${v.category.name} in ${v.locality || v.postcode}`,
+    address: { "@type": "PostalAddress", streetAddress: v.street, addressLocality: v.locality, postalCode: v.postcode, addressCountry: "GB" },
+    geo: { "@type": "GeoCoordinates", latitude: v.geo.lat, longitude: v.geo.lng },
     // Only ratings from Answerd's own reviews; Google ratings can't be marked up as ours
-    ...(l.layer !== "places" && r.count > 0 ? { aggregateRating: { "@type": "AggregateRating", ratingValue: r.rating, reviewCount: r.count, bestRating: 5 } } : {}),
+    ...(v.layer !== "places" && !v.rating.google && v.rating.count > 0 ? { aggregateRating: { "@type": "AggregateRating", ratingValue: v.rating.rating, reviewCount: v.rating.count, bestRating: 5 } } : {}),
   }
 }

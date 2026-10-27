@@ -8,6 +8,8 @@ import { cn } from "@/lib/utils"
 import { fill } from "@/lib/fill"
 import { focusRing } from "@/components/site/focus"
 import { safeNext, useDemo, writeDemo } from "@/lib/demo-session"
+import { apiEnabled } from "@/lib/api/client"
+import { signInStart, signInVerify, signOut } from "@/lib/api/actions"
 import type { pages } from "@/content/pages"
 import { CodeInput, Field, Note, btnPrimary, btnSecondary, inputCls, linkCls } from "./form"
 
@@ -53,6 +55,7 @@ export function SignInFlow({ copy }: { copy: Copy }) {
   const [email, setEmail] = React.useState("")
   const [emailErr, setEmailErr] = React.useState("")
   const card = React.useRef<HTMLDivElement>(null)
+  const [busy, setBusy] = React.useState(false)
 
   const goStep = (s: Step) => {
     setStep(s)
@@ -67,12 +70,19 @@ export function SignInFlow({ copy }: { copy: Copy }) {
     return (
       <Shell cardRef={card}>
         <Title>{copy.signedIn}</Title>
-        <p className="mt-2 text-slate">{fill(copy.signedInAs, { name: demo.user.name, business: demo.user.business })}</p>
+        <p className="mt-2 text-slate">{demo.user.business ? fill(copy.signedInAs, { name: demo.user.name, business: demo.user.business }) : fill(copy.signedInAsNoBusiness, { name: demo.user.name })}</p>
         <div className="mt-6 grid gap-2">
-          <Link href={next} className={btnPrimary}>
-            {copy.continue}
+          <Link href={demo.user.business ? next : "/claim"} className={btnPrimary}>
+            {demo.user.business ? copy.continue : copy.claimLink}
           </Link>
-          <button type="button" className={btnSecondary} onClick={() => writeDemo((s) => ({ ...s, user: null, subs: [] }))}>
+          <button
+            type="button"
+            className={btnSecondary}
+            onClick={async () => {
+              if (demo.user?.api) await signOut()
+              writeDemo((s) => ({ ...s, user: null, subs: [] }))
+            }}
+          >
             {copy.signOut}
           </button>
         </div>
@@ -98,10 +108,16 @@ export function SignInFlow({ copy }: { copy: Copy }) {
           <form
             className="mt-6 flex flex-col gap-3"
             noValidate
-            onSubmit={(e) => {
+            onSubmit={async (e) => {
               e.preventDefault()
               const n = normaliseUkMobile(phone)
               if (!n) return setPhoneErr(copy.phoneError)
+              if (apiEnabled) {
+                setBusy(true)
+                const r = await signInStart(n)
+                setBusy(false)
+                if (!r.ok) return setPhoneErr(r.status ? r.message : copy.unreachable)
+              }
               setPhoneErr("")
               setPhone(n)
               setCode("")
@@ -112,41 +128,46 @@ export function SignInFlow({ copy }: { copy: Copy }) {
             <Field label={copy.phone} htmlFor="si-phone" error={phoneErr} hint={copy.phoneHint}>
               <input id="si-phone" type="tel" inputMode="tel" autoComplete="tel" value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="07700 900123" aria-invalid={!!phoneErr || undefined} aria-describedby="si-phone-msg" className={cn(inputCls, "tnum")} />
             </Field>
-            <button type="submit" className={btnPrimary}>
-              <Smartphone aria-hidden /> {copy.sendCode}
+            <button type="submit" className={btnPrimary} disabled={busy}>
+              <Smartphone aria-hidden /> {busy ? copy.sending : copy.sendCode}
             </button>
           </form>
-          <div className="my-5 flex items-center gap-3 text-[14px] text-muted-ink">
-            <span className="h-px flex-1 bg-line" /> {copy.or} <span className="h-px flex-1 bg-line" />
-          </div>
-          <div className="grid gap-2">
-            <button type="button" className={btnSecondary} onClick={() => goStep("google")}>
-              <GoogleG /> {copy.google}
-            </button>
-            {emailOpen ? (
-              <form
-                noValidate
-                className="flex flex-col gap-3 rounded-2xl border border-line p-4"
-                onSubmit={(e) => {
-                  e.preventDefault()
-                  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())) return setEmailErr(copy.emailError)
-                  setEmailErr("")
-                  goStep("inbox")
-                }}
-              >
-                <Field label={copy.emailLabel} htmlFor="si-email" error={emailErr}>
-                  <input id="si-email" type="email" autoComplete="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="you@example.com" aria-invalid={!!emailErr || undefined} className={inputCls} />
-                </Field>
-                <button type="submit" className={btnPrimary}>
-                  {copy.emailSend}
+          {/* Google and email sign-in are prototype-only: the API signs in by phone code */}
+          {!apiEnabled && (
+            <>
+              <div className="my-5 flex items-center gap-3 text-[14px] text-muted-ink">
+                <span className="h-px flex-1 bg-line" /> {copy.or} <span className="h-px flex-1 bg-line" />
+              </div>
+              <div className="grid gap-2">
+                <button type="button" className={btnSecondary} onClick={() => goStep("google")}>
+                  <GoogleG /> {copy.google}
                 </button>
-              </form>
-            ) : (
-              <button type="button" className={btnSecondary} onClick={() => setEmailOpen(true)}>
-                <Mail aria-hidden /> {copy.email}
-              </button>
-            )}
-          </div>
+                {emailOpen ? (
+                  <form
+                    noValidate
+                    className="flex flex-col gap-3 rounded-2xl border border-line p-4"
+                    onSubmit={(e) => {
+                      e.preventDefault()
+                      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())) return setEmailErr(copy.emailError)
+                      setEmailErr("")
+                      goStep("inbox")
+                    }}
+                  >
+                    <Field label={copy.emailLabel} htmlFor="si-email" error={emailErr}>
+                      <input id="si-email" type="email" autoComplete="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="you@example.com" aria-invalid={!!emailErr || undefined} className={inputCls} />
+                    </Field>
+                    <button type="submit" className={btnPrimary}>
+                      {copy.emailSend}
+                    </button>
+                  </form>
+                ) : (
+                  <button type="button" className={btnSecondary} onClick={() => setEmailOpen(true)}>
+                    <Mail aria-hidden /> {copy.email}
+                  </button>
+                )}
+              </div>
+            </>
+          )}
           <p className="mt-6 text-center text-[14px] leading-5 text-muted-ink">
             {copy.terms.split(/(\{terms\}|\{privacy\})/).map((part, i) =>
               part === "{terms}" ? (
@@ -168,9 +189,20 @@ export function SignInFlow({ copy }: { copy: Copy }) {
       {step === "code" && (
         <form
           noValidate
-          onSubmit={(e) => {
+          onSubmit={async (e) => {
             e.preventDefault()
             if (code.length !== 6) return setCodeErr(copy.codeShort)
+            if (apiEnabled) {
+              setBusy(true)
+              const r = await signInVerify(phone, code)
+              setBusy(false)
+              if (!r.ok) {
+                setCode("")
+                return setCodeErr(r.status ? r.message : copy.unreachable)
+              }
+              writeDemo((s) => ({ ...s, user: { ...r.data, api: true } }))
+              return router.push(r.data.business ? next : "/claim")
+            }
             if (code === "000000") {
               const left = Math.max(0, tries - 1)
               setTries(left)
@@ -182,12 +214,12 @@ export function SignInFlow({ copy }: { copy: Copy }) {
         >
           <Title>{copy.codeHeading}</Title>
           <p className="mt-1.5 text-slate">{fill(copy.codeSent, { phone })}</p>
-          <Field label={copy.codeLabel} htmlFor="si-code" error={codeErr} hint={copy.hintCode} className="mt-6">
+          <Field label={copy.codeLabel} htmlFor="si-code" error={codeErr} hint={apiEnabled ? undefined : copy.hintCode} className="mt-6">
             <CodeInput id="si-code" value={code} onChange={setCode} invalid={!!codeErr} describedBy="si-code-msg" />
           </Field>
           <div className="mt-6 flex flex-wrap items-center gap-3">
-            <button type="submit" className={btnPrimary}>
-              {copy.codeSubmit}
+            <button type="submit" className={btnPrimary} disabled={busy}>
+              {busy ? copy.checking : copy.codeSubmit}
             </button>
             <button type="button" onClick={() => goStep("start")} className={`inline-flex h-11 items-center rounded-full px-3 font-semibold text-blue hover:bg-blue-tint ${focusRing}`}>
               {copy.changeNumber}

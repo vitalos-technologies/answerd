@@ -17,6 +17,15 @@ export const pages = {
     noReviews: "No reviews yet",
   },
 
+  /** Google results (API mode). Shown only with Google's attribution, never cached or stored. */
+  google: {
+    intro: "Not on Answerd yet. Details from Google; call them to check availability.",
+    attribution: "Powered by Google",
+    loading: "Loading more results…",
+    call: "Call",
+    distance: "{miles} mi away",
+  },
+
   badges: {
     responds_instantly: "Responds instantly",
     verified: "Verified",
@@ -27,6 +36,22 @@ export const pages = {
     dbs: "DBS checked",
     unclaimed: "Unclaimed",
     new: "New",
+  },
+
+  /** W-02 /search */
+  search: {
+    metaTitle: "Search · Answerd",
+    heading: "Find local help",
+    headingFor: "{q} near {postcode}",
+    what: "What do you need?",
+    whatPlaceholder: "Plumber, boiler service, haircut…",
+    where: "Postcode",
+    wherePlaceholder: "SE25",
+    submit: "Search",
+    count: "{count} on Answerd",
+    none: "Nobody on Answerd matches that yet. Try a different service, or ask Chat with Answerd.",
+    needBoth: "Tell us what you need and where.",
+    google: "More near {postcode}, from Google",
   },
 
   /** W-03 /[category] */
@@ -59,6 +84,8 @@ export const pages = {
     nearbyResults: "Also covering nearby areas",
     nearbyResultsEmpty: "Nothing in {area} yet. These cover nearby areas",
     inPlace: "In",
+    /** API mode: Google results, fetched live in the browser and never cached into the page */
+    googleHeading: "More {plural} near {area}, from Google",
     avgHeading: "Average prices",
     avgLocal: "Listed by {plural} in {area}.",
     avgWider: "Not enough listed in {area} yet, so these are from {plural} across Answerd.",
@@ -173,6 +200,17 @@ export const pages = {
     stepOf: "Step {n} of {total}: {name}",
     back: "Back",
     prototypeNote: "Prototype: nothing you enter here is saved or sent.",
+    /** API mode */
+    live: {
+      signInHeading: "Sign in to claim {name}",
+      signInBody: "We'll text you a code. Claiming adds the business to your Answerd account.",
+      signIn: "Sign in to continue",
+      searching: "Searching…",
+      working: "One moment…",
+      error: "That didn't work: {message}",
+      fromAnswerd: "On Answerd",
+      fromRecords: "From public records",
+    },
     find: {
       heading: "Let's find your business",
       body: "Many businesses are already on Answerd from public records. Claim yours for free.",
@@ -320,6 +358,12 @@ export const pages = {
     continue: "Continue to billing",
     signOut: "Sign out",
     demo: { name: "Sam Okafor", business: "Swift Plumbing & Heating", slug: "swift-plumbing-heating" },
+    /** API mode */
+    sending: "Sending…",
+    checking: "Checking…",
+    signedInAsNoBusiness: "Signed in as {name}. Claim your business to manage billing.",
+    claimLink: "Claim your business",
+    unreachable: "We couldn't reach Answerd. Try again in a minute.",
   },
 
   /** W-18 /billing, /billing/checkout, /billing/portal */
@@ -373,6 +417,18 @@ export const pages = {
     trialCarriesOn: "Your free trial carries on until then.",
     manage: "Manage payment method and invoices",
     success: "You're subscribed to {plan}. Prototype: nothing was charged.",
+    /** API mode: real Stripe Checkout and Customer Portal */
+    live: {
+      payment: "You'll pay on Stripe's secure checkout page. Answerd never sees your card.",
+      redirecting: "Opening Stripe…",
+      continue: "Continue to payment, {total} a month",
+      portalHeading: "Manage your subscription",
+      portalBody: "Change your card, download invoices or cancel on Stripe's secure billing portal.",
+      portalOpen: "Open the billing portal",
+      noBusiness: "Claim your business first, then come back to choose a plan.",
+      claim: "Claim your business",
+      error: "That didn't work: {message}",
+    },
     checkout: {
       metaTitle: "Checkout · Answerd",
       heading: "Checkout",
