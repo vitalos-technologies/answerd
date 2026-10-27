@@ -2,6 +2,27 @@
 
 Tracking issue: https://github.com/vitalos-technologies/answerd-prototype/issues/1
 
+## Update, 27 Oct 2026: deploys now go through GitHub Actions
+
+`.github/workflows/deploy.yml` is now the normal way to deploy. The steps below are the fallback.
+- **On push to `main`:** it deploys whichever app changed.
+- **By hand:** Actions → Deploy → Run workflow, then pick `both`, `prototype` or `website`.
+- **Each job:**
+  1. checks that the Cloudflare credentials exist, without printing them;
+  2. runs `pnpm install --frozen-lockfile`;
+  3. runs the app's own `pnpm deploy:cf:prod`. The prototype's version sets `NEXT_PUBLIC_SITE_URL=https://answerd.vitalos.co.uk`.
+- **Overlap:** each app has its own concurrency group (`deploy-prototype`, `deploy-website`), and a running deploy is never cancelled.
+
+| Name | Kind | Purpose |
+| --- | --- | --- |
+| `CLOUDFLARE_API_TOKEN` | secret | Workers edit rights, with the vitalos.co.uk zone under Zone Resources |
+| `CLOUDFLARE_ACCOUNT_ID` | variable **or** secret | The account that owns vitalos.co.uk. The workflow reads `vars` first, then `secrets` |
+| `ANSWERD_API_URL_PROTOTYPE` | variable, optional | Turns API mode on for the production prototype. Leave unset (mock mode); never staging |
+| `ANSWERD_API_URL_SITE` | variable, optional | The same for the production website (unset means the static fallback data) |
+| `GITHUB_TOKEN` | built in | Reads `@vitalos-technologies/answerd-client` from GitHub Packages once it's a dependency |
+
+Manual deploys from a session or a laptop (`pnpm deploy:cf:prod`, below) still work and deploy the same build.
+
 ## Goal
 
 Move both projects off temporary `workers.dev` addresses onto the vitalos.co.uk zone (DNS is on Cloudflare):
