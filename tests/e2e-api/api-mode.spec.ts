@@ -1,11 +1,12 @@
 import { expect, test, type Page } from "@playwright/test"
 import { app, start, watchErrors } from "../e2e/helpers"
+import { parsePhones } from "./phones"
 
 // API mode against staging (playwright.api.config.ts). Checks the main customer path reads the API, not the
 // mock store, and that sign-in uses the real phone-code flow when allowlisted test numbers are configured.
 
 const API = process.env.NEXT_PUBLIC_ANSWERD_API_URL!
-const phones = JSON.parse(process.env.ANSWERD_STAGING_TEST_PHONES ?? "{}") as Record<string, string>
+const phones = parsePhones(process.env.ANSWERD_STAGING_TEST_PHONES)
 const OTP = process.env.ANSWERD_STAGING_OTP ?? "123456"
 
 /** "+447700900123" → "07700 900123" */
