@@ -146,7 +146,9 @@ function applyListing(d: D, a: ApiListing, reviews: ApiReview[]) {
   l.unpublished = false
 
   // Reviews: the API's latest page replaces the mock ones (the rating uses the API's summary above)
-  d.reviews = d.reviews.filter((r) => r.listingId !== l.id || r.bookingId)
+  // Kept local: reviews from a booking in this demo, and the moderation queue (flagged or removed), which the
+  // public reviews don't carry until admin reads are wired to the API
+  d.reviews = d.reviews.filter((r) => r.listingId !== l.id || r.bookingId || r.flagged || r.status === "removed")
   for (const r of reviews)
     d.reviews.push({
       id: `api-${r.id}`,
@@ -197,8 +199,10 @@ function applyListing(d: D, a: ApiListing, reviews: ApiReview[]) {
     if (a.deskLive) desk.status = "live"
     else if (desk.status === "live") desk.status = "off"
   }
+  // The public listing only carries verified credentials. Pending and rejected ones (the admin review queue)
+  // stay local until admin reads are wired to the API.
   d.credentials = [
-    ...d.credentials.filter((c) => c.businessId !== bizId),
+    ...d.credentials.filter((c) => c.businessId !== bizId || c.status !== "verified"),
     ...a.credentials
       .filter((c): c is typeof c & { type: CredentialType } => (CRED_TYPES as string[]).includes(c.type))
       .map((c, i) => ({ id: `api-cr-${a.slug}-${i}`, businessId: bizId, type: c.type, label: c.label, number: "", fileUrl: "", expiresAt: c.expiresAt ?? undefined, status: c.status as Credential["status"], submittedAt: new Date().toISOString() })),
