@@ -49,7 +49,10 @@ export function DataSourcePanel() {
         <dt className="text-muted-ink">Signed in</dt>
         <dd className="text-navy">{s.user ? `${s.user.phone}${s.user.name ? ` (${s.user.name})` : ""}` : "No API session (personas are demo-only)"}</dd>
         <dt className="text-muted-ink">Realtime</dt>
-        <dd className="text-navy">{s.realtime}</dd>
+        <dd className="text-navy">
+          {s.realtime}
+          {s.realtime !== "open" && s.realtimeReason ? ` (${s.realtimeReason})` : ""}
+        </dd>
         <dt className="text-muted-ink">Actions</dt>
         <dd className="text-navy">{BRIDGE_ROUTES.length} store actions call the API</dd>
       </dl>

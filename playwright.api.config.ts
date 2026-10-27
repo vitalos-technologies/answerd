@@ -19,7 +19,8 @@ export default defineConfig({
   expect: { timeout: 30_000 },
   fullyParallel: false,
   workers: 1,
-  retries: process.env.CI ? 1 : 0,
+  // No retries: staging rate-limits sign-in codes per number (OTP_RATE_LIMITED), and every retry spends one
+  retries: 0,
   reporter: [["list"]],
   use: {
     ...devices["Desktop Chrome"],

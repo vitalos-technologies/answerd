@@ -69,7 +69,7 @@ NEXT_PUBLIC_ANSWERD_API_URL=https://answerd-staging-api.onrender.com pnpm build 
 - **The client.** `lib/api/client.ts` stands in for `@vitalos/answerd-client` until the package can be installed (issue #2). `docs/answerd-api-contract.md` lists what's confirmed on staging.
 - **Tests.** `pnpm test:e2e:api` runs the API-mode checks against staging. It wakes the API first. The journeys run too when `ANSWERD_STAGING_TEST_PHONES` is set.
 
-The production deploy doesn't set the variable, so it stays in mock mode.
+Production stays in mock mode: the deploy workflow sets `NEXT_PUBLIC_ANSWERD_API_URL` only from the repo variable `ANSWERD_API_URL_PROTOTYPE`, which is unset. Never point it at staging.
 
 ## Surfaces
 
@@ -84,11 +84,19 @@ The production deploy doesn't set the variable, so it stays in mock mode.
 
 ## Deploy to Cloudflare Workers
 
-Uses OpenNext (`@opennextjs/cloudflare`); config is in `wrangler.jsonc` and `open-next.config.ts`.
+Uses OpenNext (`@opennextjs/cloudflare`); config is in `wrangler.jsonc` and `open-next.config.ts`, and production is `wrangler.production.jsonc` (https://answerd-demo.vitalos.co.uk).
+
+**Production deploys go through GitHub Actions** (`.github/workflows/deploy.yml`):
+- When CI passes on `main`, a change to the prototype (anything outside `marketing-site/`, docs, Markdown and tests) deploys it to https://answerd-demo.vitalos.co.uk.
+- To deploy by hand, use **Actions → Deploy → Run workflow** and pick `both`, `prototype` or `website`.
+- The job runs `pnpm deploy:cf:prod` with the repo's `CLOUDFLARE_API_TOKEN` (secret) and `CLOUDFLARE_ACCOUNT_ID` (variable or secret).
+- Production stays in mock mode unless the repo variable `ANSWERD_API_URL_PROTOTYPE` is set.
+
+Locally:
 
 ```bash
-pnpm preview:cf   # build and run locally in workerd
-pnpm deploy:cf    # build and deploy (needs CLOUDFLARE_API_TOKEN with Workers edit rights, and CLOUDFLARE_ACCOUNT_ID)
+pnpm preview:cf       # build and run locally in workerd
+pnpm deploy:cf:prod   # fallback: deploy production by hand (needs CLOUDFLARE_API_TOKEN with Workers edit rights on the vitalos.co.uk zone, and CLOUDFLARE_ACCOUNT_ID)
 ```
 
 ## Tests
