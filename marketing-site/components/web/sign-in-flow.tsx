@@ -201,7 +201,8 @@ export function SignInFlow({ copy }: { copy: Copy }) {
                 return setCodeErr(r.status ? r.message : copy.unreachable)
               }
               writeDemo((s) => ({ ...s, user: { ...r.data, api: true } }))
-              return router.push(r.data.business ? next : "/claim")
+              // No business yet: claiming is the next step (keep a ?listing= from the claim flow)
+              return router.push(r.data.business || next.startsWith("/claim") ? next : "/claim")
             }
             if (code === "000000") {
               const left = Math.max(0, tries - 1)

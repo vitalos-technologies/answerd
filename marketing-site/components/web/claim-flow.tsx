@@ -1,5 +1,6 @@
 "use client"
 import * as React from "react"
+import Link from "next/link"
 import { ArrowLeft, Building2, CheckCircle2, ChevronRight, Clock, FileText, MessageSquare, PhoneCall, Plus, Search, ShieldAlert, Smartphone } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { fill } from "@/lib/fill"
@@ -11,7 +12,6 @@ import { apiEnabled } from "@/lib/api/client"
 import { claimLookup, claimSearch, claimStart, claimVerify } from "@/lib/api/actions"
 import type { ApiListingCard } from "@/lib/api/types"
 import { useDemo } from "@/lib/demo-session"
-import Link from "next/link"
 import type { pages } from "@/content/pages"
 import { Field, Note, PrototypeLabel, CodeInput, btnPrimary, btnSecondary, inputCls } from "./form"
 
@@ -116,7 +116,8 @@ export function ClaimFlow({ copy, listings, groups, qr, badges }: { copy: Copy; 
   const [pending, setPending] = React.useState(false)
   const current: Step = step ?? (presetListing ? "confirm" : "find")
   const [picked, setPicked] = React.useState<Claimable | null>(null)
-  const listing = added?.id === listingId ? added : picked?.id === listingId && picked ? picked : (listings.find((l) => l.id === (listingId ?? presetListing?.id)) ?? (presetListing?.id === (listingId ?? presetListing?.id) ? presetListing : undefined))
+  const wanted = listingId ?? presetListing?.id
+  const listing = [added, picked, presetListing].find((x) => x && x.id === wanted) ?? listings.find((l) => l.id === wanted)
   const heading = React.useRef<HTMLDivElement>(null)
   const moved = React.useRef(false)
 
@@ -326,13 +327,24 @@ function FindStep({ copy, listings, onPick, onAdd }: { copy: Copy; listings: Cla
           </ul>
         </section>
       )}
-      <button type="button" onClick={onAdd} className={`mt-6 flex min-h-14 w-full items-center gap-3 rounded-2xl bg-sky px-4 py-3 text-left hover:bg-blue-tint ${focusRing}`}>
-        <Plus className="size-5 shrink-0 text-blue" aria-hidden />
-        <span className="flex-1">
-          <span className="block font-semibold text-navy">{c.add}</span>
-          <span className="block text-[14px] leading-5 text-slate">{c.addBody}</span>
-        </span>
-      </button>
+      {apiEnabled ? (
+        // API mode: adding a new business happens in the app until the web flow is wired to POST /v1/businesses
+        <Link href="/get-the-app" className={`mt-6 flex min-h-14 w-full items-center gap-3 rounded-2xl bg-sky px-4 py-3 text-left hover:bg-blue-tint ${focusRing}`}>
+          <Plus className="size-5 shrink-0 text-blue" aria-hidden />
+          <span className="flex-1">
+            <span className="block font-semibold text-navy">{c.add}</span>
+            <span className="block text-[14px] leading-5 text-slate">{copy.live.addInApp}</span>
+          </span>
+        </Link>
+      ) : (
+        <button type="button" onClick={onAdd} className={`mt-6 flex min-h-14 w-full items-center gap-3 rounded-2xl bg-sky px-4 py-3 text-left hover:bg-blue-tint ${focusRing}`}>
+          <Plus className="size-5 shrink-0 text-blue" aria-hidden />
+          <span className="flex-1">
+            <span className="block font-semibold text-navy">{c.add}</span>
+            <span className="block text-[14px] leading-5 text-slate">{c.addBody}</span>
+          </span>
+        </button>
+      )}
     </>
   )
 }

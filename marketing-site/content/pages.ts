@@ -210,6 +210,7 @@ export const pages = {
       error: "That didn't work: {message}",
       fromAnswerd: "On Answerd",
       fromRecords: "From public records",
+      addInApp: "Not on Answerd yet? Add your business in the Answerd app.",
     },
     find: {
       heading: "Let's find your business",
