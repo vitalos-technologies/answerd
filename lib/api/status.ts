@@ -19,6 +19,8 @@ interface ApiStatus {
   mode: "mock" | "api"
   url: string
   realtime: RealtimeState
+  /** Why the relay last closed, if it said */
+  realtimeReason: string | null
   user: { id: string; phone: string; name?: string | null } | null
   sync: { state: "idle" | "running" | "done" | "error"; listings: number; at: number | null; error?: string }
   calls: ApiCallLog[]
@@ -34,6 +36,7 @@ export const useApiStatus = create<ApiStatus>(() => ({
   mode: apiMode ? "api" : "mock",
   url: API_URL,
   realtime: "off",
+  realtimeReason: null,
   user: null,
   sync: { state: "idle", listings: 0, at: null },
   calls: [],

@@ -38,9 +38,16 @@ export function connectRealtime(onEvent: (e: RealtimeEvent) => void) {
   }
   es.addEventListener("ready", () => {
     retry = 0
-    useApiStatus.setState({ realtime: "open" })
+    useApiStatus.setState({ realtime: "open", realtimeReason: null })
   })
-  es.addEventListener("closed", reconnect)
+  es.addEventListener("closed", (m) => {
+    try {
+      useApiStatus.setState({ realtimeReason: (JSON.parse(String((m as MessageEvent).data)) as { reason?: string }).reason ?? null })
+    } catch {
+      /* no reason sent */
+    }
+    reconnect()
+  })
   es.onerror = reconnect
   es.onmessage = (m) => {
     try {
