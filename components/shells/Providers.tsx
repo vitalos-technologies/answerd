@@ -3,17 +3,19 @@ import * as React from "react"
 import Link from "next/link"
 import { usePathname, useSearchParams } from "next/navigation"
 import { useStore } from "@/lib/store"
+import { bootApiMode } from "@/lib/api/boot"
 import { TooltipProvider } from "@/components/ui/tooltip"
 import { Mark } from "@/components/brand/Mark"
 import { Toaster } from "@/components/answerd/Feedback"
 import { ScreenIdBadge } from "./ScreenMeta"
 import { cn } from "@/lib/utils"
 
-/** Rehydrates the persisted demo store after mount so server and first client render match. */
+/** Rehydrates the persisted demo store after mount so server and first client render match, then starts API mode if it is on. */
 export function Providers({ children }: { children: React.ReactNode }) {
   React.useEffect(() => {
     void Promise.resolve(useStore.persist.rehydrate()).finally(() => {
       if (!useStore.getState().hydrated) useStore.setState({ hydrated: true })
+      bootApiMode()
     })
   }, [])
   return <TooltipProvider delayDuration={300}>{children}</TooltipProvider>

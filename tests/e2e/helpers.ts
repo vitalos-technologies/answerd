@@ -3,6 +3,9 @@ import type { PersonaId } from "@/lib/types"
 
 type StoreWindow = Window & { __answerdStore: { getState: () => { hydrated: boolean; setCookieConsent: (c: { analytics: boolean; marketing: boolean }) => void } } }
 
+/** Set by playwright.api.config.ts: the app under test runs against the Answerd API. */
+export const API_MODE = !!process.env.NEXT_PUBLIC_ANSWERD_API_URL
+
 /** The phone frame: app screens render inside it. */
 export const app = (page: Page) => page.locator("[data-phone-frame]")
 
@@ -12,6 +15,8 @@ export async function start(page: Page, persona: PersonaId = "guest") {
   await page.waitForFunction(() => Boolean((window as unknown as StoreWindow).__answerdStore?.getState().hydrated))
   await page.getByRole("button", { name: /Reset demo data/ }).click()
   await page.evaluate(() => (window as unknown as StoreWindow).__answerdStore.getState().setCookieConsent({ analytics: false, marketing: false }))
+  // API mode (playwright.api.config.ts): wait until the API's catalogue is in the store
+  if (API_MODE) await expect(page.getByTestId("api-sync")).toHaveAttribute("data-state", "done", { timeout: 180_000 })
   if (persona !== "guest") await as(page, persona)
 }
 
@@ -45,6 +50,8 @@ export function watchErrors(page: Page) {
   const errors: string[] = []
   page.on("pageerror", (e) => errors.push(e.message))
   page.on("console", (m) => {
+    // API mode: a refused API call is logged by the browser; the hub's log shows it, and the local action still ran
+    if (API_MODE && m.location().url.includes("/api/answerd/")) return
     if (m.type() === "error") errors.push(m.text())
   })
   return { assertNone: () => expect(errors, errors.join("\n")).toEqual([]) }

@@ -11,6 +11,8 @@ import { useStore } from "@/lib/store"
 import { fmtTime, ms } from "@/lib/time"
 import { cn } from "@/lib/utils"
 import { SignupsPausedBanner } from "@/components/admin/super/live"
+import { apiMode } from "@/lib/api/config"
+import { otpStart } from "@/lib/api/client"
 
 /** C-06: UK mobile in any common format. */
 function PhonePage() {
@@ -29,12 +31,21 @@ function PhonePage() {
     <AppScreen id="C-06" bg="white" header={<TopBar title="Your mobile number" back tone="clear" />}>
       <form
         className="flex h-full flex-col px-4 pb-6 pt-2"
-        onSubmit={(e) => {
+        onSubmit={async (e) => {
           e.preventDefault()
           if (!normal) return setErr("Enter a UK mobile number, like 07700 900123")
           if (lockedUntil) return
           setLoading(true)
-          setTimeout(() => router.push(`/app/sign-in/code?next=${encodeURIComponent(next)}&phone=${encodeURIComponent(normal)}`), 500)
+          const to = `/app/sign-in/code?next=${encodeURIComponent(next)}&phone=${encodeURIComponent(normal)}`
+          if (!apiMode) return void setTimeout(() => router.push(to), 500)
+          // API mode: the real phone-code flow (staging texts allowlisted test numbers only)
+          try {
+            await otpStart(normal)
+            router.push(to)
+          } catch (x) {
+            setLoading(false)
+            setErr(x instanceof Error ? x.message : "We couldn't send a code. Try again.")
+          }
         }}
       >
         <h1 className="t-title">What&apos;s your mobile number?</h1>
@@ -74,7 +85,9 @@ function PhonePage() {
             {err}
           </p>
         )}
-        <p className="mt-2 t-caption text-muted-ink">Prototype: any UK mobile works. Tayo is 07700 900123, Sam 07700 900456, Jo 07700 900457.</p>
+        <p className="mt-2 t-caption text-muted-ink">
+          {apiMode ? "API mode: we text a real code. On staging, only allowlisted test numbers get one." : "Prototype: any UK mobile works. Tayo is 07700 900123, Sam 07700 900456, Jo 07700 900457."}
+        </p>
         <div className="mt-auto">
           <Button block type="submit" loading={loading} disabled={!value}>
             Send code

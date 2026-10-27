@@ -48,6 +48,29 @@ The hub (`/hub`) drives the demo. From it you can:
 
 To sign in by hand, any UK mobile number works. Tayo is 07700 900123, Sam is 07700 900456 and Jo is 07700 900457. For any code, **000000 is wrong** and any other 6 digits are right.
 
+## API mode
+
+By default the prototype runs on its mock store. To run it against the real Answerd API, build with `NEXT_PUBLIC_ANSWERD_API_URL` set:
+
+```bash
+NEXT_PUBLIC_ANSWERD_API_URL=https://answerd-staging-api.onrender.com pnpm build && pnpm start
+```
+
+- **Catalogue.** Listings, services, hours, service areas, credentials, desk status, ratings and reviews come from the API.
+  - They're matched to the demo's listings by slug, so personas keep working.
+  - Mock listings the API doesn't have are hidden.
+  - Google results are never copied into the store.
+- **Store actions.** Every store action with an endpoint (37 of them: messages, bookings, quotes, reviews, saves, claims, business settings, the desk, team, admin claim decisions) also calls the API.
+  - The action still runs locally first.
+  - See `lib/api/bridge.ts`.
+- **Realtime.** Events from `/v1/realtime` update the store.
+- **Sign-in.** It uses the real phone-code flow (C-06, C-07). On staging only allowlisted test numbers get a code.
+- **The hub.** It shows the mode in its header. Its **Data source** panel shows sync state, the API session, realtime, and every API call with its status.
+- **The client.** `lib/api/client.ts` stands in for `@vitalos/answerd-client` until the package can be installed (issue #2). `docs/answerd-api-contract.md` lists what's confirmed on staging.
+- **Tests.** `pnpm test:e2e:api` runs the API-mode checks against staging. It wakes the API first. The journeys run too when `ANSWERD_STAGING_TEST_PHONES` is set.
+
+The production deploy doesn't set the variable, so it stays in mock mode.
+
 ## Surfaces
 
 | Surface | Routes | IDs |
