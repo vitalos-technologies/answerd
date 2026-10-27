@@ -10,6 +10,15 @@ concurrency:
   group: ci-${{ github.ref }}
   cancel-in-progress: true
 
+# packages: read lets installs fetch @vitalos-technologies/answerd-client from GitHub Packages with GITHUB_TOKEN
+# (once the client is a dependency; see update-answerd-client.yml). The token is only read through .npmrc.
+permissions:
+  contents: read
+  packages: read
+
+env:
+  NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
 jobs:
   prototype:
     name: Prototype (mock mode)
