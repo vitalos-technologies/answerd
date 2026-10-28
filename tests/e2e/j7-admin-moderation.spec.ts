@@ -1,5 +1,5 @@
 import { expect, test, type Page } from "@playwright/test"
-import { start, state, watchErrors } from "./helpers"
+import { API_MODE, start, state, watchErrors } from "./helpers"
 
 type W = Window & { __answerdStore: { getState: () => Record<string, (...a: unknown[]) => unknown> & { session: { userId: string } } } }
 
@@ -76,8 +76,11 @@ test("J7 admin approves a claim and a credential, removes a review; badges, rati
   await expect(page.locator("[data-phone-frame]")).toContainText(/\bDBS\b/)
   await page.goto("/app/b/swift-plumbing-heating")
   const ratingAfter = await ratingLine(page)
-  expect(ratingBefore).toMatch(/from 132$/)
-  expect(ratingAfter).toMatch(/from 131$/)
+  // Removing the flagged review takes one off the count. Against staging the starting count drifts (other runs
+  // post real reviews), so only the mock seed's exact 132 is checked.
+  const count = (line: string | undefined) => Number(/from (\d+)$/.exec(line ?? "")?.[1])
+  if (!API_MODE) expect(ratingBefore).toMatch(/from 132$/)
+  expect(count(ratingAfter)).toBe(count(ratingBefore) - 1)
 
   // The audit log screen lists the entries
   await page.goto("/admin/audit")
