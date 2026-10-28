@@ -13,6 +13,12 @@ pnpm build        # production build (about 580 static pages)
 pnpm lint
 ```
 
+**Installing needs a GitHub token.** The Answerd API client (`@vitalos/answerd-client`) comes from GitHub Packages, which asks for a token on every install, even for public packages.
+- Create a classic token with only `read:packages` and export it before `pnpm install`: `export NODE_AUTH_TOKEN=<token>`.
+- Never commit it. `.npmrc` holds only the `${NODE_AUTH_TOKEN}` placeholder.
+- CI and the deploy workflow use the repo's built-in `GITHUB_TOKEN`.
+- Cloud sessions need `NODE_AUTH_TOKEN` in the environment's secrets.
+
 ## App-first rules
 
 1. "Get the app" is the one primary action on every page: the header button, the mobile smart banner and the home page's sticky bar. On a computer it opens the QR dialog; on a phone it goes straight to the right store (or the dialog with both badges while the store links aren't set).
