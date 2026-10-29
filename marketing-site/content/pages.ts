@@ -506,6 +506,93 @@ export const pages = {
     help: "Visit the help centre",
   },
 
+  /** W-08 /how-it-works: for customers. */
+  howItWorks: {
+    metaTitle: "How Answerd works",
+    metaDescription: "Find, contact, book and review local services in the Answerd app. How we check businesses, and why reviews come only from real bookings.",
+    eyebrow: "For customers",
+    heading: "From “I need someone” to a job done",
+    lead: "Answerd is free for customers. Find a local business, reach them in two taps, book a time that suits you, then tell your neighbours how it went.",
+    stepsHeading: "Four steps",
+    steps: [
+      { icon: "Search", title: "Find", body: "Search for what you need and where. Compare businesses by their reviews, prices, credentials and when they're free. Not sure who you need? Describe the problem to Ask Answerd and it suggests the right local businesses." },
+      { icon: "PhoneCall", title: "Contact", body: "Call, message or send photos of the job. Businesses with an Answerd desk reply straight away, even when they're busy on another job." },
+      { icon: "CalendarCheck", title: "Book", body: "Pick a real slot from the business's diary, or ask for a quote. You'll get a text to confirm and a reminder before they arrive." },
+      { icon: "Star", title: "Review", body: "After the job, rate it in a minute. Your review helps the next person choose well." },
+    ],
+    trustHeading: "Why you can trust what you see",
+    trust: [
+      { icon: "ShieldCheck", title: "Credentials we check", body: "Gas Safe, NICEIC, insurance and DBS badges appear only after our team has checked the document. Badges with an expiry date come off when they lapse." },
+      { icon: "Star", title: "Reviews from real jobs", body: "Only customers who booked or called a business through Answerd can review it. Businesses can reply, but they can't remove a review." },
+      { icon: "Bot", title: "AI that says it's an AI", body: "Answerd desks and Ask Answerd always say they're an AI, and a person from the business can take over at any time." },
+      { icon: "BadgeCheck", title: "Claimed by the owner", body: "A business is marked claimed only after its owner proves it's theirs: by text, a call, Companies House or a document." },
+    ],
+    ctaHeading: "Find local help now",
+    ctaBody: "Search on the web, or get the app to call, message and book.",
+    search: "Search for a service",
+    getApp: "Get the app",
+  },
+
+  /** W-09 /for-businesses */
+  forBusinesses: {
+    metaTitle: "Answerd for businesses",
+    metaDescription: "List your business free on Answerd, see every enquiry we send you, and add an AI front desk that answers calls, replies to texts and books jobs.",
+    eyebrow: "For businesses",
+    heading: "Every business picks up.",
+    lead: "Customers across the UK use Answerd to find, call, message and book local services. List free, see every enquiry we send you, and add an AI front desk that answers when you can't.",
+    claim: "List your business free",
+    seePricing: "See pricing",
+    features: [
+      { icon: "Store", title: "A free listing, for good", body: "Your profile, services and prices, photos, reviews, inbox and diary. No contract and no card." },
+      { icon: "Inbox", title: "Enquiries you can see", body: "Every call, message and booking request Answerd sends you, with where it came from. Claim your listing and you'll see the history we've already logged." },
+      { icon: "PhoneIncoming", title: "An AI front desk", body: "It answers your calls and texts when you're busy, quotes from your price list, books jobs into your diary and hands anything tricky to you." },
+    ],
+    demoHeading: "Hear the desk at work",
+    demoBody: "A sample call to a plumber's AI desk. The desk only knows your business: your services, prices, hours and diary.",
+    demoLabel: "Sample call, for illustration",
+    demoPlay: "Play the sample call",
+    demoReplay: "Play again",
+    demoCaller: "Caller",
+    demoDesk: "Swift Plumbing's AI desk",
+    demoLines: [
+      { who: "desk", text: "Hi, you've reached Swift Plumbing & Heating. I'm the AI assistant for Sam's team. How can I help?" },
+      { who: "caller", text: "My kitchen tap won't stop dripping. Could someone come this week?" },
+      { who: "desk", text: "I can book that. A tap repair is from £60. Sam has Thursday at 10am or Friday at 2pm. Which suits you?" },
+      { who: "caller", text: "Thursday at 10, please." },
+      { who: "desk", text: "Booked for Thursday at 10am. You'll get a text to confirm, and Sam can see it in the diary now." },
+    ],
+    demoResult: "Booked into Sam's diary · Thu 10:00",
+    pricingHeading: "Simple pricing",
+    pricingBody: "Free to list. Pay only for what you add, and never before Answerd has sent you 10 enquiries.",
+    faqsHeading: "Questions from businesses",
+    faqs: [
+      { q: "Is listing really free?", a: "Yes. Your listing, inbox, diary and reviews are free for good, with no contract." },
+      { q: "When would I pay anything?", a: "Only if you choose the AI desk or Featured, and never before Answerd has sent you 10 enquiries. The AI desk starts with a 14-day free trial." },
+      { q: "Does the AI desk pretend to be me?", a: "No. It always says it's an AI assistant for your business, and it hands over to you for anything it can't answer." },
+      { q: "What does it know about my business?", a: "Only what you give it: your services and prices, hours, service area, diary and your own questions and answers." },
+      { q: "Can I turn it off?", a: "Yes, pause it any time in the app, and cancel whenever you like." },
+      { q: "How do I claim my listing?", a: "Search for your business on the claim page and verify by text, a call, Companies House or a document. It takes a few minutes." },
+    ],
+  },
+
+  /** W-10 /pricing */
+  pricing: {
+    metaTitle: "Answerd pricing",
+    metaDescription: "Free listing for good. AI front desk £49/month with a 14-day free trial, Featured £29/month, all ex VAT. You'll never pay before you've had 10 enquiries from Answerd.",
+    eyebrow: "Pricing",
+    heading: "Free to list. Pay only for what you add.",
+    lead: "All prices exclude VAT. You'll never pay before you've had 10 enquiries from Answerd.",
+    start: "Get started",
+    startFree: "List your business free",
+    faqsHeading: "Pricing questions",
+    faqs: [
+      { q: "What counts as an enquiry?", a: "A call that connected or reached your desk, a new message thread, or a booking request from a customer who found you on Answerd. Profile views don't count, and one customer counts once a day." },
+      { q: "Is there a contract?", a: "No. Plans are monthly and you can cancel in the app at any time." },
+      { q: "What happens after the AI desk trial?", a: "The trial lasts 14 days. If you keep the desk, it's £49 a month ex VAT, and only once Answerd has sent you 10 enquiries." },
+      { q: "How do I pay?", a: "Subscriptions are bought on the web by card. You'll get a VAT invoice each month." },
+    ],
+  },
+
   /** /contact: the contact form, relayed to the Vitalos admin inbox (app/api/contact). */
   contact: {
     metaTitle: "Contact Answerd",

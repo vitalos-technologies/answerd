@@ -33,10 +33,14 @@ pnpm lint
 | `/billing`, `/billing/checkout?plan=desk\|featured`, `/billing/portal` | W-18 | Plans (public), plus for the signed-in demo owner: current plan, monetise-gate progress, gated plan buttons, mock checkout and portal. Labelled "Prototype checkout, no card needed" |
 | `/help` | W-20 | 20 articles for customers and businesses with a search filter; contact by email |
 | `/about` | W-21 | Answerd by Vitalos, chat powered by Askbridge, contact |
+| `/how-it-works` | W-08 | How it works for customers (find, contact, book, review) and how trust and verification work |
+| `/for-businesses` | W-09 | "Every business picks up.": free listing, enquiries you can see, the AI desk with a sample-call player, pricing preview, FAQs. Testimonials are real only, so none at launch |
+| `/pricing` | W-10 | Free listing, AI desk £49 (14-day trial), Featured £29, ex VAT; the 10-enquiry promise; FAQs. Buying stays on `/billing` |
 | `/contact` | — | Contact form (topic, name, email, organisation, message). `app/api/contact` relays it, signed, to the Vitalos admin inbox (admin.vitalos.co.uk › Enquiries) |
 | `/terms`, `/privacy`, `/cookies`, `/legal/review-policy`, `/legal/acceptable-use`, `/legal/call-recording` | W-22 | Legal placeholders with shared navigation |
 | `/review/[token]` | W-27 | Review from the post-job link. Demo tokens: `bk-tayo-swift-past` (valid), `bk-tayo-sparkle` (already reviewed); anything else shows "expired" |
 | `/get-the-app` | W-26 | QR, store badges, what the app does. The site's QR codes point here |
+| (every page) | W-23 | Cookie banner: Accept all, Reject non-essential and Manage (chat and analytics separately), equal weight |
 | (every page, phones) | W-26 | Smart app banner at the top, dismissible for the session |
 | (every page) | W-25 | Chat with Answerd placeholder; its chips now suggest up to three businesses as cards linking to `/b/[slug]` |
 | 404 | W-24 | Not found with links to popular services |
@@ -69,7 +73,7 @@ pnpm lint
 | `NEXT_PUBLIC_ANSWERD_API_URL` | Turns on API mode (see below), e.g. `https://answerd-staging-api.onrender.com` | Static fallback data, as before |
 | `ANSWERD_REVALIDATE_SECRET` | Secret for the signed `POST /api/revalidate` (API mode). Set it on the Worker as a secret, and on the API | `/api/revalidate` answers 503 |
 | `NEXT_PUBLIC_ASKBRIDGE_SITE_KEY` | The Answerd workspace's public site key in Askbridge (`pk_…`). Loads the real Askbridge widget, `askbridge.vitalos.co.uk/widget/v1/askbridge.js`, only after the visitor accepts all cookies. Build time: the deploy reads the repo variable `ASKBRIDGE_SITE_KEY` | The local chat placeholder shows |
-| `VITALOS_ENQUIRY_SECRET` | Secret for the `/contact` form's relay to the Vitalos admin inbox (the admin's `INBOUND_WEBHOOK_SECRET`). Set it on the Worker as a secret | The form says it can't send and shows the email address |
+| `VITALOS_ENQUIRY_SECRET` | Secret for the `/contact` form's relay to the Vitalos admin inbox (the admin's `INBOUND_WEBHOOK_SECRET`). The deploy copies it onto the Worker from the GitHub secret `VITALOS_ENQUIRY_SECRET`, or an org secret `INBOUND_WEBHOOK_SECRET` shared with this repo; or set it on the Worker directly | The form says it can't send and shows the email address |
 | `VITALOS_ENQUIRY_URL` | The admin inbox's web-form endpoint | `https://admin.vitalos.co.uk/api/inbound/web-form` |
 | `NEXT_PUBLIC_TURNSTILE_SITE_KEY` | Cloudflare Turnstile on `/contact`. Needed only when the admin inbox has `TURNSTILE_SECRET_KEY` set: use the site key paired with that secret, with `answerd.vitalos.co.uk` in its hostnames. Build time: repo variable `TURNSTILE_SITE_KEY` | No check on the form |
 | `APP_STORE_URL` | App Store listing for badges, QR flow and "Get the app" on iPhone | Links go to `/#download` |

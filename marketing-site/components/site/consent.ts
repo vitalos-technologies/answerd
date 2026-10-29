@@ -1,7 +1,14 @@
 "use client"
 import * as React from "react"
 
-export type Consent = "all" | "essential"
+/** "chat" and "analytics" are the two Manage choices (W-23): one optional category each, the other off. */
+export type Consent = "all" | "essential" | "chat" | "analytics"
+const VALUES: readonly string[] = ["all", "essential", "chat", "analytics"]
+
+/** Whether the visitor's choice allows an optional category. */
+export function allows(consent: Consent | null | undefined, category: "chat" | "analytics") {
+  return consent === "all" || consent === category
+}
 export const CONSENT_KEY = "answerd-consent"
 const KEY = CONSENT_KEY
 const EVENT = "answerd-consent-change"
@@ -9,7 +16,7 @@ const EVENT = "answerd-consent-change"
 function read(): Consent | null {
   try {
     const v = localStorage.getItem(KEY)
-    return v === "all" || v === "essential" ? v : null
+    return v && VALUES.includes(v) ? (v as Consent) : null
   } catch {
     return null
   }

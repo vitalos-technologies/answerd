@@ -174,3 +174,12 @@ jobs:
           done
       - run: pnpm install --frozen-lockfile
       - run: pnpm deploy:cf:prod
+      # The /contact relay's secret: the admin inbox's INBOUND_WEBHOOK_SECRET. Copied onto the Worker from GitHub
+      # (a repo secret VITALOS_ENQUIRY_SECRET, else an org secret INBOUND_WEBHOOK_SECRET shared with this repo); never
+      # printed. Neither set: the Worker keeps whatever secret it has, and the form falls back to email until one is set.
+      - name: Contact form secret on the Worker (only if set in GitHub)
+        env:
+          ENQUIRY_SECRET: ${{ secrets.VITALOS_ENQUIRY_SECRET || secrets.INBOUND_WEBHOOK_SECRET }}
+        run: |
+          if [ -z "$ENQUIRY_SECRET" ]; then echo "No VITALOS_ENQUIRY_SECRET or INBOUND_WEBHOOK_SECRET in GitHub: skipped"; exit 0; fi
+          printf '%s' "$ENQUIRY_SECRET" | pnpm exec wrangler secret put VITALOS_ENQUIRY_SECRET --config wrangler.production.jsonc

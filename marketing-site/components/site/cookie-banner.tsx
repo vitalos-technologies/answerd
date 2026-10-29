@@ -1,7 +1,7 @@
 "use client"
 import * as React from "react"
 import Link from "next/link"
-import { setConsent, useConsent } from "./consent"
+import { setConsent, useConsent, type Consent } from "./consent"
 import type { site } from "@/content/site"
 
 type CookieCopy = (typeof site)["cookies"]
@@ -20,7 +20,14 @@ export function CookieBannerClient({ copy }: { copy: CookieCopy }) {
   const consent = useConsent()
   const show = consent === null || consent === undefined
   const [leaving, setLeaving] = React.useState(false)
+  const [managing, setManaging] = React.useState(false)
+  const [chat, setChat] = React.useState(false)
+  const [analytics, setAnalytics] = React.useState(false)
   const ref = React.useRef<HTMLDivElement>(null)
+  const panel = React.useRef<HTMLFieldSetElement>(null)
+  React.useEffect(() => {
+    if (managing) panel.current?.querySelector("input")?.focus()
+  }, [managing])
 
   React.useEffect(() => {
     const root = document.documentElement
@@ -38,7 +45,7 @@ export function CookieBannerClient({ copy }: { copy: CookieCopy }) {
   }, [show])
 
   // Slide out, then record the choice (which unmounts the banner). Instant under reduced motion.
-  const choose = (value: "all" | "essential") => {
+  const choose = (value: Consent) => {
     if (leaving) return
     const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches
     if (reduce) return setConsent(value)
@@ -65,21 +72,54 @@ export function CookieBannerClient({ copy }: { copy: CookieCopy }) {
           {copy.policy}
         </Link>
       </p>
-      <div className="mt-4 flex flex-col gap-3 sm:flex-row">
-        <button type="button" className={choice} onClick={() => choose("all")}>
-          {copy.accept}
-        </button>
-        <button type="button" className={choice} onClick={() => choose("essential")}>
-          {copy.reject}
-        </button>
+      {managing && (
+        <fieldset ref={panel} className="mt-4 flex flex-col gap-3 rounded-xl bg-sky p-4">
+          <legend className="sr-only">{copy.manageLegend}</legend>
+          <p className="t-small text-slate">{copy.essentialNote}</p>
+          {(
+            [
+              ["chat", chat, setChat, copy.chatLabel, copy.chatHint],
+              ["analytics", analytics, setAnalytics, copy.analyticsLabel, copy.analyticsHint],
+            ] as const
+          ).map(([key, on, set, label, hint]) => (
+            <label key={key} className="flex cursor-pointer items-start gap-3 text-navy">
+              <input type="checkbox" checked={on} onChange={(e) => set(e.target.checked)} className="mt-1 size-5 shrink-0 accent-blue" />
+              <span>
+                <span className="block font-semibold">{label}</span>
+                <span className="t-small block text-slate">{hint}</span>
+              </span>
+            </label>
+          ))}
+        </fieldset>
+      )}
+      <div className="mt-4 flex flex-col gap-3 sm:flex-row sm:flex-wrap">
+        {managing ? (
+          <button type="button" className={choice} onClick={() => choose(chat && analytics ? "all" : chat ? "chat" : analytics ? "analytics" : "essential")}>
+            {copy.save}
+          </button>
+        ) : (
+          <>
+            <button type="button" className={choice} onClick={() => choose("all")}>
+              {copy.accept}
+            </button>
+            <button type="button" className={choice} onClick={() => choose("essential")}>
+              {copy.reject}
+            </button>
+            <button type="button" className={choice} onClick={() => setManaging(true)}>
+              {copy.manage}
+            </button>
+          </>
+        )}
       </div>
     </div>
   )
 }
 
-const CURRENT: Record<"all" | "essential" | "none", string> = {
+const CURRENT: Record<Consent | "none", string> = {
   all: "You have accepted all cookies, including the Askbridge chat and analytics.",
   essential: "You have chosen essential cookies only.",
+  chat: "You have allowed the Askbridge chat, but not analytics.",
+  analytics: "You have allowed analytics, but not the Askbridge chat.",
   none: "You haven't made a choice yet.",
 }
 

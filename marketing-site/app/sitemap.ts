@@ -10,7 +10,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
   const page = (path: string, priority: number, changeFrequency: "weekly" | "monthly" | "yearly" = "weekly") => ({ url: `${SITE_URL}${path}`, lastModified, changeFrequency, priority })
   return [
     page("", 1),
-    ...["/claim", "/billing", "/help", "/about", "/contact", "/get-the-app"].map((p) => page(p, 0.6, "monthly")),
+    ...["/claim", "/billing", "/help", "/about", "/contact", "/how-it-works", "/for-businesses", "/pricing", "/get-the-app"].map((p) => page(p, 0.6, "monthly")),
     ...LEAF_CATEGORIES.map((c) => page(`/${c.slug}`, 0.8)),
     // Category-in-area pages with at least one business (empty ones are noindex). API mode lists them all:
     // counting each would mean 448 API searches per sitemap build.
