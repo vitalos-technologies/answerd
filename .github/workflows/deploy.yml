@@ -152,6 +152,9 @@ jobs:
       NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       # Empty unless the owner sets the repo variable: the static fallback data
       NEXT_PUBLIC_ANSWERD_API_URL: ${{ vars.ANSWERD_API_URL_SITE }}
+      # Public, inlined at build time. Empty: the local chat placeholder, and no Turnstile check on /contact.
+      NEXT_PUBLIC_ASKBRIDGE_SITE_KEY: ${{ vars.ASKBRIDGE_SITE_KEY }}
+      NEXT_PUBLIC_TURNSTILE_SITE_KEY: ${{ vars.TURNSTILE_SITE_KEY }}
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
         with:

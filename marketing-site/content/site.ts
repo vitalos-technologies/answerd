@@ -132,7 +132,7 @@ export const site = {
       { title: "Businesses", links: [{ label: "List your business", href: "/claim" }, { label: "Plans and billing", href: "/billing" }, { label: "Sign in", href: "/sign-in" }, { label: "Business help", href: "/help#for-businesses" }] },
       { title: "Services", links: [{ label: "Plumbers", href: "/plumbers" }, { label: "Electricians", href: "/electricians" }, { label: "Cleaners", href: "/cleaners" }, { label: "Mobile mechanics", href: "/mobile-mechanics" }, { label: "Barbers", href: "/barbers" }, { label: "Locksmiths", href: "/locksmiths" }] },
       { title: "Cities", links: [{ label: "London (Croydon)", href: "/areas/croydon" }, { label: "Birmingham", href: "/areas/birmingham" }, { label: "Manchester", href: "/areas/manchester" }] },
-      { title: "Company", links: [{ label: "About", href: "/about" }, { label: "Contact", href: "mailto:hello@vitalos.co.uk" }] },
+      { title: "Company", links: [{ label: "About", href: "/about" }, { label: "Contact", href: "/contact" }] },
       { title: "Legal", links: [{ label: "Terms", href: "/terms" }, { label: "Privacy", href: "/privacy" }, { label: "Cookies", href: "/cookies" }, { label: "Review policy", href: "/legal/review-policy" }, { label: "Acceptable use", href: "/legal/acceptable-use" }, { label: "Call recording", href: "/legal/call-recording" }] },
     ],
     bottom: "Answerd is a Vitalos product · Powered by Askbridge · © 2026 Vitalos Technologies",
