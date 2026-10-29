@@ -44,6 +44,9 @@ export default function AboutPage() {
             <p className="mt-2 text-slate">{a.contactBody}</p>
           </div>
           <div className="flex flex-col gap-3 sm:flex-row">
+            <Link href="/contact" className={`inline-flex h-12 items-center justify-center gap-2 rounded-full bg-blue px-6 font-semibold text-white hover:bg-blue-hover ${focusRing}`}>
+              <MessagesSquare className="size-5" aria-hidden /> {a.contactForm}
+            </Link>
             <a href={`mailto:${a.contactEmail}`} className={`inline-flex h-12 items-center justify-center gap-2 rounded-full border border-line bg-white px-6 font-semibold text-navy hover:bg-sky ${focusRing}`}>
               <Mail className="size-5 text-blue" aria-hidden /> {a.contactEmail}
             </a>

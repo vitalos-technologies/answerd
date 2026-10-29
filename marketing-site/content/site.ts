@@ -23,7 +23,8 @@ export const site = {
 
   nav: [
     { label: "Find a business", href: "/#popular-services" },
-    { label: "For businesses", href: "/#for-businesses" },
+    { label: "For businesses", href: "/for-businesses" },
+    { label: "Pricing", href: "/pricing" },
     { label: "Help", href: "/help" },
   ],
   getApp: "Get the app",
@@ -128,11 +129,11 @@ export const site = {
 
   footer: {
     columns: [
-      { title: "Customers", links: [{ label: "How it works", href: "/#how-it-works" }, { label: "Popular services", href: "/#popular-services" }, { label: "Get the app", href: "/get-the-app" }, { label: "Help centre", href: "/help" }] },
-      { title: "Businesses", links: [{ label: "List your business", href: "/claim" }, { label: "Plans and billing", href: "/billing" }, { label: "Sign in", href: "/sign-in" }, { label: "Business help", href: "/help#for-businesses" }] },
+      { title: "Customers", links: [{ label: "How it works", href: "/how-it-works" }, { label: "Popular services", href: "/#popular-services" }, { label: "Get the app", href: "/get-the-app" }, { label: "Help centre", href: "/help" }] },
+      { title: "Businesses", links: [{ label: "For businesses", href: "/for-businesses" }, { label: "List your business", href: "/claim" }, { label: "Pricing", href: "/pricing" }, { label: "Plans and billing", href: "/billing" }, { label: "Sign in", href: "/sign-in" }, { label: "Business help", href: "/help#for-businesses" }] },
       { title: "Services", links: [{ label: "Plumbers", href: "/plumbers" }, { label: "Electricians", href: "/electricians" }, { label: "Cleaners", href: "/cleaners" }, { label: "Mobile mechanics", href: "/mobile-mechanics" }, { label: "Barbers", href: "/barbers" }, { label: "Locksmiths", href: "/locksmiths" }] },
       { title: "Cities", links: [{ label: "London (Croydon)", href: "/areas/croydon" }, { label: "Birmingham", href: "/areas/birmingham" }, { label: "Manchester", href: "/areas/manchester" }] },
-      { title: "Company", links: [{ label: "About", href: "/about" }, { label: "Contact", href: "mailto:hello@vitalos.co.uk" }] },
+      { title: "Company", links: [{ label: "About", href: "/about" }, { label: "Contact", href: "/contact" }] },
       { title: "Legal", links: [{ label: "Terms", href: "/terms" }, { label: "Privacy", href: "/privacy" }, { label: "Cookies", href: "/cookies" }, { label: "Review policy", href: "/legal/review-policy" }, { label: "Acceptable use", href: "/legal/acceptable-use" }, { label: "Call recording", href: "/legal/call-recording" }] },
     ],
     bottom: "Answerd is a Vitalos product · Powered by Askbridge · © 2026 Vitalos Technologies",
@@ -166,6 +167,14 @@ export const site = {
     text: "We use essential cookies to make this site work. With your OK we'd also load the Askbridge chat and measure how the site is used.",
     accept: "Accept all",
     reject: "Reject non-essential",
+    manage: "Manage",
+    manageLegend: "Choose which optional cookies to allow",
+    essentialNote: "Essential cookies keep the site working and are always on.",
+    chatLabel: "Chat with Answerd",
+    chatHint: "Loads the Askbridge chat assistant.",
+    analyticsLabel: "Analytics",
+    analyticsHint: "Helps us see how the site is used.",
+    save: "Save choices",
     label: "Cookie choices",
     policy: "Cookie policy",
     settings: "Change cookie settings",
