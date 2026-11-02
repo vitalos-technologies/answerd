@@ -19,6 +19,12 @@ pnpm lint
 
 Start at **`/hub`**.
 
+**Installing needs a GitHub token.** The Answerd API client (`@vitalos/answerd-client`) comes from GitHub Packages, which asks for a token on every install, even for public packages.
+- Create a classic token with only `read:packages` and export it before `pnpm install`: `export NODE_AUTH_TOKEN=<token>`.
+- Never commit it. `.npmrc` holds only the `${NODE_AUTH_TOKEN}` placeholder.
+- CI and the deploy workflow use the repo's built-in `GITHUB_TOKEN`.
+- Cloud sessions need `NODE_AUTH_TOKEN` in the environment's secrets.
+
 ## The hub
 
 The hub (`/hub`) drives the demo. From it you can:
