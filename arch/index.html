@@ -103,6 +103,7 @@ p { max-width: 860px; }
 .grid-3 { display: grid; grid-template-columns: 1fr; gap: 14px; }
 @media (min-width: 720px) { .grid-3 { grid-template-columns: repeat(2, 1fr); } }
 @media (min-width: 1040px) { .grid-3 { grid-template-columns: repeat(3, 1fr); } }
+.grid-2 > *, .grid-3 > * { min-width: 0; }
 .card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 16px 18px; }
 .card h4 { margin: 0 0 6px; font-size: 15px; }
 .card p, .card ul { margin: 0; font-size: 14px; color: var(--muted); }
@@ -168,7 +169,7 @@ svg.arch .head { fill: var(--edge); }
 svg.arch .head.hot { fill: var(--accent); }
 svg.arch .el { font-size: 12px; fill: var(--muted); paint-order: stroke; stroke: var(--halo); stroke-width: 5px; stroke-linejoin: round; }
 svg.arch .badge rect { fill: var(--accent); stroke: none; }
-svg.arch .badge text { fill: #ffffff; font-size: 11px; font-weight: 700; text-anchor: middle; }
+svg.arch .badge text { fill: var(--surface); font-size: 11px; font-weight: 700; text-anchor: middle; }
 
 /* Tables */
 .table-wrap { overflow-x: auto; border: 1px solid var(--border); border-radius: var(--radius); background: var(--surface); margin: 0 0 18px; }
@@ -1007,7 +1008,7 @@ classDef sec fill:#fdecea,stroke:#c9372c,color:#081a2a
       <a href="README.md">README</a> · <a href="01-context-containers.md">Context and containers</a> · <a href="02-data-model.md">Data model</a> ·
       <a href="03-deployment-cicd.md">Deployment and CI/CD</a> · <a href="04-flows-security.md">Flows and security</a>.</p>
     <p>Main sources inspected: <code>README.md</code>, <code>COVERAGE.md</code>, <code>docs/answerd-spec.md</code>, <code>docs/answerd-api-contract.md</code>, <code>docs/handoff-2026-10-26-deploy.md</code>, <code>package.json</code>, <code>wrangler.jsonc</code>, <code>wrangler.production.jsonc</code>, <code>open-next.config.ts</code>, <code>next.config.ts</code>, <code>app/api/</code>, <code>lib/types.ts</code>, <code>lib/store.ts</code>, <code>lib/api/</code>, <code>marketing-site/</code> (README, <code>app/api/</code>, <code>lib/api/</code>, <code>lib/enquiry.ts</code>, wrangler configs), <code>.github/workflows/</code>, and Workforce's <code>infrastructure/answerd/README.md</code> for the backend context.</p>
-    <p>Portfolio map: see <code>vitalos-technologies/vitalos-platform</code>, <code>arch/portfolio/</code>.</p>
+    <p>A portfolio map of all Vitalos projects is kept in a private Vitalos repository.</p>
   </div>
 </footer>
 

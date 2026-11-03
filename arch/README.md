@@ -36,4 +36,4 @@ Open `arch/index.html` in a browser. Mermaid loads from jsDelivr; offline, each 
 2. Update counts in the Overview tiles from the repository (for example `find app -name page.tsx | wc -l`).
 3. Update the snapshot SHA and date in this file, in the page header and in the page footer.
 
-The portfolio map of all Vitalos projects is in `vitalos-technologies/vitalos-platform`, under `arch/portfolio/`.
+A portfolio map of all Vitalos projects is kept in a private Vitalos repository.
