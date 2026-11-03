@@ -28,7 +28,7 @@ Snapshot: `vitalos-technologies/answerd` at `42b8c33`, 3 Nov 2026.
 
 ## Viewing the visual page
 
-Open `arch/index.html` in a browser. Mermaid loads from jsDelivr; offline, each diagram falls back to its source text. Use Theme to switch between light and dark, Expand to open a diagram full screen, and Source to see its Mermaid code.
+Open `arch/index.html` in a browser. Every diagram is pre-rendered into the page in light and dark versions, so it works offline and in app file viewers; a diagram edited without re-baking renders live from jsDelivr (`mermaid@11.4.1`) instead. Use Theme to switch between light and dark, Expand to open a diagram full screen, and Source to see its Mermaid code. After editing a Mermaid diagram, re-bake the page with the Vitalos archkit bake script so it keeps working offline.
 
 ## Updating
 
