@@ -1,0 +1,1166 @@
+<!doctype html>
+<html lang="en-GB">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Answerd architecture</title>
+<meta name="description" content="Architecture of Answerd: system context, containers, data model, deployment, key flows and security.">
+<style>
+:root {
+  color-scheme: light;
+  --bg: #f7f9fc; --surface: #ffffff; --surface-2: #eef2f7; --text: #081a2a; --muted: #536273;
+  --border: #d9e1e8; --accent: #2457ff; --accent-2: #007e76; --accent-soft: #eef2ff;
+  --ok: #18794e; --warn: #9a6700; --bad: #c9372c;
+  --edge: #536273; --boundary: #8a99a8; --halo: #ffffff;
+  --n-person-bg: #081a2a; --n-person-line: #081a2a; --n-person-fg: #ffffff;
+  --n-web-bg: #eef2ff;   --n-web-line: #2457ff;
+  --n-svc-bg: #e6f4f2;   --n-svc-line: #007e76;
+  --n-db-bg: #fff6e0;    --n-db-line: #9a6700;
+  --n-ext-bg: #f1f3f5;   --n-ext-line: #536273;
+  --n-infra-bg: #f4ecff; --n-infra-line: #7a3fd1;
+  --n-sec-bg: #fdecea;   --n-sec-line: #c9372c;
+  --shadow: 0 8px 24px rgb(8 26 42 / 0.08);
+  --radius: 14px;
+  --font: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --mono: ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    color-scheme: dark;
+    --bg: #0b1622; --surface: #112131; --surface-2: #173247; --text: #e8eef5; --muted: #9fb0c2;
+    --border: #24384c; --accent: #8aa4ff; --accent-2: #3cc3b8; --accent-soft: #16244f;
+    --ok: #4cc38a; --warn: #e0b44a; --bad: #ff8a80;
+    --edge: #9fb0c2; --boundary: #5d7186; --halo: #112131;
+    --n-person-bg: #e8eef5; --n-person-line: #e8eef5; --n-person-fg: #081a2a;
+    --n-web-bg: #16244f;   --n-web-line: #8aa4ff;
+    --n-svc-bg: #0f3532;   --n-svc-line: #3cc3b8;
+    --n-db-bg: #3a2c0b;    --n-db-line: #e0b44a;
+    --n-ext-bg: #1b2836;   --n-ext-line: #9fb0c2;
+    --n-infra-bg: #2a1d46; --n-infra-line: #b48cff;
+    --n-sec-bg: #3d1714;   --n-sec-line: #ff8a80;
+    --shadow: 0 8px 24px rgb(0 0 0 / 0.35);
+  }
+}
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --bg: #0b1622; --surface: #112131; --surface-2: #173247; --text: #e8eef5; --muted: #9fb0c2;
+  --border: #24384c; --accent: #8aa4ff; --accent-2: #3cc3b8; --accent-soft: #16244f;
+  --ok: #4cc38a; --warn: #e0b44a; --bad: #ff8a80;
+  --edge: #9fb0c2; --boundary: #5d7186; --halo: #112131;
+  --n-person-bg: #e8eef5; --n-person-line: #e8eef5; --n-person-fg: #081a2a;
+  --n-web-bg: #16244f;   --n-web-line: #8aa4ff;
+  --n-svc-bg: #0f3532;   --n-svc-line: #3cc3b8;
+  --n-db-bg: #3a2c0b;    --n-db-line: #e0b44a;
+  --n-ext-bg: #1b2836;   --n-ext-line: #9fb0c2;
+  --n-infra-bg: #2a1d46; --n-infra-line: #b48cff;
+  --n-sec-bg: #3d1714;   --n-sec-line: #ff8a80;
+  --shadow: 0 8px 24px rgb(0 0 0 / 0.35);
+}
+*, *::before, *::after { box-sizing: border-box; }
+html { scroll-behavior: smooth; scroll-padding-top: 64px; }
+body { margin: 0; background: var(--bg); color: var(--text); font: 16px/1.55 var(--font); -webkit-font-smoothing: antialiased; }
+a { color: var(--accent); }
+code, kbd { font-family: var(--mono); font-size: 0.9em; background: var(--surface-2); padding: 0.1em 0.35em; border-radius: 5px; overflow-wrap: anywhere; }
+.wrap { max-width: 1180px; margin: 0 auto; padding: 0 16px; }
+@media (min-width: 720px) { .wrap { padding: 0 28px; } }
+
+/* Hero */
+.hero { background: linear-gradient(135deg, var(--surface) 0%, var(--accent-soft) 100%); border-bottom: 1px solid var(--border); padding: 40px 0 28px; }
+.hero-top { display: flex; justify-content: space-between; gap: 16px; align-items: flex-start; }
+.eyebrow { margin: 0 0 8px; font-size: 13px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); font-weight: 600; }
+h1 { margin: 0 0 12px; font-size: clamp(30px, 5vw, 46px); line-height: 1.1; letter-spacing: -0.02em; }
+.lede { margin: 0 0 18px; max-width: 760px; font-size: 18px; color: var(--muted); }
+.chips { display: flex; flex-wrap: wrap; gap: 8px; margin: 0; padding: 0; list-style: none; }
+.chip { font-size: 13px; padding: 4px 10px; border: 1px solid var(--border); border-radius: 999px; background: var(--surface); color: var(--text); white-space: nowrap; }
+.chip b { color: var(--muted); font-weight: 600; margin-right: 4px; }
+.icon-btn { flex: none; display: inline-flex; align-items: center; gap: 6px; font: 600 13px var(--font); color: var(--text); background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 8px 12px; cursor: pointer; min-height: 40px; }
+.icon-btn:hover { border-color: var(--accent); }
+.icon-btn svg { width: 16px; height: 16px; }
+
+/* Section nav */
+.tabs { position: sticky; top: 0; z-index: 10; background: color-mix(in srgb, var(--bg) 88%, transparent); backdrop-filter: blur(8px); border-bottom: 1px solid var(--border); }
+.tabs ul { display: flex; gap: 4px; margin: 0 auto; padding: 8px 16px; list-style: none; overflow-x: auto; max-width: 1180px; scrollbar-width: thin; }
+.tabs a { display: block; padding: 8px 12px; border-radius: 8px; font-size: 14px; font-weight: 600; color: var(--muted); text-decoration: none; white-space: nowrap; }
+.tabs a:hover { color: var(--text); background: var(--surface-2); }
+.tabs a.active { color: var(--accent); background: var(--accent-soft); }
+
+/* Sections */
+section { padding: 36px 0 8px; }
+section > h2 { margin: 0 0 6px; font-size: 26px; letter-spacing: -0.01em; }
+section > .sub { margin: 0 0 20px; color: var(--muted); max-width: 820px; }
+h3 { margin: 26px 0 10px; font-size: 18px; }
+p { max-width: 860px; }
+
+/* Stat tiles */
+.stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px; margin: 0 0 20px; }
+.stat { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 14px 16px; }
+.stat .n { font-size: 28px; font-weight: 700; letter-spacing: -0.02em; line-height: 1.1; }
+.stat .l { font-size: 13px; color: var(--muted); }
+
+/* Cards */
+.grid-2 { display: grid; grid-template-columns: 1fr; gap: 14px; }
+@media (min-width: 860px) { .grid-2 { grid-template-columns: 1fr 1fr; } }
+.grid-3 { display: grid; grid-template-columns: 1fr; gap: 14px; }
+@media (min-width: 720px) { .grid-3 { grid-template-columns: repeat(2, 1fr); } }
+@media (min-width: 1040px) { .grid-3 { grid-template-columns: repeat(3, 1fr); } }
+.card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 16px 18px; }
+.card h4 { margin: 0 0 6px; font-size: 15px; }
+.card p, .card ul { margin: 0; font-size: 14px; color: var(--muted); }
+.card ul { padding-left: 18px; }
+.tag { display: inline-block; font-size: 11px; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; padding: 2px 7px; border-radius: 6px; border: 1px solid var(--border); color: var(--muted); }
+.tag.web { color: var(--n-web-line); border-color: var(--n-web-line); }
+.tag.svc { color: var(--n-svc-line); border-color: var(--n-svc-line); }
+.tag.db { color: var(--n-db-line); border-color: var(--n-db-line); }
+.tag.ext { color: var(--n-ext-line); border-color: var(--n-ext-line); }
+.tag.infra { color: var(--n-infra-line); border-color: var(--n-infra-line); }
+.tag.sec { color: var(--n-sec-line); border-color: var(--n-sec-line); }
+.callout { border-left: 4px solid var(--accent); background: var(--surface); border-radius: 0 var(--radius) var(--radius) 0; padding: 12px 16px; margin: 16px 0; font-size: 15px; }
+.callout.warn { border-left-color: var(--warn); }
+
+/* Diagram figures */
+figure.diagram { margin: 0 0 18px; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); box-shadow: var(--shadow); overflow: hidden; }
+figure.diagram > header { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 12px 16px; border-bottom: 1px solid var(--border); }
+figure.diagram > header h3 { margin: 0; font-size: 16px; }
+figure.diagram > header .tools { display: flex; gap: 6px; flex: none; }
+figure.diagram > header .tools button { font: 600 12px var(--font); color: var(--muted); background: var(--surface-2); border: 1px solid var(--border); border-radius: 8px; padding: 6px 10px; cursor: pointer; min-height: 32px; }
+figure.diagram > header .tools button:hover { color: var(--text); border-color: var(--accent); }
+.canvas { padding: 16px; overflow-x: auto; }
+.canvas > svg { display: block; margin: 0 auto; height: auto; }
+.canvas > svg.arch { width: 100%; min-width: 760px; }
+.canvas.mmd > svg { width: 100%; }
+figcaption { padding: 0 16px 14px; font-size: 14px; color: var(--muted); }
+pre.mmd-src, pre.mmd-fallback { margin: 0; padding: 14px 16px; background: var(--surface-2); color: var(--text); font: 12.5px/1.5 var(--mono); overflow-x: auto; border-top: 1px solid var(--border); white-space: pre; }
+pre.mmd-error { margin: 0; padding: 12px 16px; color: var(--bad); font: 12px var(--mono); white-space: pre-wrap; }
+.legend { display: flex; flex-wrap: wrap; gap: 14px; padding: 0 16px 14px; margin: 0; list-style: none; font-size: 13px; color: var(--muted); }
+.legend li { display: inline-flex; align-items: center; gap: 6px; }
+.legend i { display: inline-block; width: 14px; height: 14px; border-radius: 4px; border: 2px solid; }
+.legend i.person { background: var(--n-person-bg); border-color: var(--n-person-line); }
+.legend i.web { background: var(--n-web-bg); border-color: var(--n-web-line); }
+.legend i.svc { background: var(--n-svc-bg); border-color: var(--n-svc-line); }
+.legend i.db { background: var(--n-db-bg); border-color: var(--n-db-line); }
+.legend i.ext { background: var(--n-ext-bg); border-color: var(--n-ext-line); border-style: dashed; }
+.legend i.infra { background: var(--n-infra-bg); border-color: var(--n-infra-line); }
+.legend i.sec { background: var(--n-sec-bg); border-color: var(--n-sec-line); }
+.legend i.line { width: 22px; height: 0; border-radius: 0; border-width: 2px 0 0; border-color: var(--edge); }
+.legend i.line.async { border-style: dashed; }
+
+/* Hand-built SVG vocabulary (svg.arch) */
+svg.arch { font-family: var(--font); }
+svg.arch text { fill: var(--text); }
+svg.arch .node rect, svg.arch .node path, svg.arch .node ellipse { stroke-width: 2; }
+svg.arch .node .t { font-size: 15px; font-weight: 700; text-anchor: middle; }
+svg.arch .node .s { font-size: 12px; fill: var(--muted); text-anchor: middle; }
+svg.arch .node.person rect, svg.arch .node.person circle { fill: var(--n-person-bg); stroke: var(--n-person-line); }
+svg.arch .node.person .t, svg.arch .node.person .s { fill: var(--n-person-fg); }
+svg.arch .node.web :is(rect, path, ellipse) { fill: var(--n-web-bg); stroke: var(--n-web-line); }
+svg.arch .node.svc :is(rect, path, ellipse) { fill: var(--n-svc-bg); stroke: var(--n-svc-line); }
+svg.arch .node.db :is(rect, path, ellipse) { fill: var(--n-db-bg); stroke: var(--n-db-line); }
+svg.arch .node.ext :is(rect, path, ellipse) { fill: var(--n-ext-bg); stroke: var(--n-ext-line); stroke-dasharray: 5 4; }
+svg.arch .node.infra :is(rect, path, ellipse) { fill: var(--n-infra-bg); stroke: var(--n-infra-line); }
+svg.arch .node.sec :is(rect, path, ellipse) { fill: var(--n-sec-bg); stroke: var(--n-sec-line); }
+svg.arch .boundary rect { fill: none; stroke: var(--boundary); stroke-width: 1.5; stroke-dasharray: 7 5; }
+svg.arch .boundary.zone rect { fill: var(--surface-2); fill-opacity: 0.45; }
+svg.arch .boundary .bt { font-size: 13px; font-weight: 700; fill: var(--muted); letter-spacing: 0.04em; text-transform: uppercase; }
+svg.arch .edge { fill: none; stroke: var(--edge); stroke-width: 1.8; }
+svg.arch .edge.async { stroke-dasharray: 6 5; }
+svg.arch .edge.hot { stroke: var(--accent); stroke-width: 2.2; }
+svg.arch .head { fill: var(--edge); }
+svg.arch .head.hot { fill: var(--accent); }
+svg.arch .el { font-size: 12px; fill: var(--muted); paint-order: stroke; stroke: var(--halo); stroke-width: 5px; stroke-linejoin: round; }
+svg.arch .badge rect { fill: var(--accent); stroke: none; }
+svg.arch .badge text { fill: #ffffff; font-size: 11px; font-weight: 700; text-anchor: middle; }
+
+/* Tables */
+.table-wrap { overflow-x: auto; border: 1px solid var(--border); border-radius: var(--radius); background: var(--surface); margin: 0 0 18px; }
+table { width: 100%; border-collapse: collapse; font-size: 14px; }
+th, td { text-align: left; padding: 10px 14px; border-bottom: 1px solid var(--border); vertical-align: top; }
+th { font-size: 12px; text-transform: uppercase; letter-spacing: 0.05em; color: var(--muted); background: var(--surface-2); }
+tr:last-child td { border-bottom: 0; }
+td code { white-space: nowrap; }
+
+/* Zoom dialog */
+dialog#zoom { width: min(96vw, 1600px); height: min(92vh, 1100px); padding: 0; border: 1px solid var(--border); border-radius: var(--radius); background: var(--surface); color: var(--text); }
+dialog#zoom::backdrop { background: rgb(8 26 42 / 0.6); }
+dialog#zoom .bar { display: flex; justify-content: space-between; align-items: center; gap: 8px; padding: 10px 14px; border-bottom: 1px solid var(--border); position: sticky; top: 0; background: var(--surface); }
+dialog#zoom .bar h3 { margin: 0; font-size: 15px; }
+dialog#zoom .bar div { display: flex; gap: 6px; }
+dialog#zoom .stage { overflow: auto; height: calc(100% - 58px); padding: 16px; }
+dialog#zoom .stage svg { display: block; margin: 0 auto; max-width: none !important; height: auto; }
+
+footer { margin-top: 40px; padding: 26px 0 40px; border-top: 1px solid var(--border); color: var(--muted); font-size: 14px; }
+footer ul { padding-left: 18px; }
+@media (max-width: 560px) { .hero-top { flex-direction: column-reverse; } .lede { font-size: 16px; } }
+@media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } }
+@media print { .tabs, .tools, #theme-toggle { display: none !important; } figure.diagram { break-inside: avoid; box-shadow: none; } }
+</style>
+</head>
+<body>
+
+<header class="hero">
+  <div class="wrap">
+    <div class="hero-top">
+      <div>
+        <p class="eyebrow">Vitalos Technologies · Architecture</p>
+        <h1>Answerd</h1>
+        <p class="lede">The UK local services marketplace where every business picks up. This repo ships two front ends on Cloudflare Workers: a clickable prototype that simulates every surface of the product against one browser store, and the app-first Answerd website. The real backend is the Answerd API in Workforce, which both apps reach only in API mode.</p>
+      </div>
+      <button class="icon-btn" id="theme-toggle" type="button" aria-label="Switch colour theme">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg>
+        <span>Theme</span>
+      </button>
+    </div>
+    <ul class="chips">
+      <li class="chip"><b>Stack</b>Next.js 16 · React 19 · zustand</li>
+      <li class="chip"><b>Hosting</b>Cloudflare Workers (OpenNext)</li>
+      <li class="chip"><b>Backend</b>Answerd API in Workforce</li>
+      <li class="chip"><b>Status</b>Prototype and website live, mock data</li>
+      <li class="chip"><b>Repo</b>vitalos-technologies/answerd</li>
+      <li class="chip"><b>Snapshot</b>3 Nov 2026 · <code>42b8c33</code></li>
+    </ul>
+  </div>
+</header>
+
+<nav class="tabs" aria-label="Sections">
+  <ul>
+    <li><a href="#overview">Overview</a></li>
+    <li><a href="#context">System context</a></li>
+    <li><a href="#containers">Containers</a></li>
+    <li><a href="#data">Data model</a></li>
+    <li><a href="#deployment">Deployment &amp; CI/CD</a></li>
+    <li><a href="#flows">Key flows</a></li>
+    <li><a href="#security">Security</a></li>
+    <li><a href="#decisions">Decisions &amp; risks</a></li>
+  </ul>
+</nav>
+
+<main class="wrap">
+
+<section id="overview">
+  <h2>Overview</h2>
+  <p class="sub">What the system is made of, at a glance. Counts come from the repository at the snapshot commit.</p>
+  <div class="stats">
+    <div class="stat"><div class="n">2</div><div class="l">Cloudflare Workers</div></div>
+    <div class="stat"><div class="n">165</div><div class="l">spec screen IDs built</div></div>
+    <div class="stat"><div class="n">161</div><div class="l">page routes (138 + 23)</div></div>
+    <div class="stat"><div class="n">27</div><div class="l">core entities in the spec</div></div>
+    <div class="stat"><div class="n">14</div><div class="l">Playwright spec files</div></div>
+    <div class="stat"><div class="n">3</div><div class="l">GitHub workflows</div></div>
+  </div>
+  <div class="grid-3">
+    <div class="card"><span class="tag web">Front end</span><h4>Prototype</h4><p>Next.js 16.4 App Router, React 19.3, Tailwind 4, Radix and shadcn/ui, zustand with immer, Recharts. Hub, customer app, business mode, web dashboard, admin and super admin.</p></div>
+    <div class="card"><span class="tag web">Front end</span><h4>Website</h4><p>A separate Next.js 16.4 project in <code>marketing-site/</code>: shadcn/ui on Base UI, Motion for the chat panel only, about 580 prerendered SEO and listing pages.</p></div>
+    <div class="card"><span class="tag svc">Server</span><h4>Route handlers and Server Actions</h4><p>On the Workers: the <code>/v1</code> proxy, the realtime relay, Ask Answerd parsing, the contact relay and the revalidate webhook. Web Crypto for HMAC.</p></div>
+    <div class="card"><span class="tag db">Data</span><h4>No database in this repo</h4><p>The prototype persists one store in <code>localStorage</code>; the website builds from seed data. Workforce Postgres sits behind the Answerd API.</p></div>
+    <div class="card"><span class="tag infra">Hosting</span><h4>Cloudflare Workers</h4><p>OpenNext 1.20.13 and wrangler 4.152 with custom domains on vitalos.co.uk and a read-only static-assets cache. No D1, KV, R2 or Durable Objects.</p></div>
+    <div class="card"><span class="tag infra">Quality</span><h4>Playwright and axe</h4><p>Ten journeys, a route sweep of every screen, axe on every screen at its viewport, and an opt-in API-mode suite against staging.</p></div>
+  </div>
+</section>
+
+<section id="context">
+  <h2>System context</h2>
+  <p class="sub">Who uses the system and which outside systems it depends on (C4 level 1).</p>
+  <figure class="diagram" data-title="System context">
+    <header><h3>System context</h3><div class="tools"></div></header>
+    <div class="canvas mmd"></div>
+<script type="text/plain" class="mmd" data-name="context">
+flowchart LR
+  visitor(["Website visitor<br/>customers and businesses"]):::person
+  demo(["Demo user<br/>Vitalos team and testers"]):::person
+  site["Answerd website<br/>answerd.vitalos.co.uk"]:::web
+  proto["Answerd prototype<br/>answerd-demo.vitalos.co.uk"]:::web
+  api["Answerd API<br/>Workforce marketplace module"]:::ext
+  askb["Askbridge<br/>Chat with Answerd widget"]:::ext
+  inbox["Vitalos admin inbox<br/>admin.vitalos.co.uk"]:::ext
+  ts["Cloudflare Turnstile<br/>optional bot check"]:::ext
+  claude["Anthropic API<br/>optional"]:::ext
+  visitor -- "HTTPS" --> site
+  demo -- "HTTPS" --> proto
+  site -- "API mode only" --> api
+  proto -- "API mode only, proxied" --> api
+  site -- "signed contact relay" --> inbox
+  visitor -. "after cookie consent" .-> askb
+  visitor -. "on the contact page" .-> ts
+  proto -- "Ask Answerd parsing" --> claude
+classDef person fill:#081a2a,stroke:#081a2a,color:#ffffff
+classDef web fill:#dce4ff,stroke:#2457ff,color:#081a2a
+classDef ext fill:#f1f3f5,stroke:#536273,color:#26333f,stroke-dasharray:4 3
+</script>
+    <figcaption>Website visitors use answerd.vitalos.co.uk; demo users use the prototype at answerd-demo.vitalos.co.uk. Dashed lines are calls the visitor's browser makes to third parties. The Answerd API is reached only in API mode, which production does not switch on.</figcaption>
+  </figure>
+</section>
+
+<section id="containers">
+  <h2>Containers</h2>
+  <p class="sub">The deployable parts, the stores they use and how they talk (C4 level 2).</p>
+  <figure class="diagram" data-title="Container view">
+    <header><h3>Container view</h3><div class="tools"></div></header>
+    <div class="canvas">
+      <svg class="arch" viewBox="0 0 1240 600" role="img" aria-labelledby="c-title c-desc">
+        <title id="c-title">Answerd container view</title>
+        <desc id="c-desc">In the visitor's browser: website visitors, demo users and the demo store. On Cloudflare Workers: the website with its server routes and prerendered pages, and the prototype with its server routes and static assets. Outside: Askbridge, Turnstile, the Vitalos admin inbox, the Answerd API in Workforce and the Anthropic API.</desc>
+        <defs>
+          <marker id="c-arr" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path class="head" d="M0 0 L10 5 L0 10 z"/></marker>
+          <marker id="c-arr-hot" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path class="head hot" d="M0 0 L10 5 L0 10 z"/></marker>
+        </defs>
+
+        <g class="boundary zone"><rect x="20" y="60" width="240" height="510" rx="16"/><text class="bt" x="40" y="86">Visitor's browser</text></g>
+        <g class="boundary zone"><rect x="300" y="60" width="560" height="510" rx="16"/><text class="bt" x="320" y="86">Cloudflare Workers · vitalos.co.uk</text></g>
+
+        <g class="node person" transform="translate(45,110)"><rect width="190" height="64" rx="32"/><text class="t" x="95" y="30">Website visitor</text><text class="s" x="95" y="49">customers, businesses</text></g>
+        <g class="node person" transform="translate(45,300)"><rect width="190" height="64" rx="32"/><text class="t" x="95" y="30">Demo user</text><text class="s" x="95" y="49">Vitalos team, testers</text></g>
+        <g class="node db" transform="translate(45,450)"><path d="M0 12 V72 A95 12 0 0 0 190 72 V12"/><ellipse cx="95" cy="12" rx="95" ry="12"/><text class="t" x="95" y="50">Demo store</text><text class="s" x="95" y="69">zustand · localStorage</text></g>
+
+        <g class="node web" transform="translate(330,110)"><rect width="230" height="72" rx="10"/><text class="t" x="115" y="31">Website</text><text class="s" x="115" y="51">answerd-site · Next.js 16</text></g>
+        <g class="node svc" transform="translate(620,110)"><rect width="220" height="72" rx="10"/><text class="t" x="110" y="31">Site server routes</text><text class="s" x="110" y="51">contact, revalidate, actions</text></g>
+        <g class="node db" transform="translate(330,215)"><path d="M0 12 V68 A115 12 0 0 0 230 68 V12"/><ellipse cx="115" cy="12" rx="115" ry="12"/><text class="t" x="115" y="47">Prerendered pages</text><text class="s" x="115" y="65">ASSETS · read-only ISR</text></g>
+
+        <g class="node web" transform="translate(330,330)"><rect width="230" height="72" rx="10"/><text class="t" x="115" y="31">Prototype</text><text class="s" x="115" y="51">answerd-prototype · Next.js 16</text></g>
+        <g class="node svc" transform="translate(620,330)"><rect width="220" height="72" rx="10"/><text class="t" x="110" y="31">Prototype routes</text><text class="s" x="110" y="51">v1 proxy · SSE relay · ask</text></g>
+        <g class="node db" transform="translate(330,440)"><path d="M0 12 V68 A115 12 0 0 0 230 68 V12"/><ellipse cx="115" cy="12" rx="115" ry="12"/><text class="t" x="115" y="47">Static assets</text><text class="s" x="115" y="65">ASSETS binding</text></g>
+
+        <g class="node ext" transform="translate(930,40)"><rect width="290" height="64" rx="10"/><text class="t" x="145" y="29">Askbridge widget</text><text class="s" x="145" y="48">askbridge.vitalos.co.uk</text></g>
+        <g class="node ext" transform="translate(930,124)"><rect width="290" height="64" rx="10"/><text class="t" x="145" y="29">Cloudflare Turnstile</text><text class="s" x="145" y="48">optional check on the contact form</text></g>
+        <g class="node ext" transform="translate(930,208)"><rect width="290" height="64" rx="10"/><text class="t" x="145" y="29">Vitalos admin inbox</text><text class="s" x="145" y="48">admin.vitalos.co.uk · Enquiries</text></g>
+        <g class="node ext" transform="translate(930,318)"><rect width="290" height="80" rx="10"/><text class="t" x="145" y="31">Answerd API (Workforce)</text><text class="s" x="145" y="51">/v1 REST and realtime</text><text class="s" x="145" y="68">staging on Render · API mode only</text></g>
+        <g class="node ext" transform="translate(930,450)"><rect width="290" height="64" rx="10"/><text class="t" x="145" y="29">Anthropic API</text><text class="s" x="145" y="48">optional · server-side key</text></g>
+
+        <path class="edge hot" d="M235 142 C282 142 282 146 328 146" marker-end="url(#c-arr-hot)"/><text class="el" x="264" y="134">HTTPS</text>
+        <path class="edge hot" d="M235 332 C282 332 282 366 328 366" marker-end="url(#c-arr-hot)"/><text class="el" x="262" y="326">HTTPS</text>
+        <path class="edge" d="M560 146 H618" marker-end="url(#c-arr)"/><text class="el" x="572" y="138">fetch</text>
+        <path class="edge" d="M560 366 H618" marker-end="url(#c-arr)"/><text class="el" x="572" y="358">fetch</text>
+        <path class="edge" d="M445 182 V213" marker-end="url(#c-arr)"/><text class="el" x="453" y="202">reads</text>
+        <path class="edge" d="M445 402 V438" marker-end="url(#c-arr)"/><text class="el" x="453" y="424">reads</text>
+        <path class="edge" d="M330 392 C292 392 282 492 237 492" marker-end="url(#c-arr)"/><text class="el" x="268" y="470">persists</text>
+        <path class="edge" d="M840 140 C885 140 885 240 928 240" marker-end="url(#c-arr)"/><text class="el" x="848" y="200">HMAC POST</text>
+        <path class="edge" d="M840 162 C890 162 885 345 928 345" marker-start="url(#c-arr)" marker-end="url(#c-arr)"/><text class="el" x="876" y="296">API mode, revalidate</text>
+        <path class="edge" d="M840 366 H928" marker-end="url(#c-arr)"/><text class="el" x="852" y="380">v1 proxy</text>
+        <path class="edge" d="M840 388 C885 388 885 482 928 482" marker-end="url(#c-arr)"/><text class="el" x="858" y="456">optional</text>
+        <path class="edge async" d="M205 110 V24 H900 C916 24 914 72 928 72" marker-end="url(#c-arr)"/>
+        <path class="edge async" d="M900 24 C920 24 912 156 928 156" marker-end="url(#c-arr)"/><text class="el" x="430" y="18">scripts the browser loads directly</text>
+
+        <g class="badge" transform="translate(829,99)"><rect width="22" height="22" rx="11"/><text x="11" y="15">1</text></g>
+        <g class="badge" transform="translate(829,319)"><rect width="22" height="22" rx="11"/><text x="11" y="15">2</text></g>
+        <g class="badge" transform="translate(222,444)"><rect width="22" height="22" rx="11"/><text x="11" y="15">3</text></g>
+        <g class="badge" transform="translate(1209,307)"><rect width="22" height="22" rx="11"/><text x="11" y="15">4</text></g>
+        <g class="badge" transform="translate(1209,29)"><rect width="22" height="22" rx="11"/><text x="11" y="15">5</text></g>
+      </svg>
+    </div>
+    <ul class="legend">
+      <li><i class="person"></i>Person</li><li><i class="web"></i>Front end</li><li><i class="svc"></i>Server routes</li>
+      <li><i class="db"></i>Data store</li><li><i class="ext"></i>External system</li>
+      <li><i class="line"></i>Sync call</li><li><i class="line async"></i>Loaded by the browser</li>
+    </ul>
+    <figcaption>
+      <strong>1</strong> The contact relay is HMAC-signed on the way out, and the revalidate webhook is HMAC-checked on the way in.
+      <strong>2</strong> The proxy exists because the API's CORS allows only the production website; it forwards <code>/v1</code> paths only, with a header allowlist and no caching.
+      <strong>3</strong> In mock mode every surface reads and writes this one browser store, driven by the demo clock.
+      <strong>4</strong> The backend lives in Workforce. Production never sets the API URL, so both apps run on mock or seed data today.
+      <strong>5</strong> Third-party chat loads only after the visitor allows chat cookies.
+    </figcaption>
+  </figure>
+
+  <div class="table-wrap"><table>
+    <thead><tr><th>Container</th><th>Technology</th><th>Responsibility</th><th>Source</th></tr></thead>
+    <tbody>
+      <tr><td>Website (<code>answerd-site</code>)</td><td>Next.js 16 on a Worker</td><td>Public, app-first website: landing, SEO category and area pages, listings, claim, billing mocks, help, legal, contact.</td><td><code>marketing-site/app</code></td></tr>
+      <tr><td>Site server routes</td><td>Route handlers, Server Actions</td><td>Contact relay, revalidate webhook, API-mode sign-in, claim, billing and search with tokens in httpOnly cookies.</td><td><code>marketing-site/app/api</code>, <code>marketing-site/lib/api/actions.ts</code></td></tr>
+      <tr><td>Prerendered pages</td><td>OpenNext static-assets cache</td><td>About 580 pages built from seed data; read-only.</td><td><code>marketing-site/open-next.config.ts</code></td></tr>
+      <tr><td>Prototype (<code>answerd-prototype</code>)</td><td>Next.js 16 on a Worker</td><td>Hub, customer app and business mode in a phone frame, business web dashboard, admin and super admin.</td><td><code>app/</code>, <code>components/</code></td></tr>
+      <tr><td>Prototype routes</td><td>Route handlers</td><td>Same-origin <code>/v1</code> proxy, WebSocket to Server-Sent Events relay, Ask Answerd parsing.</td><td><code>app/api/answerd</code>, <code>app/api/ask</code></td></tr>
+      <tr><td>Static assets</td><td>Worker <code>ASSETS</code> binding</td><td>The prototype's built assets and prerendered output.</td><td><code>wrangler.jsonc</code></td></tr>
+      <tr><td>Demo store</td><td>zustand <code>persist</code> in <code>localStorage</code></td><td>Every entity, every action and the demo clock, seeded deterministically and shared by all surfaces.</td><td><code>lib/store.ts</code>, <code>lib/seed.ts</code></td></tr>
+      <tr><td>API bridge and client</td><td>TypeScript in the browser</td><td>Mirrors 37 store actions to the API, syncs the catalogue, logs every call for the hub.</td><td><code>lib/api/bridge.ts</code>, <code>lib/api/client.ts</code></td></tr>
+    </tbody>
+  </table></div>
+</section>
+
+<section id="data">
+  <h2>Data model</h2>
+  <p class="sub">There is no database in this repo. The entity model comes from <code>lib/types.ts</code>, which follows the spec's data model; the MVP keeps it in Postgres inside the Workforce marketplace module, where a Business maps one to one to a Workforce tenant.</p>
+  <div class="grid-3">
+    <div class="card"><span class="tag db">Prototype</span><h4>Browser store</h4><p>One zustand store persisted to <code>localStorage</code> (<code>answerd-demo-v1</code>): 60 seeded listings across three layers, 300 reviews, threads, calls, bookings, quotes and the demo clock.</p></div>
+    <div class="card"><span class="tag db">Website</span><h4>Build-time seed</h4><p>A server-only port of the same seed renders the SEO and listing pages. Mock sign-in and billing use <code>sessionStorage</code>.</p></div>
+    <div class="card"><span class="tag ext">MVP</span><h4>Workforce Postgres</h4><p>Behind the Answerd API. Staging uses a Supabase free project. Reached from here only in API mode.</p></div>
+  </div>
+  <h3>Accounts, listings and businesses</h3>
+  <figure class="diagram" data-title="Accounts, listings and businesses">
+    <header><h3>Accounts, listings and businesses</h3><div class="tools"></div></header>
+    <div class="canvas mmd"></div>
+<script type="text/plain" class="mmd" data-name="erd-accounts">
+erDiagram
+  USER ||--o| CUSTOMER_PROFILE : "has"
+  USER ||--o{ BUSINESS_MEMBER : "joins as"
+  USER ||--o{ CLAIM : "starts"
+  CATEGORY |o--o{ CATEGORY : "parent of"
+  CATEGORY }o--o{ LISTING : "classifies"
+  LISTING ||--o{ SOURCE_REF : "sourced from"
+  LISTING ||--o{ CLAIM : "claimed through"
+  LISTING ||--o| BUSINESS : "becomes on claim"
+  BUSINESS ||--o{ BUSINESS_MEMBER : "has"
+  BUSINESS ||--o{ SERVICE : "offers"
+  BUSINESS ||--|| AVAILABILITY : "sets"
+  BUSINESS ||--|| SERVICE_AREA : "covers"
+  BUSINESS ||--o{ CREDENTIAL : "holds"
+  USER {
+    ID id PK
+    string phone
+    string_array authProviders
+    StaffRole staffRole
+    boolean marketingConsent
+  }
+  CUSTOMER_PROFILE {
+    ID userId PK
+    ID_array savedListingIds
+    string referralCode
+    int noShowCount
+  }
+  CATEGORY {
+    ID id PK
+    string slug UK
+    ID parentId FK
+    string_array sicCodes
+    string_array placesTypes
+  }
+  LISTING {
+    ID id PK
+    string slug UK
+    Layer layer
+    ID_array categoryIds
+    string postcodeDistrict
+    ID businessId FK
+    string placeId
+  }
+  SOURCE_REF {
+    ID listingId FK
+    string source
+    string externalId
+    ISO fetchedAt
+  }
+  CLAIM {
+    ID id PK
+    ID listingId FK
+    ID userId FK
+    string method
+    string status
+    ID decidedBy FK
+  }
+  BUSINESS {
+    ID id PK
+    ID listingId FK
+    string tenantId
+    string legalType
+    string status
+    string bookingMode
+  }
+  BUSINESS_MEMBER {
+    ID id PK
+    ID businessId FK
+    ID userId FK
+    string role
+  }
+  SERVICE {
+    ID id PK
+    ID businessId FK
+    PriceType priceType
+    int pricePence
+    boolean bookable
+  }
+  AVAILABILITY {
+    ID businessId PK
+    string slotMode
+    int leadTimeMin
+    int maxPerDay
+  }
+  SERVICE_AREA {
+    ID businessId PK
+    string basePostcode
+    string mode
+    int radiusMiles
+  }
+  CREDENTIAL {
+    ID id PK
+    ID businessId FK
+    CredentialType type
+    string status
+    ISO expiresAt
+  }
+</script>
+    <figcaption>A Listing is what customers see; a Business exists only once a listing is claimed. Listings come in three layers: claimed, seeded (Companies House and OpenStreetMap) and Places, which keeps only the place ID.</figcaption>
+  </figure>
+  <h3>Conversations, bookings and reviews</h3>
+  <figure class="diagram" data-title="Conversations, bookings and reviews">
+    <header><h3>Conversations, bookings and reviews</h3><div class="tools"></div></header>
+    <div class="canvas mmd"></div>
+<script type="text/plain" class="mmd" data-name="erd-work">
+erDiagram
+  LISTING ||--o{ THREAD : "receives"
+  USER |o--o{ THREAD : "customer in"
+  THREAD ||--o{ MESSAGE : "contains"
+  THREAD ||--o{ QUOTE : "carries"
+  LISTING ||--o{ CALL : "tracked number"
+  LISTING ||--o{ ENQUIRY : "counts toward gate"
+  LISTING ||--o{ BOOKING : "takes"
+  SERVICE ||--o{ BOOKING : "booked as"
+  QUOTE |o--o{ BOOKING : "accepted into"
+  BOOKING ||--o{ BOOKING_EVENT : "timeline"
+  BOOKING |o--o| REVIEW : "reviewed in"
+  CALL |o--o| REVIEW : "reviewed in"
+  LISTING ||--o{ REVIEW : "has"
+  USER ||--o{ REFERRAL : "refers"
+  THREAD {
+    ID id PK
+    ID listingId FK
+    ID customerId FK
+    string channel
+    string status
+    boolean deskActive
+  }
+  MESSAGE {
+    ID id PK
+    ID threadId FK
+    MessageAuthor author
+    MessageCard card
+    ISO createdAt
+  }
+  CALL {
+    ID id PK
+    ID listingId FK
+    string trackedNumber
+    string callerMasked
+    string outcome
+    int durationSec
+  }
+  ENQUIRY {
+    ID id PK
+    ID listingId FK
+    string kind
+    Layer layer
+    ISO at
+  }
+  QUOTE {
+    ID id PK
+    ID threadId FK
+    int totalPence
+    ISO validUntil
+    string status
+  }
+  BOOKING {
+    ID id PK
+    ID listingId FK
+    ID serviceId FK
+    ID customerId FK
+    BookingStatus status
+    string createdBy
+    ISO startAt
+  }
+  BOOKING_EVENT {
+    ID id PK
+    ID bookingId FK
+    string type
+    string actor
+    ISO at
+  }
+  REVIEW {
+    ID id PK
+    ID listingId FK
+    ID bookingId FK
+    ID callId FK
+    int stars
+    string status
+  }
+  REFERRAL {
+    ID id PK
+    ID referrerUserId FK
+    string kind
+    string code
+  }
+</script>
+    <figcaption>Desk messages always carry <code>author = desk</code>. Enquiries feed stats and the monetise gate: no business pays before 10 enquiries. A review needs a completed booking or a tracked call over 60 seconds.</figcaption>
+  </figure>
+  <h3>Desk, billing and platform</h3>
+  <figure class="diagram" data-title="Desk, billing and platform">
+    <header><h3>Desk, billing and platform</h3><div class="tools"></div></header>
+    <div class="canvas mmd"></div>
+<script type="text/plain" class="mmd" data-name="erd-platform">
+erDiagram
+  BUSINESS ||--|| DESK_CONFIG : "configures"
+  BUSINESS ||--o{ SUBSCRIPTION : "pays through"
+  BUSINESS ||--o{ INVOICE : "is billed"
+  BUSINESS |o--o{ FEATURED_SLOT : "holds"
+  CATEGORY ||--o{ FEATURED_SLOT : "offers per area"
+  USER ||--o{ NOTIFICATION : "receives"
+  USER ||--o{ AUDIT_EVENT : "acts in"
+  USER |o--o{ REPORT : "files"
+  USER ||--o{ DATA_REQUEST : "requests"
+  SETTINGS ||--o{ RULE_VERSION : "versions pricing rules"
+  SETTINGS ||--o{ INTEGRATION : "tracks"
+  DESK_CONFIG {
+    ID businessId PK
+    DeskStatus status
+    string number
+    string voice
+    json handoffRules
+    ISO trialEndsAt
+  }
+  SUBSCRIPTION {
+    ID id PK
+    ID businessId FK
+    string plan
+    string status
+    string stripeId
+  }
+  INVOICE {
+    ID id PK
+    ID businessId FK
+    int amountPence
+    string status
+  }
+  FEATURED_SLOT {
+    ID id PK
+    ID categoryId FK
+    string areaCode
+    int position
+    ID businessId FK
+  }
+  NOTIFICATION {
+    ID id PK
+    ID userId FK
+    string event
+    Mode mode
+    ISO readAt
+  }
+  AUDIT_EVENT {
+    ID id PK
+    ID actorId FK
+    string action
+    string targetType
+    string reason
+  }
+  REPORT {
+    ID id PK
+    string target
+    ID targetId
+    string status
+  }
+  DATA_REQUEST {
+    ID id PK
+    ID userId FK
+    string kind
+    string status
+  }
+  SETTINGS {
+    boolean killSwitch
+    int placesCapPence
+    json platform
+  }
+  RULE_VERSION {
+    ID id PK
+    int version
+    json rules
+    ISO effectiveAt
+  }
+  INTEGRATION {
+    ID id PK
+    string name
+    string status
+    ISO lastRotatedAt
+  }
+</script>
+    <figcaption>Every admin write needs a reason and creates an AuditEvent. Settings hold the platform switches, the desk kill switch and the daily Places spend cap; pricing rules are versioned.</figcaption>
+  </figure>
+  <div class="table-wrap"><table>
+    <thead><tr><th>Rule</th><th>Where it lives today</th></tr></thead>
+    <tbody>
+      <tr><td>Money in pence as integers, with VAT stated.</td><td><code>Service.pricePence</code>, <code>Quote.totalPence</code>, <code>Invoice.amountPence</code></td></tr>
+      <tr><td>Google results are never stored or cached into a page; only place IDs are kept.</td><td>Spec; <code>marketing-site/components/web/google-results.tsx</code></td></tr>
+      <tr><td>London time throughout; the demo clock starts Mon 26 Oct 2026, 9am.</td><td><code>lib/time.ts</code>, <code>lib/store.ts</code></td></tr>
+      <tr><td>Advancing the demo clock runs due work: reminders, two-hour request expiry, quote follow-ups, trial countdowns, digests, auto-approvals.</td><td><code>lib/store.ts</code> (<code>tick</code>)</td></tr>
+      <tr><td>Demo phone numbers come from the Ofcom drama range.</td><td><code>lib/seed.ts</code></td></tr>
+    </tbody>
+  </table></div>
+</section>
+
+<section id="deployment">
+  <h2>Deployment &amp; CI/CD</h2>
+  <p class="sub">Where each part runs, and how a change gets from a branch to answerd.vitalos.co.uk and answerd-demo.vitalos.co.uk.</p>
+  <figure class="diagram" data-title="Runtime topology">
+    <header><h3>Runtime topology</h3><div class="tools"></div></header>
+    <div class="canvas mmd"></div>
+<script type="text/plain" class="mmd" data-name="deploy">
+flowchart TB
+  subgraph gh["GitHub Actions"]
+    ci["CI workflow<br/>GitHub-hosted runners"]:::infra
+    dep["Deploy workflow<br/>after CI on main, or by hand"]:::infra
+    pkg["GitHub Packages<br/>answerd-client, not yet installed"]:::infra
+  end
+  subgraph cf["Cloudflare, vitalos.co.uk zone"]
+    wsite["Worker answerd-site<br/>answerd.vitalos.co.uk"]:::web
+    wproto["Worker answerd-prototype<br/>answerd-demo.vitalos.co.uk"]:::web
+    assets[("Static assets per Worker<br/>ASSETS binding")]:::db
+    wsec["Worker secrets<br/>contact relay, revalidate, optional AI key"]:::sec
+  end
+  subgraph wf["Workforce backend"]
+    stg["Answerd API staging<br/>Render free tier"]:::ext
+    pg[("Postgres<br/>Supabase free project")]:::ext
+    aws["Production on AWS eu-west-2<br/>planned, not applied"]:::ext
+  end
+  ci --> dep
+  dep -- "wrangler deploy" --> wsite
+  dep -- "wrangler deploy" --> wproto
+  dep -- "wrangler secret put" --> wsec
+  wsite --> assets
+  wproto --> assets
+  stg --> pg
+  wsite -. "API mode, off in production" .-> stg
+  wproto -. "API mode, off in production" .-> stg
+  ci -. "opt-in staging journeys" .-> stg
+  pkg -. "install when access is granted" .-> ci
+classDef web fill:#dce4ff,stroke:#2457ff,color:#081a2a
+classDef db fill:#fff6e0,stroke:#9a6700,color:#081a2a
+classDef ext fill:#f1f3f5,stroke:#536273,color:#26333f,stroke-dasharray:4 3
+classDef infra fill:#f4ecff,stroke:#7a3fd1,color:#081a2a
+classDef sec fill:#fdecea,stroke:#c9372c,color:#081a2a
+</script>
+    <figcaption>Two Workers on the vitalos.co.uk zone, each with its own custom domain and static assets. The Workforce side is shown for context: staging runs on Render and Supabase free tiers, and the AWS production stack is planned but not applied.</figcaption>
+  </figure>
+  <figure class="diagram" data-title="CI/CD pipeline">
+    <header><h3>CI/CD pipeline</h3><div class="tools"></div></header>
+    <div class="canvas mmd"></div>
+<script type="text/plain" class="mmd" data-name="cicd">
+flowchart LR
+  trig["Pull request or push to main"]:::infra
+  pj["CI Prototype job<br/>lint, build, Playwright in mock mode"]:::infra
+  sj["CI Website job<br/>lint, static build, API mode build"]:::infra
+  stj["CI Staging job<br/>API mode journeys, opt-in"]:::infra
+  gate{"CI finished on main"}
+  ch["Deploy changes job<br/>diff since last good deploy"]:::infra
+  blk["Blocked job<br/>fails the run, retried next green run"]:::sec
+  dp["Deploy prototype<br/>environment production-prototype"]:::infra
+  dw["Deploy website<br/>environment production-website"]:::infra
+  man(["Run workflow by hand<br/>both, prototype or website"]):::person
+  pdom["answerd-demo.vitalos.co.uk"]:::web
+  wdom["answerd.vitalos.co.uk"]:::web
+  trig --> pj
+  trig --> sj
+  trig -. "variable or manual run" .-> stj
+  pj --> gate
+  sj --> gate
+  gate --> ch
+  ch -- "prototype changed and its job passed" --> dp
+  ch -- "marketing-site changed and its job passed" --> dw
+  ch -- "an app's CI job failed" --> blk
+  man --> dp
+  man --> dw
+  dp --> pdom
+  dw --> wdom
+classDef person fill:#081a2a,stroke:#081a2a,color:#ffffff
+classDef web fill:#dce4ff,stroke:#2457ff,color:#081a2a
+classDef infra fill:#f4ecff,stroke:#7a3fd1,color:#081a2a
+classDef sec fill:#fdecea,stroke:#c9372c,color:#081a2a
+</script>
+    <figcaption>Deploys follow a green CI run on <code>main</code> and ship only the app that changed since the last good deploy, and only if that app's own CI job passed. Docs, Markdown and tests never trigger a deploy.</figcaption>
+  </figure>
+  <div class="table-wrap"><table>
+    <thead><tr><th>Workflow</th><th>Trigger</th><th>Runner</th><th>What it does</th></tr></thead>
+    <tbody>
+      <tr><td><code>ci.yml</code></td><td>PR, push to <code>main</code>, manual</td><td><code>ubuntu-latest</code></td><td>Prototype: lint, build, Playwright in mock mode. Website: lint, static build, API-mode build. Staging (opt-in): API-mode journeys, one run at a time, traces kept 7 days.</td></tr>
+      <tr><td><code>deploy.yml</code></td><td><code>workflow_run</code> after CI on <code>main</code>, manual</td><td><code>ubuntu-latest</code></td><td>Picks changed apps, checks their CI jobs, runs <code>pnpm deploy:cf:prod</code> per app in the <code>production-prototype</code> and <code>production-website</code> environments, copies the contact relay secret onto the website Worker. Actions pinned to SHAs.</td></tr>
+      <tr><td><code>update-answerd-client.yml</code></td><td>Manual</td><td><code>ubuntu-latest</code></td><td>Adds or bumps <code>@vitalos/answerd-client</code> from GitHub Packages, lints and builds both apps, opens a PR.</td></tr>
+    </tbody>
+  </table></div>
+  <div class="table-wrap"><table>
+    <thead><tr><th>Environment</th><th>How</th><th>Data</th></tr></thead>
+    <tbody>
+      <tr><td>Local</td><td><code>pnpm dev</code>, or <code>pnpm preview:cf</code> on workerd</td><td>Demo store and seed data</td></tr>
+      <tr><td>API mode</td><td>Build with <code>NEXT_PUBLIC_ANSWERD_API_URL</code> set to staging, locally or in the CI staging job</td><td>Answerd API staging (sleeps after 15 minutes)</td></tr>
+      <tr><td>Production prototype</td><td>answerd-demo.vitalos.co.uk</td><td>Mock mode</td></tr>
+      <tr><td>Production website</td><td>answerd.vitalos.co.uk</td><td>Static seed data</td></tr>
+    </tbody>
+  </table></div>
+</section>
+
+<section id="flows">
+  <h2>Key flows</h2>
+  <p class="sub">The journeys that cross a boundary, step by step. The full product journeys (J1 to J10) are scripted in the Playwright suite.</p>
+  <figure class="diagram" data-title="Sign-in and realtime">
+    <header><h3>Sign-in by phone code and realtime (prototype, API mode)</h3><div class="tools"></div></header>
+    <div class="canvas mmd"></div>
+<script type="text/plain" class="mmd" data-name="flow-signin">
+sequenceDiagram
+  autonumber
+  actor U as Demo user
+  participant P as Prototype in the browser
+  participant X as Proxy route /api/answerd
+  participant A as Answerd API
+  participant R as Realtime relay route
+  U->>P: Enter mobile number (C-06)
+  P->>X: POST v1/auth/otp/start with device id
+  X->>A: Forward path, body and allowlisted headers
+  A-->>U: SMS code, allowlisted test numbers only on staging
+  U->>P: Enter the 6-digit code (C-07)
+  P->>X: POST v1/auth/otp/verify
+  X->>A: Forward
+  A-->>P: Access and refresh tokens
+  Note over P: Prototype keeps tokens in localStorage. The Expo app will use the keychain.
+  P->>X: GET v1/me to learn the user's businesses
+  P->>R: EventSource with the access token
+  R->>A: WebSocket upgrade to v1/realtime with a bearer header
+  A-->>R: Realtime events
+  R-->>P: Server-Sent Events update the store
+</script>
+    <figcaption>The API's CORS allows only the production website, so the prototype calls it through its own proxy and relays the realtime socket as Server-Sent Events.</figcaption>
+  </figure>
+  <figure class="diagram" data-title="Booking mirrored to the API">
+    <header><h3>A booking mirrored to the API (prototype)</h3><div class="tools"></div></header>
+    <div class="canvas mmd"></div>
+<script type="text/plain" class="mmd" data-name="flow-booking">
+sequenceDiagram
+  autonumber
+  actor C as Customer persona
+  participant S as Demo store
+  participant B as API bridge
+  participant X as Proxy route /api/answerd
+  participant A as Answerd API
+  participant H as Hub data source log
+  C->>S: Confirm the booking (C-27)
+  S->>S: Run the action locally, the UI updates at once
+  alt Mock mode, the default
+    Note over S,B: The bridge is not installed. Nothing leaves the browser.
+  else API mode and the listing has an API id
+    S->>B: Wrapped action fires after the local run
+    B->>X: POST v1/bookings with the bearer token
+    X->>A: Forward, no-store
+    A-->>X: Created booking
+    X-->>B: Response with allowlisted headers
+    Note over B,X: A 401 refreshes the token once and retries.<br/>A 502 to 504 waits for staging to wake.
+    B->>B: Map the local id to the API id
+    B->>H: Log method, path, status and timing
+    A--)S: Later events arrive through the realtime relay
+  end
+</script>
+    <figcaption>Every action runs locally first, so the demo stays instant. In API mode the bridge mirrors the 37 actions that have an endpoint and logs each call in the hub.</figcaption>
+  </figure>
+  <figure class="diagram" data-title="Contact form relay">
+    <header><h3>Website contact form to the Vitalos admin inbox</h3><div class="tools"></div></header>
+    <div class="canvas mmd"></div>
+<script type="text/plain" class="mmd" data-name="flow-contact">
+sequenceDiagram
+  autonumber
+  actor V as Visitor
+  participant F as Contact page
+  participant T as Cloudflare Turnstile
+  participant C as Site route /api/contact
+  participant I as Vitalos admin inbox
+  V->>F: Fill in topic, name, email and message
+  opt Turnstile site key is set
+    F->>T: Render the challenge
+    T-->>F: Token
+  end
+  F->>C: POST JSON from the same origin
+  C->>C: Check Origin, 32 KB limit and field rules
+  alt Enquiry secret not set on the Worker
+    C-->>F: 503, the page shows the email address instead
+  else Secret set
+    C->>I: POST web form with a timestamp and HMAC-SHA256 signature
+    I->>I: Verify signature, honeypot, Turnstile and hourly limit
+    I-->>C: 201 with a reference, or 200 accepted
+    C-->>F: Thank-you with the reference
+  end
+</script>
+    <figcaption>The inbox is the Super Admin's Enquiries in vitalos-platform. Without the secret on the Worker the form says it cannot send and shows the email address.</figcaption>
+  </figure>
+  <figure class="diagram" data-title="On-demand revalidation">
+    <header><h3>On-demand revalidation (website, API mode)</h3><div class="tools"></div></header>
+    <div class="canvas mmd"></div>
+<script type="text/plain" class="mmd" data-name="flow-revalidate">
+sequenceDiagram
+  autonumber
+  participant A as Answerd API
+  participant R as Site route /api/revalidate
+  participant N as Next.js cache tags
+  actor V as Visitor
+  participant W as Website Worker
+  Note over A,W: API mode only. Production does not set the API URL, so this path is dormant today.
+  A->>R: POST listingSlug or listingId with timestamp and signature
+  R->>R: Verify HMAC-SHA256 within a 5 minute window
+  alt Missing secret, bad or stale signature
+    R-->>A: 503 or 401
+  else Valid
+    opt Only an id was sent
+      R->>A: GET the listing to find its slug
+    end
+    R->>N: Expire the listing and search tags now
+    R-->>A: revalidated true with the tags
+  end
+  V->>W: Next visit to the listing page
+  W->>A: Fetch fresh listing data
+  W-->>V: Freshly rendered page
+</script>
+    <figcaption>Pages also revalidate hourly in API mode. Google results are fetched after load and never cached into a page.</figcaption>
+  </figure>
+  <figure class="diagram" data-title="Ask Answerd">
+    <header><h3>Ask Answerd (prototype)</h3><div class="tools"></div></header>
+    <div class="canvas mmd"></div>
+<script type="text/plain" class="mmd" data-name="flow-ask">
+sequenceDiagram
+  autonumber
+  actor C as Customer or guest
+  participant Q as Ask Answerd chat (C-38)
+  participant K as Prototype route /api/ask
+  participant M as Anthropic API
+  participant S as Scripted agent in lib/askAnswerd.ts
+  Q->>K: GET, is the model switched on
+  K-->>Q: enabled only when the Worker has an API key
+  C->>Q: Describe the job
+  Note over C,Q: Guests get 5 messages, then sign in (Q-06)
+  alt Model switched on
+    Q->>K: POST the first 1000 characters
+    K->>M: Structured parse into categories, postcode, urgency and emergency
+    M-->>K: Parsed understanding
+    K-->>Q: Understanding
+  else No key, refusal or error
+    K-->>Q: Scripted mode
+  end
+  Q->>S: askTurn with the store and any understanding
+  S-->>C: Matching businesses, or the safety line for gas, danger to life, power cuts or flooding
+</script>
+    <figcaption>The model, when switched on, only parses the message into fields. The reply always comes from the scripted agent, so safety lines and listing matches stay deterministic.</figcaption>
+  </figure>
+</section>
+
+<section id="security">
+  <h2>Security</h2>
+  <p class="sub">Trust boundaries, authentication and authorisation, secrets handling and data protection.</p>
+  <figure class="diagram" data-title="Trust boundaries">
+    <header><h3>Trust boundaries</h3><div class="tools"></div></header>
+    <div class="canvas mmd"></div>
+<script type="text/plain" class="mmd" data-name="trust">
+flowchart LR
+  subgraph untrusted["Untrusted: browsers"]
+    v(["Visitor or demo user"]):::person
+    ls[("Browser storage<br/>demo data, prototype API tokens")]:::db
+  end
+  subgraph edge["Trusted: Cloudflare Workers"]
+    site["Website routes<br/>origin check, validation, HMAC"]:::svc
+    proto["Prototype routes<br/>v1-only proxy, header allowlist, ask"]:::svc
+    wsec["Worker secrets<br/>never sent to the browser"]:::sec
+  end
+  subgraph vitalos["Other Vitalos systems"]
+    api["Answerd API<br/>bearer tokens, CORS to the website only"]:::ext
+    inbox["Admin inbox<br/>verifies signature and Turnstile"]:::ext
+  end
+  subgraph third["Third parties"]
+    askb["Askbridge widget"]:::ext
+    claude["Anthropic API"]:::ext
+  end
+  v -- "TLS" --> site
+  v -- "TLS" --> proto
+  site -- "HMAC-signed relay" --> inbox
+  site -- "tokens from httpOnly cookies" --> api
+  proto -- "bearer token" --> api
+  proto -- "server-side key" --> claude
+  v -. "only after consent" .-> askb
+classDef person fill:#081a2a,stroke:#081a2a,color:#ffffff
+classDef svc fill:#e6f4f2,stroke:#007e76,color:#081a2a
+classDef db fill:#fff6e0,stroke:#9a6700,color:#081a2a
+classDef ext fill:#f1f3f5,stroke:#536273,color:#26333f,stroke-dasharray:4 3
+classDef sec fill:#fdecea,stroke:#c9372c,color:#081a2a
+</script>
+    <figcaption>Secrets stay on the Workers. The browser holds only demo data and, in API mode on the prototype, its own tokens; the website keeps tokens in httpOnly cookies.</figcaption>
+  </figure>
+  <div class="grid-3">
+    <div class="card"><span class="tag sec">Auth</span><h4>Authentication</h4><p>Mock mode: personas from the hub; any code but 000000 passes; five wrong codes lock a number for 15 minutes. API mode: phone number and SMS code through the Answerd API, with one token refresh on a 401.</p></div>
+    <div class="card"><span class="tag sec">Sessions</span><h4>Token storage</h4><p>Website: <code>answerd_at</code> (1 hour) and <code>answerd_rt</code> (30 days) as httpOnly, SameSite Lax cookies, Secure in production, set by Server Actions. Prototype: <code>localStorage</code>, as a stand-in for the app's keychain.</p></div>
+    <div class="card"><span class="tag sec">Access</span><h4>Authorisation</h4><p>Enforced by the Answerd API. The prototype mirrors the spec's permission table (guest to admin) in the UI only and holds no real data. Every admin write needs a reason and is audited.</p></div>
+    <div class="card"><span class="tag sec">Webhooks</span><h4>Signed in and out</h4><p>Revalidate: HMAC-SHA256 over timestamp and body, constant-time compare, 5 minute window. Contact relay: Origin check, 32 KB cap, field and control-character checks, honeypot, optional Turnstile, HMAC signature, body never logged.</p></div>
+    <div class="card"><span class="tag sec">Secrets</span><h4>Where they live</h4><p>Worker secrets for the contact relay, revalidation and the optional model key; GitHub Actions secrets for the Cloudflare token and staging test numbers. The deploy checks they exist without printing them.</p></div>
+    <div class="card"><span class="tag sec">Privacy</span><h4>Consent and third parties</h4><p>Equal-weight cookie choices. The Askbridge widget loads only after the visitor allows chat. Google results carry attribution and are never cached. All demo people and numbers are fictional.</p></div>
+  </div>
+</section>
+
+<section id="decisions">
+  <h2>Decisions &amp; risks</h2>
+  <p class="sub">There is no ADR folder in this repo; decisions are recorded in the docs below. Risks are what the code and docs show at the snapshot.</p>
+  <div class="table-wrap"><table>
+    <thead><tr><th>Record</th><th>Decision</th></tr></thead>
+    <tbody>
+      <tr><td><a href="../COVERAGE.md">COVERAGE.md</a></td><td>Prototype-wide decisions: the real 2026 calendar, the 000000 rule, no real calls, texts, payments or audio, and one website, app first.</td></tr>
+      <tr><td><a href="../docs/design-review-2026-10-25.md">Design review, 25 Oct 2026</a></td><td>Make <code>marketing-site/</code> the only website, add the super admin tier, density and copy fixes.</td></tr>
+      <tr><td><a href="../docs/handoff-2026-10-26-deploy.md">Deploy handoff, 26 Oct 2026</a></td><td>Move both apps to custom domains on vitalos.co.uk; the prototype uses a one-level subdomain because of the free certificate; deploys go through GitHub Actions.</td></tr>
+      <tr><td><a href="../marketing-site/README.md">Website README</a></td><td>Standalone project that never imports from the prototype; read-only static-assets cache, no paid R2; Google results never cached; Server Actions because of the API's CORS.</td></tr>
+      <tr><td><a href="../docs/answerd-api-contract.md">API contract (stand-in)</a></td><td>What staging confirmed on 27 Oct 2026, until the Workforce backend spec and <code>@vitalos/answerd-client</code> can be read here (issue #2).</td></tr>
+      <tr><td><a href="../README.md">README, From prototype to MVP</a></td><td>Expo app for both modes, Next.js web, admin with Google sign-in, Workforce backend for data, the desk and billing, Ask Answerd powered by Askbridge.</td></tr>
+    </tbody>
+  </table></div>
+  <div class="callout warn"><strong>No security headers.</strong> Neither Next.js config sets a Content-Security-Policy, frame or referrer policy, and there is no <code>_headers</code> file, so only Cloudflare's defaults apply.</div>
+  <div class="callout warn"><strong>Prototype token handling.</strong> In API mode the prototype keeps tokens in <code>localStorage</code> and passes the access token to its realtime relay in the query string, because <code>EventSource</code> cannot set headers. Fine for a demo that runs in mock mode in production; it must not carry over to the MVP.</div>
+  <div class="callout warn"><strong>API contract not confirmed.</strong> Authenticated request bodies are unverified because staging answers 401 before validating, and two hand-written clients stand in for <code>@vitalos/answerd-client</code>, so they can drift from the backend.</div>
+  <div class="callout warn"><strong>Unpinned actions.</strong> <code>ci.yml</code> and <code>update-answerd-client.yml</code> use version tags; <code>deploy.yml</code> pins SHAs.</div>
+  <div class="callout"><strong>Doc drift.</strong> The deploy handoff still links issues on <code>answerd-prototype</code>, the repo's old name. The prototype sends the realtime token as <code>?access_token=</code> plus a bearer header, while Workforce's infrastructure README documents <code>?token=</code>. The README says Ask Answerd will be powered by Askbridge, while the prototype's optional parser calls the Anthropic API directly. The deploy filter counts <code>arch/index.html</code> as a prototype change, so updating this page triggers one redeploy of an unchanged build.</div>
+</section>
+
+</main>
+
+<footer>
+  <div class="wrap">
+    <p>Snapshot of <code>vitalos-technologies/answerd</code> at <code>42b8c33</code>, 3 Nov 2026. Diagram sources live in the Markdown files next to this page:
+      <a href="README.md">README</a> · <a href="01-context-containers.md">Context and containers</a> · <a href="02-data-model.md">Data model</a> ·
+      <a href="03-deployment-cicd.md">Deployment and CI/CD</a> · <a href="04-flows-security.md">Flows and security</a>.</p>
+    <p>Main sources inspected: <code>README.md</code>, <code>COVERAGE.md</code>, <code>docs/answerd-spec.md</code>, <code>docs/answerd-api-contract.md</code>, <code>docs/handoff-2026-10-26-deploy.md</code>, <code>package.json</code>, <code>wrangler.jsonc</code>, <code>wrangler.production.jsonc</code>, <code>open-next.config.ts</code>, <code>next.config.ts</code>, <code>app/api/</code>, <code>lib/types.ts</code>, <code>lib/store.ts</code>, <code>lib/api/</code>, <code>marketing-site/</code> (README, <code>app/api/</code>, <code>lib/api/</code>, <code>lib/enquiry.ts</code>, wrangler configs), <code>.github/workflows/</code>, and Workforce's <code>infrastructure/answerd/README.md</code> for the backend context.</p>
+    <p>Portfolio map: see <code>vitalos-technologies/vitalos-platform</code>, <code>arch/portfolio/</code>.</p>
+  </div>
+</footer>
+
+
+<dialog id="zoom" aria-labelledby="zoom-title">
+  <div class="bar"><h3 id="zoom-title">Diagram</h3><div>
+    <button class="icon-btn" type="button" data-z="out" aria-label="Zoom out">−</button>
+    <button class="icon-btn" type="button" data-z="fit">Fit</button>
+    <button class="icon-btn" type="button" data-z="in" aria-label="Zoom in">+</button>
+    <button class="icon-btn" type="button" data-z="close">Close</button>
+  </div></div>
+  <div class="stage"></div>
+</dialog>
+
+<script src="https://cdn.jsdelivr.net/npm/mermaid@11.4.1/dist/mermaid.min.js"></script>
+<script>
+(function () {
+  "use strict";
+  var root = document.documentElement;
+  var KEY = "vitalos-arch-theme";
+  try { var saved = localStorage.getItem(KEY); if (saved === "light" || saved === "dark") root.setAttribute("data-theme", saved); } catch (e) {}
+  var mq = window.matchMedia("(prefers-color-scheme: dark)");
+  function theme() { return root.getAttribute("data-theme") || (mq.matches ? "dark" : "light"); }
+  function v(name) { return getComputedStyle(root).getPropertyValue(name).trim(); }
+
+  function dedent(s) {
+    var lines = s.replace(/\t/g, "  ").split("\n");
+    while (lines.length && !lines[0].trim()) lines.shift();
+    while (lines.length && !lines[lines.length - 1].trim()) lines.pop();
+    var min = Infinity;
+    lines.forEach(function (l) { if (l.trim()) min = Math.min(min, l.match(/^ */)[0].length); });
+    return lines.map(function (l) { return l.slice(min === Infinity ? 0 : min); }).join("\n");
+  }
+  var KINDS = ["person", "web", "svc", "db", "ext", "infra", "sec"];
+  function classDefs() {
+    return KINDS.map(function (k) {
+      var fg = k === "person" ? v("--n-person-fg") : v("--text");
+      return "classDef " + k + " fill:" + v("--n-" + k + "-bg") + ",stroke:" + v("--n-" + k + "-line") + ",color:" + fg + (k === "ext" ? ",stroke-dasharray:4 3" : "");
+    }).join("\n");
+  }
+  function themeVars() {
+    var dark = theme() === "dark";
+    return {
+      darkMode: dark, fontFamily: v("--font"), fontSize: "15px",
+      background: v("--surface"), primaryColor: v("--n-web-bg"), primaryBorderColor: v("--n-web-line"), primaryTextColor: v("--text"),
+      secondaryColor: v("--n-svc-bg"), secondaryBorderColor: v("--n-svc-line"), secondaryTextColor: v("--text"),
+      tertiaryColor: v("--surface-2"), tertiaryBorderColor: v("--border"), tertiaryTextColor: v("--text"),
+      mainBkg: v("--n-web-bg"), nodeBorder: v("--n-web-line"), nodeTextColor: v("--text"), textColor: v("--text"),
+      lineColor: v("--edge"), clusterBkg: v("--surface-2"), clusterBorder: v("--boundary"), titleColor: v("--text"),
+      edgeLabelBackground: v("--surface"), labelBackground: v("--surface"),
+      actorBkg: v("--n-web-bg"), actorBorder: v("--n-web-line"), actorTextColor: v("--text"), actorLineColor: v("--boundary"),
+      signalColor: v("--edge"), signalTextColor: v("--text"), labelBoxBkgColor: v("--surface-2"), labelBoxBorderColor: v("--border"),
+      labelTextColor: v("--text"), loopTextColor: v("--text"), noteBkgColor: v("--n-db-bg"), noteBorderColor: v("--n-db-line"), noteTextColor: v("--text"),
+      activationBkgColor: v("--n-svc-bg"), activationBorderColor: v("--n-svc-line"), sequenceNumberColor: dark ? "#081a2a" : "#ffffff",
+      attributeBackgroundColorOdd: v("--surface"), attributeBackgroundColorEven: v("--surface-2"),
+      git0: v("--accent"), cScale0: v("--n-web-bg"), cScale1: v("--n-svc-bg"), cScale2: v("--n-db-bg")
+    };
+  }
+  var seq = 0;
+  async function renderAll() {
+    window.__archErrors = [];
+    window.__archRendered = false;
+    var blocks = document.querySelectorAll("script.mmd");
+    if (!window.mermaid) {
+      blocks.forEach(function (s) {
+        var c = s.parentElement.querySelector(".canvas"); c.textContent = "";
+        var pre = document.createElement("pre"); pre.className = "mmd-fallback"; pre.textContent = dedent(s.textContent); c.appendChild(pre);
+      });
+      window.__archRendered = true; return;
+    }
+    window.mermaid.initialize({
+      startOnLoad: false, theme: "base", securityLevel: "strict", themeVariables: themeVars(),
+      flowchart: { curve: "basis", padding: 14, nodeSpacing: 46, rankSpacing: 56, htmlLabels: true },
+      sequence: { useMaxWidth: true, mirrorActors: false, showSequenceNumbers: true, boxMargin: 8, messageFontSize: 14 },
+      er: { useMaxWidth: true, layoutDirection: "TB", minEntityWidth: 120, fontSize: 13 }
+    });
+    for (var i = 0; i < blocks.length; i++) {
+      var s = blocks[i], c = s.parentElement.querySelector(".canvas");
+      var src = dedent(s.textContent).replace(/^[ \t]*classDef[ \t]+(person|web|svc|db|ext|infra|sec)\b.*$/gm, "");
+      if (/^\s*(flowchart|graph)\b/.test(src)) src += "\n" + classDefs();
+      var id = "mmd-" + (++seq);
+      try {
+        var out = await window.mermaid.render(id, src);
+        c.innerHTML = out.svg;
+        var el = c.querySelector("svg"), vb = el && el.viewBox && el.viewBox.baseVal;
+        if (vb && vb.width) { el.style.maxWidth = Math.round(vb.width) + "px"; el.style.minWidth = Math.round(Math.min(vb.width, 720)) + "px"; }
+      } catch (e) {
+        var stray = document.getElementById("d" + id); if (stray) stray.remove();
+        window.__archErrors.push({ name: s.dataset.name || ("block " + i), message: String((e && e.message) || e) });
+        c.textContent = "";
+        var err = document.createElement("pre"); err.className = "mmd-error"; err.textContent = "Diagram failed to render: " + ((e && e.message) || e); c.appendChild(err);
+        var pre = document.createElement("pre"); pre.className = "mmd-fallback"; pre.textContent = dedent(s.textContent); c.appendChild(pre);
+      }
+    }
+    window.__archRendered = true;
+  }
+
+  // Figure tools: Expand and Source
+  var dlg = document.getElementById("zoom"), stage = dlg.querySelector(".stage"), scale = 1;
+  function applyScale() { var svg = stage.querySelector("svg"); if (!svg) return; var w = svg.viewBox && svg.viewBox.baseVal && svg.viewBox.baseVal.width; svg.style.width = (w ? w * scale : 1000 * scale) + "px"; }
+  function fit() { var svg = stage.querySelector("svg"); if (!svg) return; var w = (svg.viewBox && svg.viewBox.baseVal && svg.viewBox.baseVal.width) || 1000; scale = Math.max(0.2, Math.min(3, (stage.clientWidth - 32) / w)); applyScale(); }
+  dlg.addEventListener("click", function (e) {
+    var b = e.target.closest("button[data-z]"); if (!b) { if (e.target === dlg) dlg.close(); return; }
+    var z = b.getAttribute("data-z");
+    if (z === "close") dlg.close(); else if (z === "fit") fit(); else { scale = Math.max(0.2, Math.min(4, scale * (z === "in" ? 1.25 : 0.8))); applyScale(); }
+  });
+  document.querySelectorAll("figure.diagram").forEach(function (fig) {
+    var tools = fig.querySelector(".tools"); if (!tools) return;
+    var ex = document.createElement("button"); ex.type = "button"; ex.textContent = "Expand";
+    ex.addEventListener("click", function () {
+      var svg = fig.querySelector(".canvas > svg"); if (!svg) return;
+      stage.textContent = ""; var copy = svg.cloneNode(true); copy.removeAttribute("id"); copy.style.maxWidth = "none"; copy.style.minWidth = "0";
+      copy.querySelectorAll("[id]").forEach(function (n) { if (n.tagName.toLowerCase() === "marker") return; });
+      stage.appendChild(copy); dlg.querySelector("#zoom-title").textContent = fig.getAttribute("data-title") || "Diagram";
+      dlg.showModal(); fit();
+    });
+    tools.appendChild(ex);
+    var mmd = fig.querySelector("script.mmd");
+    if (mmd) {
+      var sb = document.createElement("button"); sb.type = "button"; sb.textContent = "Source"; sb.setAttribute("aria-expanded", "false");
+      sb.addEventListener("click", function () {
+        var pre = fig.querySelector("pre.mmd-src");
+        if (pre) { pre.remove(); sb.setAttribute("aria-expanded", "false"); return; }
+        pre = document.createElement("pre"); pre.className = "mmd-src"; pre.textContent = dedent(mmd.textContent);
+        fig.insertBefore(pre, fig.querySelector("figcaption")); sb.setAttribute("aria-expanded", "true");
+      });
+      tools.appendChild(sb);
+    }
+  });
+
+  // Theme toggle
+  document.getElementById("theme-toggle").addEventListener("click", function () {
+    var next = theme() === "dark" ? "light" : "dark";
+    root.setAttribute("data-theme", next);
+    try { localStorage.setItem(KEY, next); } catch (e) {}
+    renderAll();
+  });
+  mq.addEventListener("change", function () { if (!root.getAttribute("data-theme")) renderAll(); });
+
+  // Active section highlight
+  var links = Array.prototype.slice.call(document.querySelectorAll(".tabs a"));
+  if ("IntersectionObserver" in window) {
+    var io = new IntersectionObserver(function (entries) {
+      entries.forEach(function (en) {
+        if (!en.isIntersecting) return;
+        links.forEach(function (a) { a.classList.toggle("active", a.getAttribute("href") === "#" + en.target.id); });
+      });
+    }, { rootMargin: "-40% 0px -55% 0px" });
+    document.querySelectorAll("main section[id]").forEach(function (s) { io.observe(s); });
+  }
+
+  renderAll();
+})();
+</script>
+</body>
+</html>
